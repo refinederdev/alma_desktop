@@ -9,7 +9,8 @@ AppPublisher=__APP_NAME__
 DefaultDirName={autopf}\__APP_NAME__
 DefaultGroupName=__APP_NAME__
 DisableProgramGroupPage=yes
-OutputDir=installer\output
+; Paths below are relative to this .iss file (installer/). Flutter output lives at repo root build\...
+OutputDir=output
 OutputBaseFilename=__APP_NAME___setup_v__APP_VERSION__
 Compression=lzma
 SolidCompression=yes
@@ -23,7 +24,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\__APP_NAME__"; Filename: "{app}\__APP_NAME__.exe"
