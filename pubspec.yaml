@@ -1,0 +1,57 @@
+name: alma_desktop
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  dartz: ^0.10.1
+  delightful_toast: ^1.1.0
+  dio: ^5.9.2
+  emoji_picker_flutter: ^4.4.0
+  equatable: ^2.0.8
+  file_picker: ^11.0.2
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_screenutil: ^5.9.3
+  get: ^4.7.3
+  image_picker: ^1.2.2
+  audioplayers: ^6.5.0
+  shared_preferences: ^2.5.5
+  web_socket_channel: ^3.0.3
+  window_manager: ^0.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/svgs/icons/
+    - assets/svgs/general/
+    - assets/gifs/empty_notifications.gif
+    - assets/gifs/success.gif
+    - assets/sound/notifi.wav
+  fonts:
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/ibm/IBMPlexSansArabic-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/ibm/IBMPlexSansArabic-Light.ttf
+          weight: 300
+        - asset: assets/fonts/ibm/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/ibm/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ibm/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ibm/IBMPlexSansArabic-Bold.ttf
+          weight: 700
