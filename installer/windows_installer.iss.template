@@ -1,5 +1,5 @@
 ; Inno Setup template. Placeholders replaced by GitHub Actions:
-; __APP_NAME__ and __APP_VERSION__
+; __APP_NAME__, __APP_VERSION__, __REPO_ROOT__ (absolute workspace path on Windows)
 
 [Setup]
 AppId=__APP_NAME__.desktop
@@ -9,9 +9,8 @@ AppPublisher=__APP_NAME__
 DefaultDirName={autopf}\__APP_NAME__
 DefaultGroupName=__APP_NAME__
 DisableProgramGroupPage=yes
-; This template is compiled from the repository root (windows_installer.generated.iss).
-; Inno Setup resolves Source/OutputDir relative to the .iss file location.
-OutputDir=installer\output
+; __REPO_ROOT__ is replaced in CI with the absolute workspace path (no relative-path ambiguity).
+OutputDir=__REPO_ROOT__\installer\output
 OutputBaseFilename=__APP_NAME___setup_v__APP_VERSION__
 Compression=lzma
 SolidCompression=yes
@@ -25,7 +24,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "__REPO_ROOT__\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\__APP_NAME__"; Filename: "{app}\__APP_NAME__.exe"

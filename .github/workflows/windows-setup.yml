@@ -43,19 +43,58 @@ jobs:
       - name: Build Windows app (release)
         run: flutter build windows --release
 
-      - name: Prepare Inno Setup script
+      - name: Build setup.exe (Inno Setup, absolute paths + ISCC)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path installer -Force | Out-Null
-          $template = Get-Content installer/windows_installer.iss.template -Raw
-          $script = $template.Replace('__APP_NAME__', $env:APP_NAME).Replace('__APP_VERSION__', $env:APP_VERSION)
-          # Place .iss at repo root so Source=build\... matches Flutter output (Inno resolves paths from .iss dir).
-          Set-Content -Path windows_installer.generated.iss -Value $script -Encoding utf8
+          $rootWin = ($env:GITHUB_WORKSPACE.TrimEnd('/', '\')) -replace '/', '\'
+          $releaseDir = Join-Path $rootWin 'build\windows\x64\runner\Release'
+          if (-not (Test-Path $releaseDir)) {
+            Write-Host "::error::Flutter Windows Release folder missing: $releaseDir"
+            exit 1
+          }
+          $exes = Get-ChildItem -Path $releaseDir -Filter '*.exe' -ErrorAction SilentlyContinue
+          if (-not $exes) {
+            Write-Host "::error::No .exe under: $releaseDir"
+            exit 1
+          }
 
-      - name: Build installer (setup.exe)
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
-        with:
-          path: windows_installer.generated.iss
+          New-Item -ItemType Directory -Path (Join-Path $rootWin 'installer') -Force | Out-Null
+          $templatePath = Join-Path $rootWin 'installer\windows_installer.iss.template'
+          if (-not (Test-Path $templatePath)) {
+            Write-Host "::error::Missing installer template: $templatePath"
+            exit 1
+          }
+
+          $template = Get-Content -LiteralPath $templatePath -Raw
+          $script = $template.Replace('__APP_NAME__', $env:APP_NAME).Replace('__APP_VERSION__', $env:APP_VERSION).Replace('__REPO_ROOT__', $rootWin)
+
+          $issPath = Join-Path $rootWin 'windows_installer.generated.iss'
+          Set-Content -LiteralPath $issPath -Value $script -Encoding utf8
+
+          Write-Host '--- windows_installer.generated.iss (first 40 lines) ---'
+          Get-Content -LiteralPath $issPath | Select-Object -First 40
+
+          $isccCandidates = @(
+            (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Inno Setup 6\ISCC.exe'),
+            (Join-Path ([Environment]::GetFolderPath('ProgramFiles')) 'Inno Setup 6\ISCC.exe')
+          )
+          $iscc = $isccCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            Write-Host 'Inno Setup not found on image; installing via Chocolatey...'
+            choco install innosetup -y --no-progress
+            $iscc = $isccCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          }
+          if (-not $iscc) {
+            Write-Host '::error::Inno Setup ISCC.exe still not found after install attempt.'
+            exit 1
+          }
+
+          Write-Host "Using ISCC: $iscc"
+          & $iscc $issPath
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::ISCC failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
 
       - name: Upload setup artifact
         uses: actions/upload-artifact@v4
