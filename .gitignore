@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# CI-generated Inno Setup script (written at repo root in GitHub Actions)
+/windows_installer.generated.iss
+
 # Symbolication related
 app.*.symbols
 
