@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Widget لتنسيق النص مثل WhatsApp
 /// يدعم:
@@ -6,7 +8,7 @@ import 'package:flutter/material.dart';
 /// - _text_ للمائل (italic)
 /// - ~text~ للمشطوب (strikethrough)
 /// - `text` للنص أحادي المسافة (monospace)
-class WhatsAppFormattedText extends StatelessWidget {
+class WhatsAppFormattedText extends StatefulWidget {
   final String text;
   final TextStyle? style;
   final TextAlign? textAlign;
@@ -26,19 +28,40 @@ class WhatsAppFormattedText extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final safeText = _sanitizeInvalidUtf16(text);
-    // استخدام الخط من style إذا كان موجوداً، وإلا استخدم الخط الافتراضي
-    final TextStyle baseStyle = style?.copyWith(
-          fontFamily: style?.fontFamily ?? _defaultFontFamily,
-        ) ??
-        TextStyle(fontFamily: _defaultFontFamily);
+  State<WhatsAppFormattedText> createState() => _WhatsAppFormattedTextState();
+}
 
-    return RichText(
-      textAlign: textAlign ?? TextAlign.start,
-      maxLines: maxLines,
-      overflow: overflow ?? TextOverflow.clip,
-      text: _parseText(safeText, baseStyle),
+class _WhatsAppFormattedTextState extends State<WhatsAppFormattedText> {
+  final List<TapGestureRecognizer> _linkRecognizers = <TapGestureRecognizer>[];
+
+  @override
+  void dispose() {
+    for (final recognizer in _linkRecognizers) {
+      recognizer.dispose();
+    }
+    _linkRecognizers.clear();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    for (final recognizer in _linkRecognizers) {
+      recognizer.dispose();
+    }
+    _linkRecognizers.clear();
+
+    final safeText = _sanitizeInvalidUtf16(widget.text);
+    // استخدام الخط من style إذا كان موجوداً، وإلا استخدم الخط الافتراضي
+    final TextStyle baseStyle = widget.style?.copyWith(
+          fontFamily:
+              widget.style?.fontFamily ?? WhatsAppFormattedText._defaultFontFamily,
+        ) ??
+        TextStyle(fontFamily: WhatsAppFormattedText._defaultFontFamily);
+
+    return SelectableText.rich(
+      _parseText(safeText, baseStyle),
+      textAlign: widget.textAlign ?? TextAlign.start,
+      maxLines: widget.maxLines,
     );
   }
 
@@ -70,10 +93,12 @@ class WhatsAppFormattedText extends StatelessWidget {
       // إضافة النص قبل التنسيق
       if (match.start > currentIndex) {
         final plainText = text.substring(currentIndex, match.start);
-        spans.add(TextSpan(
-          text: plainText,
-          style: _applyFormats(baseStyle, activeFormats),
-        ));
+        spans.addAll(
+          _buildTextSpansWithLinks(
+            plainText,
+            _applyFormats(baseStyle, activeFormats),
+          ),
+        );
       }
 
       // استخراج النص المنسق
@@ -104,10 +129,12 @@ class WhatsAppFormattedText extends StatelessWidget {
     // إضافة النص المتبقي بعد آخر تنسيق
     if (currentIndex < text.length) {
       final remainingText = text.substring(currentIndex);
-      spans.add(TextSpan(
-        text: remainingText,
-        style: _applyFormats(baseStyle, activeFormats),
-      ));
+      spans.addAll(
+        _buildTextSpansWithLinks(
+          remainingText,
+          _applyFormats(baseStyle, activeFormats),
+        ),
+      );
     }
 
     // إذا لم يكن هناك تنسيقات، أعد النص كما هو
@@ -119,6 +146,59 @@ class WhatsAppFormattedText extends StatelessWidget {
     }
 
     return TextSpan(children: spans);
+  }
+
+  List<TextSpan> _buildTextSpansWithLinks(String input, TextStyle baseStyle) {
+    final List<TextSpan> spans = <TextSpan>[];
+    final RegExp linkPattern = RegExp(
+      r'((?:https?:\/\/|www\.)[^\s]+)',
+      caseSensitive: false,
+    );
+
+    int currentIndex = 0;
+    for (final match in linkPattern.allMatches(input)) {
+      if (match.start > currentIndex) {
+        spans.add(
+          TextSpan(
+            text: input.substring(currentIndex, match.start),
+            style: baseStyle,
+          ),
+        );
+      }
+
+      final String rawUrl = match.group(0)!;
+      final String normalizedUrl = rawUrl.toLowerCase().startsWith('http')
+          ? rawUrl
+          : 'https://$rawUrl';
+      final recognizer = TapGestureRecognizer()
+        ..onTap = () => _openLink(normalizedUrl);
+      _linkRecognizers.add(recognizer);
+
+      spans.add(
+        TextSpan(
+          text: rawUrl,
+          style: baseStyle.copyWith(
+            decoration: TextDecoration.underline,
+            color: Colors.blueAccent,
+          ),
+          recognizer: recognizer,
+        ),
+      );
+
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < input.length) {
+      spans.add(TextSpan(text: input.substring(currentIndex), style: baseStyle));
+    }
+
+    return spans;
+  }
+
+  Future<void> _openLink(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.platformDefault);
   }
 
   TextStyle _applyFormats(TextStyle baseStyle, List<String> formats) {
@@ -142,7 +222,8 @@ class WhatsAppFormattedText extends StatelessWidget {
           // استخدام نفس الخط للنص أحادي المسافة بدلاً من monospace
           // للحفاظ على الاتساق مع خط التطبيق
           result = result.copyWith(
-            fontFamily: baseStyle.fontFamily ?? _defaultFontFamily,
+            fontFamily: baseStyle.fontFamily ??
+                WhatsAppFormattedText._defaultFontFamily,
             letterSpacing: 0.5, // إضافة مسافة بين الأحرف لمظهر أحادي المسافة
           );
           break;
@@ -151,7 +232,9 @@ class WhatsAppFormattedText extends StatelessWidget {
 
     // التأكد من أن الخط موجود دائماً
     if (result.fontFamily == null) {
-      result = result.copyWith(fontFamily: _defaultFontFamily);
+      result = result.copyWith(
+        fontFamily: WhatsAppFormattedText._defaultFontFamily,
+      );
     }
 
     return result;

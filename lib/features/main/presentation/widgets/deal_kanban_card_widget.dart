@@ -1,5 +1,6 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
+import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -168,6 +169,13 @@ class DealKanbanCardWidget extends StatelessWidget {
                 ? deal.contactPhone!
                 : '-',
           ),
+          if (_isSuperAdminUser()) ...[
+            SizedBox(height: 6.h),
+            _InfoRow(
+              icon: Icons.support_agent_rounded,
+              text: _assignedAgentName(deal) ?? '-',
+            ),
+          ],
           SizedBox(height: 10.h),
           Row(
             children: [
@@ -246,6 +254,21 @@ class DealKanbanDraggableCard extends StatelessWidget {
 }
 
 enum _DealAction { openChat, editDeal, transferDeal }
+
+bool _isSuperAdminUser() {
+  final roles = GlobalController.to.user?.roles ?? const <String>[];
+  return roles.any((role) => role.toLowerCase().trim() == 'super_admin');
+}
+
+String? _assignedAgentName(Deal deal) {
+  final fullName = deal.user?.fullName.trim();
+  if (fullName != null && fullName.isNotEmpty) return fullName;
+  final first = deal.user?.firstName.trim() ?? '';
+  final last = deal.user?.lastName.trim() ?? '';
+  final combined = '$first $last'.trim();
+  if (combined.isNotEmpty) return combined;
+  return null;
+}
 
 class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.icon, required this.text});

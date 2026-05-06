@@ -73,6 +73,22 @@ class FilePickerService {
     return null;
   }
 
+  /// Pick multiple image files
+  Future<List<File>?> pickMultipleImages() async {
+    final FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+    );
+
+    if (result != null) {
+      return result.paths
+          .where((path) => path != null)
+          .map((path) => File(path!))
+          .toList();
+    }
+    return null;
+  }
+
   /// Pick video files only
   Future<File?> pickVideo() async {
     final FilePickerResult? result = await FilePicker.pickFiles(
@@ -81,6 +97,22 @@ class FilePickerService {
 
     if (result != null && result.files.single.path != null) {
       return File(result.files.single.path!);
+    }
+    return null;
+  }
+
+  /// Pick multiple video files
+  Future<List<File>?> pickMultipleVideos() async {
+    final FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.video,
+      allowMultiple: true,
+    );
+
+    if (result != null) {
+      return result.paths
+          .where((path) => path != null)
+          .map((path) => File(path!))
+          .toList();
     }
     return null;
   }
@@ -97,6 +129,22 @@ class FilePickerService {
     return null;
   }
 
+  /// Pick multiple audio files
+  Future<List<File>?> pickMultipleAudio() async {
+    final FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.audio,
+      allowMultiple: true,
+    );
+
+    if (result != null) {
+      return result.paths
+          .where((path) => path != null)
+          .map((path) => File(path!))
+          .toList();
+    }
+    return null;
+  }
+
   /// Pick media files (images and videos)
   Future<File?> pickMedia() async {
     final FilePickerResult? result = await FilePicker.pickFiles(
@@ -105,6 +153,22 @@ class FilePickerService {
 
     if (result != null && result.files.single.path != null) {
       return File(result.files.single.path!);
+    }
+    return null;
+  }
+
+  /// Pick multiple media files (images and videos)
+  Future<List<File>?> pickMultipleMedia() async {
+    final FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.media,
+      allowMultiple: true,
+    );
+
+    if (result != null) {
+      return result.paths
+          .where((path) => path != null)
+          .map((path) => File(path!))
+          .toList();
     }
     return null;
   }

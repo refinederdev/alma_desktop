@@ -45,6 +45,15 @@ abstract class MainRepository {
     String? mediaPath,
   });
 
+  Future<Either<Failure, DealMessage>> updateMessage({
+    required int messageId,
+    String? messageBody,
+    String? mediaUrl,
+    String? mediaType,
+  });
+
+  Future<Either<Failure, void>> deleteMessage({required int messageId});
+
   Future<Either<Failure, List<Agent>>> getAgents({String? search});
 
   Future<Either<Failure, Deal>> assignDeal({

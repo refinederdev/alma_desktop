@@ -160,6 +160,36 @@ class MainRepositoryImpl implements MainRepository {
   }
 
   @override
+  Future<Either<Failure, DealMessage>> updateMessage({
+    required int messageId,
+    String? messageBody,
+    String? mediaUrl,
+    String? mediaType,
+  }) async {
+    try {
+      final result = await mainRemoteDataSource.updateMessage(
+        messageId: messageId,
+        messageBody: messageBody,
+        mediaUrl: mediaUrl,
+        mediaType: mediaType,
+      );
+      return Right(result);
+    } on CustomException catch (e) {
+      return Left(ServerFailure(exception: e, message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteMessage({required int messageId}) async {
+    try {
+      await mainRemoteDataSource.deleteMessage(messageId: messageId);
+      return Right(null);
+    } on CustomException catch (e) {
+      return Left(ServerFailure(exception: e, message: e.message));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<Agent>>> getAgents({String? search}) async {
     try {
       final result = await mainRemoteDataSource.getAgents(search: search);

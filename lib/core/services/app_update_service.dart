@@ -29,6 +29,11 @@ class AppUpdateService {
 
   final Dio _dio;
 
+  Future<String> getCurrentVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    return packageInfo.version;
+  }
+
   List<String> _preferredAssetExtensions() {
     if (Platform.isWindows) return const ['.exe'];
     if (Platform.isMacOS) return const ['.zip', '.pkg', '.dmg'];
@@ -36,11 +41,16 @@ class AppUpdateService {
   }
 
   Future<UpdateInfo> checkForUpdate() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-    final currentVersion = packageInfo.version;
+    final currentVersion = await getCurrentVersion();
     final response = await _dio.get(
       AppConfig.latestReleaseApi,
-      options: Options(headers: {'Accept': 'application/vnd.github+json'}),
+      options: Options(
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'User-Agent': 'alma-desktop-updater',
+        },
+      ),
     );
 
     final Map<String, dynamic> data =

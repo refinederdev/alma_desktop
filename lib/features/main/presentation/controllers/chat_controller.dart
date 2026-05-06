@@ -18,10 +18,15 @@ import 'package:alma_desktop/features/main/domain/usecases/get_open_deals_use_ca
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/update_message_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/delete_message_use_case.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pasteboard/pasteboard.dart';
+import 'package:alma_desktop/core/errors/failures.dart';
 
 class ChatController extends GetxController {
   ChatController({
@@ -30,6 +35,8 @@ class ChatController extends GetxController {
     required this.getLostDealsUseCase,
     required this.getDealMessagesUseCase,
     required this.sendMessageUseCase,
+    required this.updateMessageUseCase,
+    required this.deleteMessageUseCase,
   });
 
   final GetOpenDealsUseCase getOpenDealsUseCase;
@@ -37,6 +44,8 @@ class ChatController extends GetxController {
   final GetLostDealsUseCase getLostDealsUseCase;
   final GetDealMessagesUseCase getDealMessagesUseCase;
   final SendMessageUseCase sendMessageUseCase;
+  final UpdateMessageUseCase updateMessageUseCase;
+  final DeleteMessageUseCase deleteMessageUseCase;
   final FilePickerService _filePickerService = FilePickerService();
 
   final TextEditingController messageController = TextEditingController();
@@ -54,6 +63,8 @@ class ChatController extends GetxController {
   bool isLoadingMoreDeals = false;
   bool hasOlderMessages = false;
   bool showEmojiPicker = false;
+  bool isUpdatingMessage = false;
+  int? deletingMessageId;
 
   List<Deal> allDeals = const [];
   List<Deal> filteredDeals = const [];
@@ -61,8 +72,8 @@ class ChatController extends GetxController {
 
   String searchQuery = '';
   Deal? selectedDeal;
-  File? selectedAttachment;
-  String? selectedAttachmentType;
+  DealMessage? editingMessage;
+  List<File> selectedAttachments = const [];
   String? dealsErrorMessage;
   String? messagesErrorMessage;
   DateTime? _lastDealsLoadedAt;
@@ -75,11 +86,16 @@ class ChatController extends GetxController {
   bool _isReverbConnected = false;
   final List<String> _subscribedChannelNames = <String>[];
   final Set<String> _playedNotificationMessageIds = <String>{};
+  final Map<int, int> _unreadCountByDealId = <int, int>{};
+  final Set<int> _newDealIds = <int>{};
 
   final Map<int, List<DealMessage>> _messagesCache = <int, List<DealMessage>>{};
   final Map<int, int> _messagesPageCache = <int, int>{};
   final Map<int, bool> _hasOlderCache = <int, bool>{};
   bool get isReverbConnected => _isReverbConnected;
+  int unreadCountForDeal(int dealId) => _unreadCountByDealId[dealId] ?? 0;
+  bool hasUnreadForDeal(int dealId) => unreadCountForDeal(dealId) > 0;
+  bool isNewDeal(int dealId) => _newDealIds.contains(dealId);
 
   @override
   void onInit() {
@@ -129,8 +145,7 @@ class ChatController extends GetxController {
 
     result.fold(
       (failure) {
-        firstFailure =
-            failure.message ?? 'failed_to_load_open_deals'.tr;
+        firstFailure = failure.message ?? 'failed_to_load_open_deals'.tr;
         _openDealsPage = 1;
         _hasMoreOpenDeals = false;
       },
@@ -143,8 +158,8 @@ class ChatController extends GetxController {
 
     final deduplicated = _deduplicateDeals(loadedDeals);
     deduplicated.sort((a, b) {
-      final aTs = a.lastMessage?.messageTimestamp ?? 0;
-      final bTs = b.lastMessage?.messageTimestamp ?? 0;
+      final aTs = _dealOrderingTimestamp(a);
+      final bTs = _dealOrderingTimestamp(b);
       return bTs.compareTo(aTs);
     });
 
@@ -183,8 +198,7 @@ class ChatController extends GetxController {
     }
   }
 
-  bool get hasMoreDeals =>
-      _hasMoreOpenDeals;
+  bool get hasMoreDeals => _hasMoreOpenDeals;
 
   Future<void> loadMoreDeals() async {
     if (isLoadingDeals || isRefreshing || isLoadingMoreDeals || !hasMoreDeals) {
@@ -204,8 +218,7 @@ class ChatController extends GetxController {
       );
       result.fold(
         (failure) {
-          firstFailure =
-              failure.message ?? 'failed_to_load_open_deals'.tr;
+          firstFailure = failure.message ?? 'failed_to_load_open_deals'.tr;
         },
         (paginator) {
           loadedDeals.addAll(paginator.data);
@@ -221,8 +234,8 @@ class ChatController extends GetxController {
     if (loadedDeals.isNotEmpty) {
       final merged = _deduplicateDeals([...allDeals, ...loadedDeals]);
       merged.sort((a, b) {
-        final aTs = a.lastMessage?.messageTimestamp ?? 0;
-        final bTs = b.lastMessage?.messageTimestamp ?? 0;
+        final aTs = _dealOrderingTimestamp(a);
+        final bTs = _dealOrderingTimestamp(b);
         return bTs.compareTo(aTs);
       });
       allDeals = merged;
@@ -272,8 +285,8 @@ class ChatController extends GetxController {
   }
 
   Future<void> pickMediaAttachment() async {
-    final picked = await _filePickerService.pickMedia();
-    if (picked == null) {
+    final picked = await _filePickerService.pickMultipleMedia();
+    if (picked == null || picked.isEmpty) {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
@@ -281,22 +294,14 @@ class ChatController extends GetxController {
       );
       return;
     }
-    if (!_validateAttachment(picked)) return;
-    selectedAttachment = picked;
-    if (_filePickerService.isImageFile(picked)) {
-      selectedAttachmentType = 'imageMessage';
-    } else if (_filePickerService.isVideoFile(picked)) {
-      selectedAttachmentType = 'videoMessage';
-    } else {
-      selectedAttachmentType = 'documentMessage';
-    }
+    _setSelectedAttachments(picked);
     hideEmojiPicker();
     update();
   }
 
   Future<void> pickDocumentAttachment() async {
-    final picked = await _filePickerService.pickSingleFile();
-    if (picked == null) {
+    final picked = await _filePickerService.pickMultipleFiles();
+    if (picked == null || picked.isEmpty) {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
@@ -304,16 +309,14 @@ class ChatController extends GetxController {
       );
       return;
     }
-    if (!_validateAttachment(picked)) return;
-    selectedAttachment = picked;
-    selectedAttachmentType = 'documentMessage';
+    _setSelectedAttachments(picked);
     hideEmojiPicker();
     update();
   }
 
   Future<void> pickImageAttachment() async {
-    final picked = await _filePickerService.pickImage();
-    if (picked == null) {
+    final picked = await _filePickerService.pickMultipleImages();
+    if (picked == null || picked.isEmpty) {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
@@ -321,16 +324,49 @@ class ChatController extends GetxController {
       );
       return;
     }
-    if (!_validateAttachment(picked)) return;
-    selectedAttachment = picked;
-    selectedAttachmentType = 'imageMessage';
+    _setSelectedAttachments(picked);
     hideEmojiPicker();
     update();
   }
 
+  Future<void> pickImageFromClipboard() async {
+    Uint8List? imageBytes;
+    try {
+      imageBytes = await Pasteboard.image;
+    } catch (_) {
+      AppMessages.showSnackBar(
+        type: ErrorType.warning,
+        title: 'error'.tr,
+        message: 'تعذر قراءة الصورة من الحافظة.',
+      );
+      return;
+    }
+
+    if (imageBytes == null || imageBytes.isEmpty) {
+      return;
+    }
+
+    try {
+      final tempPath =
+          '${Directory.systemTemp.path}${Platform.pathSeparator}alma_clip_${DateTime.now().millisecondsSinceEpoch}.png';
+      final file = File(tempPath);
+      await file.writeAsBytes(imageBytes, flush: true);
+      if (!_validateAttachment(file)) return;
+      _setSelectedAttachments([file]);
+      hideEmojiPicker();
+      update();
+    } catch (_) {
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'فشل تجهيز الصورة المُلصقة.',
+      );
+    }
+  }
+
   Future<void> pickVideoAttachment() async {
-    final picked = await _filePickerService.pickVideo();
-    if (picked == null) {
+    final picked = await _filePickerService.pickMultipleVideos();
+    if (picked == null || picked.isEmpty) {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
@@ -338,16 +374,14 @@ class ChatController extends GetxController {
       );
       return;
     }
-    if (!_validateAttachment(picked)) return;
-    selectedAttachment = picked;
-    selectedAttachmentType = 'videoMessage';
+    _setSelectedAttachments(picked);
     hideEmojiPicker();
     update();
   }
 
   Future<void> pickAudioAttachment() async {
-    final picked = await _filePickerService.pickAudio();
-    if (picked == null) {
+    final picked = await _filePickerService.pickMultipleAudio();
+    if (picked == null || picked.isEmpty) {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
@@ -355,17 +389,45 @@ class ChatController extends GetxController {
       );
       return;
     }
-    if (!_validateAttachment(picked)) return;
-    selectedAttachment = picked;
-    selectedAttachmentType = 'audioMessage';
+    _setSelectedAttachments(picked);
     hideEmojiPicker();
     update();
   }
 
   void clearAttachment() {
-    selectedAttachment = null;
-    selectedAttachmentType = null;
+    selectedAttachments = const [];
     update();
+  }
+
+  void removeAttachmentAt(int index) {
+    if (index < 0 || index >= selectedAttachments.length) return;
+    final next = List<File>.from(selectedAttachments)..removeAt(index);
+    selectedAttachments = next;
+    update();
+  }
+
+  void _setSelectedAttachments(List<File> files) {
+    final valid = <File>[];
+    for (final file in files) {
+      if (_validateAttachment(file)) {
+        valid.add(file);
+      }
+    }
+    selectedAttachments = valid;
+  }
+
+  bool isImageAttachment(File file) {
+    return _filePickerService.isImageFile(file);
+  }
+
+  String _attachmentTypeFor(File file) {
+    if (_filePickerService.isImageFile(file)) return 'imageMessage';
+    if (_filePickerService.isVideoFile(file)) return 'videoMessage';
+    final extension = _filePickerService.getFileExtension(file);
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].contains(extension)) {
+      return 'audioMessage';
+    }
+    return 'documentMessage';
   }
 
   bool _validateAttachment(File file) {
@@ -383,9 +445,14 @@ class ChatController extends GetxController {
   }
 
   Future<void> selectDeal(Deal deal, {bool silentLoading = false}) async {
-    if (selectedDeal?.id == deal.id && messages.isNotEmpty) return;
+    if (selectedDeal?.id == deal.id && messages.isNotEmpty) {
+      _markDealAsRead(deal.id);
+      update();
+      return;
+    }
 
     selectedDeal = deal;
+    _markDealAsRead(deal.id);
     final cachedMessages = _messagesCache[deal.id];
     if (cachedMessages != null) {
       messages = cachedMessages;
@@ -511,7 +578,11 @@ class ChatController extends GetxController {
   Future<void> sendCurrentMessage() async {
     final deal = selectedDeal;
     final text = messageController.text.trim();
-    final hasAttachment = selectedAttachment != null;
+    if (editingMessage != null) {
+      await _updateCurrentMessage(text);
+      return;
+    }
+    final hasAttachment = selectedAttachments.isNotEmpty;
     if (deal == null || (!hasAttachment && text.isEmpty) || isSendingMessage) {
       return;
     }
@@ -528,20 +599,101 @@ class ChatController extends GetxController {
     isSendingMessage = true;
     update();
 
-    var result = await sendMessageUseCase(
-      SendMessageParams(
+    final attachmentsToSend = List<File>.from(selectedAttachments);
+    final sentMessages = <DealMessage>[];
+
+    if (attachmentsToSend.isEmpty) {
+      final result = await _sendMessageWithOptionalRetry(
         dealId: deal.id,
         messageBody: text.isEmpty ? null : text,
+        messageType: 'conversation',
+        mediaPath: null,
+      );
+      result.fold(
+        (failure) {
+          isSendingMessage = false;
+          update();
+          AppMessages.showSnackBar(
+            type: ErrorType.error,
+            title: 'error'.tr,
+            message: failure.message ?? 'failed_to_send_message'.tr,
+          );
+        },
+        (message) {
+          messageController.clear();
+          clearAttachment();
+          messages = _sortedUniqueMessages([...messages, message]);
+          _updateSelectedDealLastMessage(message);
+          if (selectedDeal != null) {
+            _messagesCache[selectedDeal!.id] = messages;
+          }
+          isSendingMessage = false;
+          update();
+          _scrollToBottom();
+        },
+      );
+      return;
+    }
+
+    for (var i = 0; i < attachmentsToSend.length; i++) {
+      final file = attachmentsToSend[i];
+      final messageBody = i == 0 && text.isNotEmpty ? text : null;
+      final result = await _sendMessageWithOptionalRetry(
+        dealId: deal.id,
+        messageBody: messageBody,
+        messageType: _attachmentTypeFor(file),
+        mediaPath: file.path,
+      );
+      final failed = result.fold((failure) => failure, (_) => null);
+      if (failed != null) {
+        isSendingMessage = false;
+        update();
+        AppMessages.showSnackBar(
+          type: ErrorType.error,
+          title: 'error'.tr,
+          message: failed.message ?? 'failed_to_send_message'.tr,
+        );
+        return;
+      }
+      final sent = result.fold<DealMessage?>((_) => null, (message) => message);
+      if (sent != null) {
+        sentMessages.add(sent);
+      }
+    }
+
+    messageController.clear();
+    clearAttachment();
+    if (sentMessages.isNotEmpty) {
+      messages = _sortedUniqueMessages([...messages, ...sentMessages]);
+      _updateSelectedDealLastMessage(sentMessages.last);
+      if (selectedDeal != null) {
+        _messagesCache[selectedDeal!.id] = messages;
+      }
+    }
+    isSendingMessage = false;
+    update();
+    _scrollToBottom();
+  }
+
+  Future<Either<Failure, DealMessage>> _sendMessageWithOptionalRetry({
+    required int dealId,
+    required String? messageBody,
+    required String? messageType,
+    required String? mediaPath,
+  }) async {
+    var result = await sendMessageUseCase(
+      SendMessageParams(
+        dealId: dealId,
+        messageBody: messageBody,
         // Backend accepts:
         // conversation,imageMessage,videoMessage,audioMessage,documentMessage,
         // stickerMessage,locationMessage,pollMessage
-        messageType: selectedAttachmentType ?? 'conversation',
+        messageType: messageType,
         fromMe: true,
-        mediaPath: selectedAttachment?.path,
+        mediaPath: mediaPath,
       ),
     );
 
-    // Some backends reject custom message_type values.
     final shouldRetryWithoutType = result.fold((failure) {
       final msg = (failure.message ?? '').toLowerCase();
       return msg.contains('نوع الرسالة غير صالح') ||
@@ -552,36 +704,99 @@ class ChatController extends GetxController {
     if (shouldRetryWithoutType) {
       result = await sendMessageUseCase(
         SendMessageParams(
-          dealId: deal.id,
-          messageBody: text.isEmpty ? null : text,
+          dealId: dealId,
+          messageBody: messageBody,
           messageType: null,
           fromMe: true,
-          mediaPath: selectedAttachment?.path,
+          mediaPath: mediaPath,
         ),
       );
     }
+    return result;
+  }
+
+  void startEditingMessage(DealMessage message) {
+    if (!message.fromMe) return;
+    editingMessage = message;
+    messageController.text = message.messageBody ?? '';
+    messageController.selection = TextSelection.fromPosition(
+      TextPosition(offset: messageController.text.length),
+    );
+    hideEmojiPicker();
+    clearAttachment();
+    update();
+  }
+
+  void cancelEditingMessage() {
+    editingMessage = null;
+    messageController.clear();
+    update();
+  }
+
+  Future<void> _updateCurrentMessage(String text) async {
+    final message = editingMessage;
+    if (message == null || isUpdatingMessage) return;
+    if (text.isEmpty) {
+      AppMessages.showSnackBar(
+        type: ErrorType.warning,
+        title: 'info'.tr,
+        message: 'message_text_required'.tr,
+      );
+      return;
+    }
+
+    isUpdatingMessage = true;
+    update();
+
+    final result = await updateMessageUseCase(
+      UpdateMessageParams(messageId: message.id, messageBody: text),
+    );
 
     result.fold(
       (failure) {
-        isSendingMessage = false;
+        isUpdatingMessage = false;
         update();
         AppMessages.showSnackBar(
           type: ErrorType.error,
           title: 'error'.tr,
-          message: failure.message ?? 'failed_to_send_message'.tr,
+          message: failure.message ?? 'failed_to_update_message'.tr,
         );
       },
-      (message) {
+      (updatedMessage) {
+        _replaceMessageInState(updatedMessage);
+        editingMessage = null;
         messageController.clear();
-        clearAttachment();
-        messages = _sortedUniqueMessages([...messages, message]);
-        _updateSelectedDealLastMessage(message);
-        if (selectedDeal != null) {
-          _messagesCache[selectedDeal!.id] = messages;
-        }
-        isSendingMessage = false;
+        isUpdatingMessage = false;
         update();
-        _scrollToBottom();
+      },
+    );
+  }
+
+  Future<void> deleteMessage(DealMessage message) async {
+    if (deletingMessageId != null || !message.fromMe) return;
+    deletingMessageId = message.id;
+    update();
+    final result = await deleteMessageUseCase(
+      DeleteMessageParams(messageId: message.id),
+    );
+    result.fold(
+      (failure) {
+        deletingMessageId = null;
+        update();
+        AppMessages.showSnackBar(
+          type: ErrorType.error,
+          title: 'error'.tr,
+          message: failure.message ?? 'failed_to_delete_message'.tr,
+        );
+      },
+      (_) {
+        if (editingMessage?.id == message.id) {
+          editingMessage = null;
+          messageController.clear();
+        }
+        _removeMessageFromState(message);
+        deletingMessageId = null;
+        update();
       },
     );
   }
@@ -654,8 +869,17 @@ class ChatController extends GetxController {
       final dealId = (dealData['id'] as num?)?.toInt();
       if (dealId == null) return;
 
-      _upsertDealWithMessage(dealData: dealData, messageData: messageData);
+      final upserted = _upsertDealWithMessage(
+        dealData: dealData,
+        messageData: messageData,
+      );
       _playIncomingNotificationIfNeeded(messageData, fromMe: fromMe);
+      if (!upserted) {
+        unawaited(loadDeals(refresh: true));
+      }
+      if (!fromMe && selectedDeal?.id != dealId) {
+        _incrementUnreadForDeal(dealId);
+      }
 
       // Add incoming websocket message directly for selected chat.
       if (selectedDeal?.id == dealId && !fromMe) {
@@ -677,6 +901,8 @@ class ChatController extends GetxController {
 
       final dealId = (dealData['id'] as num?)?.toInt();
       if (dealId == null) return;
+      final actionType = (data['action_type'] as String?)?.toLowerCase();
+      final wasKnownDeal = allDeals.any((deal) => deal.id == dealId);
 
       final newStatus = dealData['status'] as String?;
       if (newStatus != null && newStatus != 'open') {
@@ -685,32 +911,51 @@ class ChatController extends GetxController {
           selectedDeal = null;
           messages = const [];
         }
+        _unreadCountByDealId.remove(dealId);
+        _newDealIds.remove(dealId);
         update();
         return;
       }
 
       final messageData = data['message'] as Map<String, dynamic>?;
-      _upsertDealWithMessage(dealData: dealData, messageData: messageData);
+      final upserted = _upsertDealWithMessage(
+        dealData: dealData,
+        messageData: messageData,
+      );
       _playIncomingNotificationIfNeeded(messageData, fromMe: false);
 
       if (selectedDeal?.id == dealId && messageData != null) {
         final message = _messageFromReverbPayload(messageData, selectedDeal!);
         messages = _sortedUniqueMessages([...messages, message]);
         _messagesCache[dealId] = messages;
+        _markDealAsRead(dealId);
         update();
         _scrollToBottom();
+      }
+
+      if (actionType == 'new' && !wasKnownDeal) {
+        _newDealIds.add(dealId);
+        if (!upserted) {
+          unawaited(loadDeals(refresh: true));
+        }
+        AppMessages.showSnackBar(
+          type: ErrorType.info,
+          title: 'CRM',
+          message: 'new_deal_received'.tr,
+        );
+        _playNotificationSound();
       }
     } catch (e) {
       if (kDebugMode) print('❌ Error handling deal.history.updated: $e');
     }
   }
 
-  void _upsertDealWithMessage({
+  bool _upsertDealWithMessage({
     required Map<String, dynamic> dealData,
     Map<String, dynamic>? messageData,
   }) {
     final dealId = (dealData['id'] as num?)?.toInt();
-    if (dealId == null) return;
+    if (dealId == null) return false;
 
     final existingIndex = allDeals.indexWhere((deal) => deal.id == dealId);
     Deal? baseDeal;
@@ -718,15 +963,15 @@ class ChatController extends GetxController {
     if (existingIndex >= 0) {
       baseDeal = allDeals[existingIndex];
     } else {
-      if (!DealModel.canParseFromJson(dealData)) return;
+      if (!DealModel.canParseFromJson(dealData)) return false;
       try {
         baseDeal = DealModel.fromJson(dealData);
       } catch (_) {
-        return;
+        return false;
       }
     }
 
-    if (!baseDeal.isOpen || baseDeal.status != 'open') return;
+    if (!baseDeal.isOpen || baseDeal.status != 'open') return false;
 
     final lastMessage = messageData != null
         ? DealLastMessageModel.fromReverbPayload(
@@ -755,11 +1000,14 @@ class ChatController extends GetxController {
     _sortDealsByLatestMessage();
     _applySearch();
     update();
+    return true;
   }
 
   void _removeDealById(int dealId) {
     allDeals = allDeals.where((deal) => deal.id != dealId).toList();
     filteredDeals = filteredDeals.where((deal) => deal.id != dealId).toList();
+    _unreadCountByDealId.remove(dealId);
+    _newDealIds.remove(dealId);
   }
 
   DealMessage _messageFromReverbPayload(
@@ -869,14 +1117,57 @@ class ChatController extends GetxController {
     }
   }
 
+  void _replaceMessageInState(DealMessage updatedMessage) {
+    final next = List<DealMessage>.from(messages);
+    final idx = next.indexWhere((m) => m.id == updatedMessage.id);
+    if (idx >= 0) {
+      next[idx] = updatedMessage;
+      messages = _sortedUniqueMessages(next);
+      if (selectedDeal != null) {
+        _messagesCache[selectedDeal!.id] = messages;
+      }
+      _refreshSelectedDealLastMessageFromMessages();
+    }
+  }
+
+  void _removeMessageFromState(DealMessage message) {
+    messages = messages.where((m) => m.id != message.id).toList();
+    if (selectedDeal != null) {
+      _messagesCache[selectedDeal!.id] = messages;
+    }
+    _refreshSelectedDealLastMessageFromMessages();
+  }
+
+  void _refreshSelectedDealLastMessageFromMessages() {
+    final currentSelected = selectedDeal;
+    if (currentSelected == null) return;
+    if (messages.isEmpty) return;
+    final latest = messages.last;
+    _updateSelectedDealLastMessage(latest);
+  }
+
   void _sortDealsByLatestMessage() {
     final sorted = List<Deal>.from(allDeals)
       ..sort((a, b) {
-        final aTs = a.lastMessage?.messageTimestamp ?? 0;
-        final bTs = b.lastMessage?.messageTimestamp ?? 0;
+        final aTs = _dealOrderingTimestamp(a);
+        final bTs = _dealOrderingTimestamp(b);
         return bTs.compareTo(aTs);
       });
     allDeals = sorted;
+  }
+
+  int _dealOrderingTimestamp(Deal deal) {
+    return deal.lastMessage?.messageTimestamp ??
+        deal.createdAt.millisecondsSinceEpoch ~/ 1000;
+  }
+
+  void _incrementUnreadForDeal(int dealId) {
+    _unreadCountByDealId[dealId] = unreadCountForDeal(dealId) + 1;
+  }
+
+  void _markDealAsRead(int dealId) {
+    _unreadCountByDealId.remove(dealId);
+    _newDealIds.remove(dealId);
   }
 
   void _playIncomingNotificationIfNeeded(

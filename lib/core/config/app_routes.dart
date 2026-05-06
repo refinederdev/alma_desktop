@@ -26,7 +26,9 @@ import 'package:alma_desktop/features/main/domain/usecases/get_attendance_status
 import 'package:alma_desktop/features/main/domain/usecases/get_lost_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_open_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/assign_deal_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/delete_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/update_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_deal_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
 import 'package:alma_desktop/core/services/app_update_service.dart';
@@ -85,7 +87,8 @@ class AppRoutes {
             getTodayTotalUseCase: Get.find<GetTodayTotalUseCase>(),
             getWeekTotalUseCase: Get.find<GetWeekTotalUseCase>(),
             getWeeklyStatsUseCase: Get.find<GetWeeklyStatsUseCase>(),
-            getMessagesLineChartUseCase: Get.find<GetMessagesLineChartUseCase>(),
+            getMessagesLineChartUseCase:
+                Get.find<GetMessagesLineChartUseCase>(),
           ),
           fenix: true,
         );
@@ -107,6 +110,8 @@ class AppRoutes {
             getLostDealsUseCase: Get.find<GetLostDealsUseCase>(),
             getDealMessagesUseCase: Get.find<GetDealMessagesUseCase>(),
             sendMessageUseCase: Get.find<SendMessageUseCase>(),
+            updateMessageUseCase: Get.find<UpdateMessageUseCase>(),
+            deleteMessageUseCase: Get.find<DeleteMessageUseCase>(),
           ),
           fenix: true,
         );
@@ -117,9 +122,7 @@ class AppRoutes {
           fenix: true,
         );
         Get.lazyPut(
-          () => UpdateController(
-            updateService: AppUpdateService(),
-          ),
+          () => UpdateController(updateService: AppUpdateService()),
           fenix: true,
         );
       }),

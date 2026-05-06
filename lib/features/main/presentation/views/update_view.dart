@@ -45,7 +45,7 @@ class UpdateView extends GetView<UpdateController> {
                   else ...[
                     _InfoRow(
                       label: 'current_version'.tr,
-                      value: info?.currentVersion ?? '--',
+                      value: info?.currentVersion ?? c.currentVersion,
                     ),
                     SizedBox(height: 8.h),
                     _InfoRow(

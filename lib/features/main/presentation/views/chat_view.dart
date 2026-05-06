@@ -1,15 +1,24 @@
+import 'dart:io';
+
 import 'package:alma_desktop/core/theme/app_styles.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/whatsapp_formatted_text.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
+import 'package:alma_desktop/core/errors/app_messages.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
+import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/chat_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/crm_kanban_controller.dart';
+import 'package:dio/dio.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatView extends GetView<ChatController> {
   const ChatView({super.key});
@@ -43,6 +52,7 @@ class _ChatDealsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSuperAdmin = _isSuperAdminUser();
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.baseWhite,
@@ -131,8 +141,10 @@ class _ChatDealsPanel extends StatelessWidget {
                       return false;
                     },
                     child: ListView.separated(
-                      itemCount: controller.filteredDeals.length +
-                          ((controller.hasMoreDeals || controller.isLoadingMoreDeals)
+                      itemCount:
+                          controller.filteredDeals.length +
+                          ((controller.hasMoreDeals ||
+                                  controller.isLoadingMoreDeals)
                               ? 1
                               : 0),
                       separatorBuilder: (_, _) =>
@@ -143,7 +155,9 @@ class _ChatDealsPanel extends StatelessWidget {
                             return Padding(
                               padding: EdgeInsets.symmetric(vertical: 10.h),
                               child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             );
                           }
@@ -151,9 +165,12 @@ class _ChatDealsPanel extends StatelessWidget {
                         }
 
                         final deal = controller.filteredDeals[index];
-                        final isSelected = controller.selectedDeal?.id == deal.id;
+                        final isSelected =
+                            controller.selectedDeal?.id == deal.id;
                         return _DealTile(
+                          controller: controller,
                           deal: deal,
+                          showAssignedAgent: isSuperAdmin,
                           isSelected: isSelected,
                           onTap: () => controller.selectDeal(deal),
                         );
@@ -169,12 +186,16 @@ class _ChatDealsPanel extends StatelessWidget {
 
 class _DealTile extends StatelessWidget {
   const _DealTile({
+    required this.controller,
     required this.deal,
+    required this.showAssignedAgent,
     required this.isSelected,
     required this.onTap,
   });
 
+  final ChatController controller;
   final Deal deal;
+  final bool showAssignedAgent;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -185,6 +206,11 @@ class _DealTile extends StatelessWidget {
     final messageTime = trailing > 0
         ? DateTime.fromMillisecondsSinceEpoch(trailing * 1000)
         : null;
+    final hasUnread = controller.hasUnreadForDeal(deal.id);
+    final unreadCount = controller.unreadCountForDeal(deal.id);
+    final waitingReply = (deal.lastMessage?.fromMe ?? true) == false;
+    final isNewDeal = controller.isNewDeal(deal.id);
+    final assignedAgentName = _assignedAgentName(deal);
 
     return Material(
       color: Colors.transparent,
@@ -216,8 +242,8 @@ class _DealTile extends StatelessWidget {
                     Text(
                       _safeText(
                         deal.contactName?.trim().isNotEmpty == true
-                          ? deal.contactName!
-                          : (deal.contactPhone ?? '—'),
+                            ? deal.contactName!
+                            : (deal.contactPhone ?? '—'),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -226,18 +252,58 @@ class _DealTile extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    if (showAssignedAgent && assignedAgentName != null) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        '${'agent'.tr}: ${_safeText(assignedAgentName)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppStyles.labelSmall.copyWith(
+                          color: AppTheme.gray400,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 2.h),
                     Text(
                       _safeText(
                         lastMessage?.trim().isNotEmpty == true
-                          ? lastMessage!
-                          : (deal.title ?? ''),
+                            ? lastMessage!
+                            : (deal.title ?? ''),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppStyles.bodySmall.copyWith(
-                        color: AppTheme.gray300,
+                        color: hasUnread ? AppTheme.gray700 : AppTheme.gray300,
+                        fontWeight: hasUnread
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                       ),
+                    ),
+                    SizedBox(height: 5.h),
+                    Wrap(
+                      spacing: 6.w,
+                      runSpacing: 6.h,
+                      children: [
+                        if (isNewDeal)
+                          _DealInfoBadge(
+                            label: 'new_deal_badge'.tr,
+                            backgroundColor: AppTheme.error100,
+                            foregroundColor: AppTheme.error700,
+                          ),
+                        if (waitingReply)
+                          _DealInfoBadge(
+                            label: 'waiting_for_reply_badge'.tr,
+                            backgroundColor: AppTheme.error100,
+                            foregroundColor: AppTheme.error700,
+                          ),
+                        if (hasUnread)
+                          _DealInfoBadge(
+                            label: unreadCount > 9 ? '9+' : '$unreadCount',
+                            backgroundColor: AppTheme.error100,
+                            foregroundColor: AppTheme.error700,
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -360,6 +426,36 @@ class _DealStatusBadge extends StatelessWidget {
   }
 }
 
+class _DealInfoBadge extends StatelessWidget {
+  const _DealInfoBadge({
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999.r),
+      ),
+      child: Text(
+        label,
+        style: AppStyles.labelSmall.copyWith(
+          color: foregroundColor,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 class _ChatMessagesPanel extends StatelessWidget {
   const _ChatMessagesPanel({required this.controller});
 
@@ -406,6 +502,11 @@ class _ChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSuperAdmin = _isSuperAdminUser();
+    final assignedAgentName = _assignedAgentName(deal);
+    final secondaryText = isSuperAdmin
+        ? (assignedAgentName ?? '-')
+        : (deal.contactPhone ?? '');
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Row(
@@ -426,8 +527,8 @@ class _ChatHeader extends StatelessWidget {
                 Text(
                   _sanitizeInvalidUtf16(
                     deal.contactName?.trim().isNotEmpty == true
-                      ? deal.contactName!
-                      : (deal.contactPhone ?? '-'),
+                        ? deal.contactName!
+                        : (deal.contactPhone ?? '-'),
                   ),
                   style: AppStyles.titleMedium.copyWith(
                     color: AppTheme.gray800,
@@ -436,7 +537,9 @@ class _ChatHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  _sanitizeInvalidUtf16(deal.contactPhone ?? ''),
+                  isSuperAdmin
+                      ? '${'agent'.tr}: ${_sanitizeInvalidUtf16(secondaryText)}'
+                      : _sanitizeInvalidUtf16(secondaryText),
                   style: AppStyles.bodySmall.copyWith(color: AppTheme.gray300),
                 ),
               ],
@@ -458,6 +561,27 @@ class _ChatHeader extends StatelessWidget {
             position: PopupMenuPosition.under,
             tooltip: 'action'.tr,
             itemBuilder: (context) => [
+              if (deal.contactPhone?.trim().isNotEmpty == true)
+                PopupMenuItem<_ChatHeaderDealAction>(
+                  value: _ChatHeaderDealAction.copyClientPhone,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.copy_rounded,
+                        color: AppTheme.gray500,
+                        size: 18.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'copy_client_phone'.tr,
+                        style: AppStyles.labelLarge.copyWith(
+                          color: AppTheme.gray700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               PopupMenuItem<_ChatHeaderDealAction>(
                 value: _ChatHeaderDealAction.editDeal,
                 child: Row(
@@ -502,6 +626,17 @@ class _ChatHeader extends StatelessWidget {
             onSelected: (action) async {
               final crmController = Get.find<CrmKanbanController>();
               switch (action) {
+                case _ChatHeaderDealAction.copyClientPhone:
+                  final phone = deal.contactPhone?.trim();
+                  if (phone != null && phone.isNotEmpty) {
+                    await Clipboard.setData(ClipboardData(text: phone));
+                    AppMessages.showSnackBar(
+                      type: ErrorType.success,
+                      title: 'done'.tr,
+                      message: 'client_phone_copied'.tr,
+                    );
+                  }
+                  break;
                 case _ChatHeaderDealAction.editDeal:
                   await crmController.showEditDealDialog(deal);
                   break;
@@ -509,7 +644,9 @@ class _ChatHeader extends StatelessWidget {
                   await crmController.showTransferDealDialog(deal);
                   break;
               }
-              await controller.refreshAll();
+              if (action != _ChatHeaderDealAction.copyClientPhone) {
+                await controller.refreshAll();
+              }
             },
           ),
           SizedBox(width: 6.w),
@@ -520,7 +657,7 @@ class _ChatHeader extends StatelessWidget {
   }
 }
 
-enum _ChatHeaderDealAction { editDeal, transferDeal }
+enum _ChatHeaderDealAction { copyClientPhone, editDeal, transferDeal }
 
 class _MessagesList extends StatelessWidget {
   const _MessagesList({required this.controller});
@@ -568,16 +705,17 @@ class _MessagesList extends StatelessWidget {
         }
 
         final message = controller.messages[i - 1];
-        return _MessageBubble(message: message);
+        return _MessageBubble(message: message, controller: controller);
       },
     );
   }
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message});
+  const _MessageBubble({required this.message, required this.controller});
 
   final DealMessage message;
+  final ChatController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -593,6 +731,7 @@ class _MessageBubble extends StatelessWidget {
     final hh = time.hour.toString().padLeft(2, '0');
     final mm = time.minute.toString().padLeft(2, '0');
 
+    final canManageMessage = isMe;
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -611,6 +750,89 @@ class _MessageBubble extends StatelessWidget {
               ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           children: [
+            if (canManageMessage)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PopupMenuButton<_MessageAction>(
+                    tooltip: 'message_actions'.tr,
+                    icon: Icon(
+                      Icons.more_horiz_rounded,
+                      size: 18.sp,
+                      color: isMe
+                          ? AppTheme.baseWhite.withValues(alpha: 0.85)
+                          : AppTheme.gray400,
+                    ),
+                    color: AppTheme.baseWhite,
+                    onSelected: (action) async {
+                      switch (action) {
+                        case _MessageAction.edit:
+                          controller.startEditingMessage(message);
+                          break;
+                        case _MessageAction.delete:
+                          final confirmed = await Get.dialog<bool>(
+                            AlertDialog(
+                              title: Text('delete_message'.tr),
+                              content: Text('confirm_delete_message'.tr),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Get.back(result: false),
+                                  child: Text('cancel'.tr),
+                                ),
+                                TextButton(
+                                  onPressed: () => Get.back(result: true),
+                                  child: Text(
+                                    'delete'.tr,
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            await controller.deleteMessage(message);
+                          }
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem<_MessageAction>(
+                        value: _MessageAction.edit,
+                        enabled:
+                            (message.messageBody?.trim().isNotEmpty ?? false) &&
+                            controller.deletingMessageId != message.id,
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 18.sp),
+                            SizedBox(width: 8.w),
+                            Text('edit'.tr),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<_MessageAction>(
+                        value: _MessageAction.delete,
+                        enabled: controller.deletingMessageId != message.id,
+                        child: Row(
+                          children: [
+                            if (controller.deletingMessageId == message.id)
+                              SizedBox(
+                                width: 16.w,
+                                height: 16.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            else
+                              Icon(Icons.delete_outline, size: 18.sp),
+                            SizedBox(width: 8.w),
+                            Text('delete'.tr),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             if (hasMedia) ...[
               _MediaPreview(
                 mediaUrl: message.mediaUrl!,
@@ -653,6 +875,28 @@ class _MediaPreview extends StatelessWidget {
   final String? mediaType;
   final bool fromMe;
 
+  bool get _isAudio {
+    final type = (mediaType ?? '').toLowerCase();
+    final url = mediaUrl.toLowerCase();
+    return type.contains('audio') ||
+        url.contains('.ogg') ||
+        url.contains('.opus') ||
+        url.contains('.mp3') ||
+        url.contains('.wav') ||
+        url.contains('.m4a');
+  }
+
+  bool get _isVideo {
+    final type = (mediaType ?? '').toLowerCase();
+    final url = mediaUrl.toLowerCase();
+    return type.contains('video') ||
+        url.contains('.mp4') ||
+        url.contains('.mov') ||
+        url.contains('.avi') ||
+        url.contains('.mkv') ||
+        url.contains('.webm');
+  }
+
   bool get _isImage {
     final type = (mediaType ?? '').toLowerCase();
     return type.contains('image') ||
@@ -665,6 +909,10 @@ class _MediaPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedUrl = _resolveUrl(mediaUrl);
+    if (_isAudio) {
+      return _AudioPreview(mediaUrl: resolvedUrl, fromMe: fromMe);
+    }
+
     if (_isImage) {
       return GestureDetector(
         onTap: () {
@@ -685,53 +933,80 @@ class _MediaPreview extends StatelessWidget {
             ),
           );
         },
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10.r),
-          child: Image.network(
-            resolvedUrl,
-            width: 260.w,
-            height: 180.h,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
-              width: 260.w,
-              height: 110.h,
-              color: AppTheme.gray50,
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.broken_image_rounded,
-                color: AppTheme.gray300,
-                size: 28.sp,
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: Image.network(
+                resolvedUrl,
+                width: 260.w,
+                height: 180.h,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  width: 260.w,
+                  height: 110.h,
+                  color: AppTheme.gray50,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.broken_image_rounded,
+                    color: AppTheme.gray300,
+                    size: 28.sp,
+                  ),
+                ),
               ),
             ),
-          ),
+            Positioned(
+              top: 6.h,
+              right: 6.w,
+              child: _MediaDownloadButton(
+                url: resolvedUrl,
+                mediaType: mediaType,
+                fromMe: fromMe,
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: fromMe
-            ? AppTheme.baseWhite.withValues(alpha: 0.15)
-            : AppTheme.gray50,
-        borderRadius: BorderRadius.circular(10.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.attach_file_rounded,
-            size: 18.sp,
-            color: fromMe ? AppTheme.baseWhite : AppTheme.gray500,
-          ),
-          SizedBox(width: 6.w),
-          Text(
-            'Media attachment',
-            style: AppStyles.labelMedium.copyWith(
-              color: fromMe ? AppTheme.baseWhite : AppTheme.gray600,
+    return InkWell(
+      onTap: () => _openMedia(resolvedUrl),
+      borderRadius: BorderRadius.circular(10.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: fromMe
+              ? AppTheme.baseWhite.withValues(alpha: 0.15)
+              : AppTheme.gray50,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _isVideo
+                  ? Icons.movie_creation_outlined
+                  : Icons.description_outlined,
+              size: 18.sp,
+              color: fromMe ? AppTheme.baseWhite : AppTheme.gray500,
             ),
-          ),
-        ],
+            SizedBox(width: 6.w),
+            Text(
+              _isVideo
+                  ? 'Video attachment - tap to open'
+                  : 'Document attachment - tap to open',
+              style: AppStyles.labelMedium.copyWith(
+                color: fromMe ? AppTheme.baseWhite : AppTheme.gray600,
+              ),
+            ),
+            SizedBox(width: 8.w),
+            _MediaDownloadButton(
+              url: resolvedUrl,
+              mediaType: mediaType,
+              fromMe: fromMe,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -744,6 +1019,431 @@ class _MediaPreview extends StatelessWidget {
     }
     return '$base/$url';
   }
+
+  Future<void> _openMedia(String resolvedUrl) async {
+    final uri = Uri.tryParse(resolvedUrl);
+    if (uri == null) {
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'Invalid media URL.',
+      );
+      return;
+    }
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched) {
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'Could not open this attachment.',
+      );
+    }
+  }
+}
+
+class _AudioPreview extends StatefulWidget {
+  const _AudioPreview({required this.mediaUrl, required this.fromMe});
+
+  final String mediaUrl;
+  final bool fromMe;
+
+  @override
+  State<_AudioPreview> createState() => _AudioPreviewState();
+}
+
+class _AudioPreviewState extends State<_AudioPreview> {
+  final AudioPlayer _player = AudioPlayer();
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+  bool _isPlaying = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onDurationChanged.listen((duration) {
+      if (!mounted) return;
+      setState(() {
+        _duration = duration;
+      });
+    });
+    _player.onPositionChanged.listen((position) {
+      if (!mounted) return;
+      setState(() {
+        _position = position;
+      });
+    });
+    _player.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = false;
+        _position = Duration.zero;
+      });
+    });
+    _player.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = state == PlayerState.playing;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = widget.fromMe ? AppTheme.baseWhite : AppTheme.gray600;
+    final background = widget.fromMe
+        ? AppTheme.baseWhite.withValues(alpha: 0.15)
+        : AppTheme.gray50;
+    final progressMax = _duration.inMilliseconds > 0
+        ? _duration.inMilliseconds.toDouble()
+        : 1.0;
+    final progressValue = _position.inMilliseconds
+        .clamp(0, progressMax.toInt())
+        .toDouble();
+
+    return Container(
+      width: 280.w,
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(999.r),
+            onTap: _isLoading ? null : _togglePlayback,
+            child: Container(
+              width: 34.w,
+              height: 34.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.fromMe
+                    ? AppTheme.baseWhite.withValues(alpha: 0.2)
+                    : AppTheme.brandMain2_100,
+              ),
+              alignment: Alignment.center,
+              child: _isLoading
+                  ? SizedBox(
+                      width: 14.w,
+                      height: 14.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: foreground,
+                      ),
+                    )
+                  : Icon(
+                      _isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      size: 20.sp,
+                      color: widget.fromMe
+                          ? AppTheme.baseWhite
+                          : AppTheme.brandMain2_600,
+                    ),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 2.4,
+                    thumbShape: RoundSliderThumbShape(enabledThumbRadius: 5.r),
+                    overlayShape: SliderComponentShape.noOverlay,
+                    activeTrackColor: widget.fromMe
+                        ? AppTheme.baseWhite
+                        : AppTheme.brandMain2_600,
+                    inactiveTrackColor: foreground.withValues(alpha: 0.25),
+                    thumbColor: widget.fromMe
+                        ? AppTheme.baseWhite
+                        : AppTheme.brandMain2_600,
+                  ),
+                  child: Slider(
+                    min: 0,
+                    max: progressMax,
+                    value: progressValue,
+                    onChanged: (value) async {
+                      final target = Duration(milliseconds: value.toInt());
+                      await _player.seek(target);
+                    },
+                  ),
+                ),
+                Text(
+                  '${_formatDuration(_position)} / ${_formatDuration(_duration)}',
+                  style: AppStyles.labelSmall.copyWith(color: foreground),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 6.w),
+          _MediaDownloadButton(
+            url: widget.mediaUrl,
+            mediaType: 'audio',
+            fromMe: widget.fromMe,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _togglePlayback() async {
+    if (_isPlaying) {
+      await _player.pause();
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _player.play(UrlSource(widget.mediaUrl));
+    } catch (_) {
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'Could not play this audio message.',
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    final totalSeconds = duration.inSeconds;
+    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+}
+
+class _MediaDownloadButton extends StatefulWidget {
+  const _MediaDownloadButton({
+    required this.url,
+    required this.mediaType,
+    required this.fromMe,
+  });
+
+  final String url;
+  final String? mediaType;
+  final bool fromMe;
+
+  @override
+  State<_MediaDownloadButton> createState() => _MediaDownloadButtonState();
+}
+
+class _MediaDownloadButtonState extends State<_MediaDownloadButton> {
+  bool _isDownloading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'تحميل',
+      visualDensity: VisualDensity.compact,
+      onPressed: _isDownloading ? null : _download,
+      icon: _isDownloading
+          ? SizedBox(
+              width: 14.w,
+              height: 14.w,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: widget.fromMe ? AppTheme.baseWhite : AppTheme.gray600,
+              ),
+            )
+          : Icon(
+              Icons.download_rounded,
+              size: 18.sp,
+              color: widget.fromMe ? AppTheme.baseWhite : AppTheme.gray600,
+            ),
+    );
+  }
+
+  Future<void> _download() async {
+    setState(() => _isDownloading = true);
+    try {
+      final savedPath = await _downloadMediaFile(
+        url: widget.url,
+        mediaType: widget.mediaType,
+      );
+      AppMessages.showSnackBar(
+        type: ErrorType.success,
+        title: 'done'.tr,
+        message: 'تم تنزيل الملف بنجاح: $savedPath',
+      );
+    } catch (e) {
+      final message = e.toString().replaceFirst('Exception: ', '');
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'فشل تنزيل الملف: $message',
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() => _isDownloading = false);
+    }
+  }
+}
+
+Future<String> _downloadMediaFile({
+  required String url,
+  String? mediaType,
+}) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) {
+    throw Exception('Invalid URL');
+  }
+
+  final downloadsDir = await _resolveDownloadsDirectory();
+  final fileName = _buildDownloadFileName(uri: uri, mediaType: mediaType);
+  final savePath = '${downloadsDir.path}${Platform.pathSeparator}$fileName';
+
+  final token = GlobalController.to.token;
+  final dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(minutes: 2),
+      followRedirects: true,
+      maxRedirects: 5,
+      headers: {
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        'Accept': '*/*',
+      },
+    ),
+  );
+
+  try {
+    await dio.download(
+      url,
+      savePath,
+      options: Options(
+        responseType: ResponseType.bytes,
+        receiveDataWhenStatusError: true,
+      ),
+    );
+  } on DioException catch (e) {
+    final status = e.response?.statusCode;
+    final body = e.response?.data?.toString();
+    if (status == 401 || status == 403) {
+      throw Exception('غير مصرح بتحميل الملف ($status).');
+    }
+    if (status != null) {
+      throw Exception(
+        'فشل التحميل برمز HTTP $status${body != null ? ': $body' : ''}',
+      );
+    }
+    throw Exception(e.message ?? 'حدث خطأ غير معروف أثناء التحميل.');
+  }
+
+  return savePath;
+}
+
+Future<Directory> _resolveDownloadsDirectory() async {
+  final candidates = <Directory>[];
+
+  if (Platform.isMacOS) {
+    final macUserDownloads = await _macosRealUserDownloadsDirectory();
+    if (macUserDownloads != null) {
+      candidates.add(macUserDownloads);
+    }
+  }
+
+  if (Platform.isLinux) {
+    final home = Platform.environment['HOME'];
+    if (home != null && home.isNotEmpty) {
+      candidates.add(Directory('$home${Platform.pathSeparator}Downloads'));
+    }
+  }
+
+  if (Platform.isWindows) {
+    final profile = Platform.environment['USERPROFILE'];
+    if (profile != null && profile.isNotEmpty) {
+      candidates.add(Directory('$profile${Platform.pathSeparator}Downloads'));
+    }
+  }
+
+  try {
+    final downloads = await getDownloadsDirectory();
+    if (downloads != null) {
+      candidates.add(downloads);
+    }
+  } catch (_) {}
+
+  try {
+    candidates.add(await getApplicationDocumentsDirectory());
+  } catch (_) {}
+
+  try {
+    candidates.add(await getTemporaryDirectory());
+  } catch (_) {}
+
+  for (final dir in candidates) {
+    if (await _ensureWritableDirectory(dir)) {
+      return dir;
+    }
+  }
+
+  return Directory.systemTemp;
+}
+
+Future<Directory?> _macosRealUserDownloadsDirectory() async {
+  try {
+    final result = await Process.run('whoami', const <String>[]);
+    final username = (result.stdout as String).trim();
+    if (username.isEmpty) return null;
+    return Directory('/Users/$username/Downloads');
+  } catch (_) {
+    return null;
+  }
+}
+
+Future<bool> _ensureWritableDirectory(Directory dir) async {
+  try {
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+
+    final probe = File(
+      '${dir.path}${Platform.pathSeparator}.alma_write_probe_${DateTime.now().microsecondsSinceEpoch}',
+    );
+    await probe.writeAsString('ok', flush: true);
+    if (probe.existsSync()) {
+      await probe.delete();
+    }
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+String _buildDownloadFileName({required Uri uri, String? mediaType}) {
+  final lastSegment = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+  var sanitized = lastSegment.split('?').first.trim();
+  sanitized = sanitized.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+
+  if (sanitized.isNotEmpty) {
+    return sanitized;
+  }
+
+  final now = DateTime.now().millisecondsSinceEpoch;
+  final ext = _extensionFromMediaType(mediaType);
+  return 'attachment_$now$ext';
+}
+
+String _extensionFromMediaType(String? mediaType) {
+  final type = (mediaType ?? '').toLowerCase();
+  if (type.contains('image')) return '.jpg';
+  if (type.contains('audio')) return '.mp3';
+  if (type.contains('video')) return '.mp4';
+  if (type.contains('pdf')) return '.pdf';
+  return '.bin';
 }
 
 class _Composer extends StatelessWidget {
@@ -754,12 +1454,47 @@ class _Composer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final disabled = controller.selectedDeal?.isOpen != true;
-    final hasAttachment = controller.selectedAttachment != null;
+    final isEditing = controller.editingMessage != null;
+    final hasAttachment = controller.selectedAttachments.isNotEmpty;
 
     return Padding(
       padding: EdgeInsets.all(12.w),
       child: Column(
         children: [
+          if (isEditing)
+            Container(
+              width: double.infinity,
+              margin: EdgeInsets.only(bottom: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                color: AppTheme.warning50,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: AppTheme.warning300),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.edit_note_rounded,
+                    color: AppTheme.warning800,
+                    size: 18.sp,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      'editing_message_mode'.tr,
+                      style: AppStyles.bodySmall.copyWith(
+                        color: AppTheme.warning800,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: controller.cancelEditingMessage,
+                    child: Text('cancel'.tr),
+                  ),
+                ],
+              ),
+            ),
           if (hasAttachment)
             Container(
               width: double.infinity,
@@ -770,23 +1505,72 @@ class _Composer extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(color: AppTheme.gray50),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.attach_file_rounded, size: 18.sp),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      controller.selectedAttachment!.path.split('/').last,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppStyles.bodySmall.copyWith(
-                        color: AppTheme.gray600,
-                      ),
+                  Text(
+                    '${controller.selectedAttachments.length} ملف محدد',
+                    style: AppStyles.bodySmall.copyWith(
+                      color: AppTheme.gray600,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  IconButton(
-                    onPressed: controller.clearAttachment,
-                    icon: const Icon(Icons.close_rounded),
+                  SizedBox(height: 8.h),
+                  ...List.generate(controller.selectedAttachments.length, (index) {
+                    final file = controller.selectedAttachments[index];
+                    final isImage = controller.isImageAttachment(file);
+                    return Container(
+                      margin: EdgeInsets.only(bottom: index == controller.selectedAttachments.length - 1 ? 0 : 6.h),
+                      child: Row(
+                        children: [
+                          if (isImage)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8.r),
+                              child: Image.file(
+                                file,
+                                width: 48.w,
+                                height: 48.w,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Container(
+                                  width: 48.w,
+                                  height: 48.w,
+                                  color: AppTheme.gray50,
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    Icons.broken_image_rounded,
+                                    color: AppTheme.gray300,
+                                    size: 18.sp,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            Icon(Icons.attach_file_rounded, size: 18.sp),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              file.path.split('/').last,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppStyles.bodySmall.copyWith(
+                                color: AppTheme.gray600,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => controller.removeAttachmentAt(index),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: controller.clearAttachment,
+                      child: Text('إزالة الكل'),
+                    ),
                   ),
                 ],
               ),
@@ -806,43 +1590,83 @@ class _Composer extends StatelessWidget {
                 icon: Icon(Icons.image_outlined, size: 20.sp),
               ),
               IconButton(
+                tooltip: 'Paste image',
+                onPressed: disabled ? null : controller.pickImageFromClipboard,
+                icon: Icon(Icons.content_paste_rounded, size: 20.sp),
+              ),
+              IconButton(
                 tooltip: 'File',
                 onPressed: disabled ? null : controller.pickDocumentAttachment,
                 icon: Icon(Icons.attach_file_rounded, size: 20.sp),
               ),
               Expanded(
-                child: TextField(
-                  controller: controller.messageController,
-                  minLines: 1,
-                  maxLines: 4,
-                  enabled: !disabled,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
-                  onTap: controller.hideEmojiPicker,
-                  decoration: InputDecoration(
-                    hintText: disabled
-                        ? 'deal_closed_cannot_send'.tr
-                        : 'write_your_message'.tr,
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
+                child: Focus(
+                  onKeyEvent: (node, event) {
+                    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+                    final isPasteShortcut =
+                        (HardwareKeyboard.instance.isMetaPressed ||
+                            HardwareKeyboard.instance.isControlPressed) &&
+                        event.logicalKey == LogicalKeyboardKey.keyV;
+                    if (isPasteShortcut && !disabled) {
+                      controller.pickImageFromClipboard();
+                    }
+
+                    final isEnterKey =
+                        event.logicalKey == LogicalKeyboardKey.enter ||
+                        event.logicalKey == LogicalKeyboardKey.numpadEnter;
+                    if (!isEnterKey) return KeyEventResult.ignored;
+
+                    if (HardwareKeyboard.instance.isShiftPressed) {
+                      return KeyEventResult.ignored;
+                    }
+
+                    if (!disabled && !controller.isSendingMessage) {
+                      controller.sendCurrentMessage();
+                    }
+                    return KeyEventResult.handled;
+                  },
+                  child: TextField(
+                    controller: controller.messageController,
+                    minLines: 1,
+                    maxLines: 4,
+                    enabled: !disabled,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    onTap: controller.hideEmojiPicker,
+                    decoration: InputDecoration(
+                      hintText: disabled
+                          ? 'deal_closed_cannot_send'.tr
+                          : 'write_your_message'.tr,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 10.h,
+                      ),
                     ),
                   ),
                 ),
               ),
               SizedBox(width: 10.w),
               ElevatedButton(
-                onPressed: disabled || controller.isSendingMessage
+                onPressed:
+                    disabled ||
+                        controller.isSendingMessage ||
+                        controller.isUpdatingMessage
                     ? null
                     : controller.sendCurrentMessage,
-                child: controller.isSendingMessage
+                child:
+                    (controller.isSendingMessage ||
+                        controller.isUpdatingMessage)
                     ? SizedBox(
                         width: 14.w,
                         height: 14.w,
                         child: const CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Icon(Icons.send_rounded, size: 18.sp),
+                    : Icon(
+                        isEditing ? Icons.check_rounded : Icons.send_rounded,
+                        size: 18.sp,
+                      ),
               ),
             ],
           ),
@@ -853,6 +1677,8 @@ class _Composer extends StatelessWidget {
     );
   }
 }
+
+enum _MessageAction { edit, delete }
 
 class _EmojiPickerPanel extends StatelessWidget {
   const _EmojiPickerPanel({required this.onEmojiTap});
@@ -1017,4 +1843,19 @@ String _sanitizeInvalidUtf16(String input) {
     buffer.writeCharCode(unit);
   }
   return buffer.toString();
+}
+
+bool _isSuperAdminUser() {
+  final roles = GlobalController.to.user?.roles ?? const <String>[];
+  return roles.any((role) => role.toLowerCase().trim() == 'super_admin');
+}
+
+String? _assignedAgentName(Deal deal) {
+  final fullName = deal.user?.fullName.trim();
+  if (fullName != null && fullName.isNotEmpty) return fullName;
+  final first = deal.user?.firstName.trim() ?? '';
+  final last = deal.user?.lastName.trim() ?? '';
+  final combined = '$first $last'.trim();
+  if (combined.isNotEmpty) return combined;
+  return null;
 }

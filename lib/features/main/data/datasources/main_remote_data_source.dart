@@ -47,6 +47,15 @@ abstract class MainRemoteDataSource {
     String? mediaPath,
   });
 
+  Future<DealMessageModel> updateMessage({
+    required int messageId,
+    String? messageBody,
+    String? mediaUrl,
+    String? mediaType,
+  });
+
+  Future<void> deleteMessage({required int messageId});
+
   Future<List<AgentModel>> getAgents({String? search});
 
   Future<DealModel> assignDeal({required int dealId, required int userId});
@@ -212,6 +221,36 @@ class MainRemoteDataSourceImpl implements MainRemoteDataSource {
     );
 
     return DealMessageModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  @override
+  Future<DealMessageModel> updateMessage({
+    required int messageId,
+    String? messageBody,
+    String? mediaUrl,
+    String? mediaType,
+  }) async {
+    final body = <String, dynamic>{};
+    if (messageBody != null) {
+      body['message_body'] = messageBody;
+    }
+    if (mediaUrl != null) {
+      body['media_url'] = mediaUrl;
+    }
+    if (mediaType != null) {
+      body['media_type'] = mediaType;
+    }
+
+    final response = await apiConsumer.put(
+      'messages/$messageId',
+      body: body.isNotEmpty ? body : null,
+    );
+    return DealMessageModel.fromJson(response as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> deleteMessage({required int messageId}) async {
+    await apiConsumer.delete('messages/$messageId');
   }
 
   @override

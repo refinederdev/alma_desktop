@@ -2,6 +2,7 @@ import 'package:alma_desktop/core/errors/app_messages.dart';
 import 'package:alma_desktop/core/services/app_update_service.dart';
 import 'package:get/get.dart';
 import 'dart:io';
+import 'package:dio/dio.dart';
 
 class UpdateController extends GetxController {
   UpdateController({required this.updateService});
@@ -14,6 +15,7 @@ class UpdateController extends GetxController {
   double downloadProgress = 0;
   String? errorMessage;
   UpdateInfo? updateInfo;
+  String currentVersion = '--';
 
   @override
   void onInit() {
@@ -26,7 +28,25 @@ class UpdateController extends GetxController {
     errorMessage = null;
     update();
     try {
+      currentVersion = await updateService.getCurrentVersion();
+      update();
+    } catch (_) {
+      // Keep fallback value when version lookup fails.
+    }
+
+    try {
       updateInfo = await updateService.checkForUpdate();
+      currentVersion = updateInfo?.currentVersion ?? currentVersion;
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 403) {
+        errorMessage = '${'update_check_failed'.tr} (GitHub rate limit/forbidden)';
+      } else if (statusCode == 404) {
+        errorMessage =
+            '${'update_check_failed'.tr} (Release not found or repo is private)';
+      } else {
+        errorMessage = 'update_check_failed'.tr;
+      }
     } catch (_) {
       errorMessage = 'update_check_failed'.tr;
     } finally {

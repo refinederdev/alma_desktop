@@ -6,7 +6,9 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
   emoji_picker_flutter
   file_selector_windows
+  pasteboard
   screen_retriever_windows
+  url_launcher_windows
   window_manager
 )
 

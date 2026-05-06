@@ -40,6 +40,8 @@ import 'package:alma_desktop/features/main/domain/usecases/mark_notification_as_
 import 'package:alma_desktop/features/main/domain/usecases/get_open_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/update_message_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/delete_message_use_case.dart';
 // import 'package:alma_desktop/features/main/presentation/controllers/home_controller.dart';
 // import 'package:alma_desktop/features/main/presentation/controllers/notifications_controller.dart';
 // import 'package:alma_desktop/features/main/presentation/controllers/onboarding_controller.dart';
@@ -222,6 +224,14 @@ class MainFeatureInjector {
     );
     Get.lazyPut(
       () => SendMessageUseCase(mainRepository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => UpdateMessageUseCase(mainRepository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => DeleteMessageUseCase(mainRepository: Get.find()),
       fenix: true,
     );
     Get.lazyPut(

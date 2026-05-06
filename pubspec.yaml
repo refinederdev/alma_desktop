@@ -23,13 +23,30 @@ dependencies:
   audioplayers: ^6.5.0
   package_info_plus: ^8.0.2
   shared_preferences: ^2.5.5
+  url_launcher: ^6.3.2
   web_socket_channel: ^3.0.3
   window_manager: ^0.5.1
+  path_provider: ^2.1.5
+  pasteboard: ^0.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  image_path: assets/icon/icon.png
+  android: false
+  ios: false
+  web:
+    generate: false
+  windows:
+    generate: true
+    image_path: assets/icon/icon.png
+  macos:
+    generate: true
+    image_path: assets/icon/icon.png
 
 flutter:
   uses-material-design: true
@@ -38,6 +55,7 @@ flutter:
     - assets/images/
     - assets/svgs/icons/
     - assets/svgs/general/
+    - assets/icon/
     - assets/gifs/empty_notifications.gif
     - assets/gifs/success.gif
     - assets/sound/notifi.wav
