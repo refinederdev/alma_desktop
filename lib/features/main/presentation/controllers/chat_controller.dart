@@ -13,10 +13,10 @@ import 'package:alma_desktop/features/main/domain/entities/deal.dart';
 import 'package:alma_desktop/features/main/domain/entities/crm_session.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_deal_messages_use_case.dart';
-import 'package:alma_desktop/features/main/domain/usecases/get_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_lost_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_open_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/get_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -66,16 +66,8 @@ class ChatController extends GetxController {
   String? dealsErrorMessage;
   String? messagesErrorMessage;
   DateTime? _lastDealsLoadedAt;
-  final Map<String, int> _dealPagesByStatus = <String, int>{
-    'open': 1,
-    'won': 1,
-    'lost': 1,
-  };
-  final Map<String, bool> _hasMoreDealsByStatus = <String, bool>{
-    'open': false,
-    'won': false,
-    'lost': false,
-  };
+  int _openDealsPage = 1;
+  bool _hasMoreOpenDeals = false;
   int _messagesRequestId = 0;
   int _currentMessagesPage = 1;
   ReverbService? _reverbService;
@@ -130,62 +122,23 @@ class ChatController extends GetxController {
     update();
 
     final params = const GetDealsParams(page: 1, perPage: _dealsPerPage);
-    final results = await Future.wait([
-      getOpenDealsUseCase(params),
-      getWonDealsUseCase(params),
-      getLostDealsUseCase(params),
-    ]);
+    final result = await getOpenDealsUseCase(params);
 
     final loadedDeals = <Deal>[];
     String? firstFailure;
 
-    results[0].fold(
-      (failure) =>
-          firstFailure ??= failure.message ?? 'failed_to_load_open_deals'.tr,
+    result.fold(
+      (failure) {
+        firstFailure =
+            failure.message ?? 'failed_to_load_open_deals'.tr;
+        _openDealsPage = 1;
+        _hasMoreOpenDeals = false;
+      },
       (paginator) {
         loadedDeals.addAll(paginator.data);
-        _dealPagesByStatus['open'] = paginator.currentPage;
-        _hasMoreDealsByStatus['open'] = paginator.hasMorePages;
+        _openDealsPage = paginator.currentPage;
+        _hasMoreOpenDeals = paginator.hasMorePages;
       },
-    );
-    results[1].fold(
-      (failure) =>
-          firstFailure ??= failure.message ?? 'failed_to_load_won_deals'.tr,
-      (paginator) {
-        loadedDeals.addAll(paginator.data);
-        _dealPagesByStatus['won'] = paginator.currentPage;
-        _hasMoreDealsByStatus['won'] = paginator.hasMorePages;
-      },
-    );
-    results[2].fold(
-      (failure) =>
-          firstFailure ??= failure.message ?? 'failed_to_load_lost_deals'.tr,
-      (paginator) {
-        loadedDeals.addAll(paginator.data);
-        _dealPagesByStatus['lost'] = paginator.currentPage;
-        _hasMoreDealsByStatus['lost'] = paginator.hasMorePages;
-      },
-    );
-    results[0].fold(
-      (_) {
-        _dealPagesByStatus['open'] = 1;
-        _hasMoreDealsByStatus['open'] = false;
-      },
-      (_) {},
-    );
-    results[1].fold(
-      (_) {
-        _dealPagesByStatus['won'] = 1;
-        _hasMoreDealsByStatus['won'] = false;
-      },
-      (_) {},
-    );
-    results[2].fold(
-      (_) {
-        _dealPagesByStatus['lost'] = 1;
-        _hasMoreDealsByStatus['lost'] = false;
-      },
-      (_) {},
     );
 
     final deduplicated = _deduplicateDeals(loadedDeals);
@@ -231,7 +184,7 @@ class ChatController extends GetxController {
   }
 
   bool get hasMoreDeals =>
-      _hasMoreDealsByStatus.values.any((hasMore) => hasMore);
+      _hasMoreOpenDeals;
 
   Future<void> loadMoreDeals() async {
     if (isLoadingDeals || isRefreshing || isLoadingMoreDeals || !hasMoreDeals) {
@@ -244,29 +197,26 @@ class ChatController extends GetxController {
     final loadedDeals = <Deal>[];
     String? firstFailure;
 
-    await Future.wait([
-      _loadMoreForStatus(
-        status: 'open',
-        request: getOpenDealsUseCase.call,
-        loadedDeals: loadedDeals,
-        onFailure: (message) => firstFailure ??= message,
-        fallbackErrorKey: 'failed_to_load_open_deals',
-      ),
-      _loadMoreForStatus(
-        status: 'won',
-        request: getWonDealsUseCase.call,
-        loadedDeals: loadedDeals,
-        onFailure: (message) => firstFailure ??= message,
-        fallbackErrorKey: 'failed_to_load_won_deals',
-      ),
-      _loadMoreForStatus(
-        status: 'lost',
-        request: getLostDealsUseCase.call,
-        loadedDeals: loadedDeals,
-        onFailure: (message) => firstFailure ??= message,
-        fallbackErrorKey: 'failed_to_load_lost_deals',
-      ),
-    ]);
+    if (_hasMoreOpenDeals) {
+      final nextPage = _openDealsPage + 1;
+      final result = await getOpenDealsUseCase(
+        GetDealsParams(page: nextPage, perPage: _dealsPerPage),
+      );
+      result.fold(
+        (failure) {
+          firstFailure =
+              failure.message ?? 'failed_to_load_open_deals'.tr;
+        },
+        (paginator) {
+          loadedDeals.addAll(paginator.data);
+          _openDealsPage = paginator.currentPage;
+          _hasMoreOpenDeals =
+              paginator.hasMorePages &&
+              paginator.currentPage > nextPage - 1 &&
+              paginator.data.isNotEmpty;
+        },
+      );
+    }
 
     if (loadedDeals.isNotEmpty) {
       final merged = _deduplicateDeals([...allDeals, ...loadedDeals]);
@@ -289,36 +239,6 @@ class ChatController extends GetxController {
         message: firstFailure,
       );
     }
-  }
-
-  Future<void> _loadMoreForStatus({
-    required String status,
-    required Future<dynamic> Function(GetDealsParams params) request,
-    required List<Deal> loadedDeals,
-    required void Function(String message) onFailure,
-    required String fallbackErrorKey,
-  }) async {
-    if (!(_hasMoreDealsByStatus[status] ?? false)) return;
-
-    final currentPage = _dealPagesByStatus[status] ?? 1;
-    final nextPage = currentPage + 1;
-    final result = await request(
-      GetDealsParams(page: nextPage, perPage: _dealsPerPage),
-    );
-
-    result.fold(
-      (failure) {
-        onFailure(failure.message ?? fallbackErrorKey.tr);
-      },
-      (paginator) {
-        loadedDeals.addAll(paginator.data);
-        _dealPagesByStatus[status] = paginator.currentPage;
-        _hasMoreDealsByStatus[status] =
-            paginator.hasMorePages &&
-            paginator.currentPage > currentPage &&
-            paginator.data.isNotEmpty;
-      },
-    );
   }
 
   void onSearchChanged(String value) {
