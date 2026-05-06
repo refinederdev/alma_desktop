@@ -94,7 +94,7 @@ BEGIN
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ALMA CRM" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 ALMA CRM. All rights reserved." "\0"
-            VALUE "OriginalFilename", "alma_desktop.exe" "\0"
+            VALUE "OriginalFilename", "ALMA_CRM.exe" "\0"
             VALUE "ProductName", "ALMA CRM" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END

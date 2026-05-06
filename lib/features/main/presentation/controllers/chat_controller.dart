@@ -1023,7 +1023,9 @@ class ChatController extends GetxController {
         payload['message_id'] as String? ??
         'ws_${timestamp}_${deal.id}';
 
-    final createdAt = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    final createdAt = DateTime.fromMillisecondsSinceEpoch(
+      _normalizeUnixToMillis(timestamp),
+    );
     final crmSession =
         deal.crmSession ??
         CrmSession(
@@ -1251,5 +1253,11 @@ class ChatController extends GetxController {
     if (position.pixels <= 80) {
       loadOlderMessages();
     }
+  }
+
+  int _normalizeUnixToMillis(int rawTimestamp) {
+    if (rawTimestamp <= 0) return 0;
+    // Some payloads arrive in seconds and others in milliseconds.
+    return rawTimestamp >= 1000000000000 ? rawTimestamp : rawTimestamp * 1000;
   }
 }

@@ -208,7 +208,7 @@ class _DealTile extends StatelessWidget {
     final lastMessage = deal.lastMessage?.messageBody;
     final trailing = deal.lastMessage?.messageTimestamp ?? 0;
     final messageTime = trailing > 0
-        ? DateTime.fromMillisecondsSinceEpoch(trailing * 1000)
+        ? DateTime.fromMillisecondsSinceEpoch(_normalizeUnixToMillis(trailing))
         : null;
     final hasUnread = controller.hasUnreadForDeal(deal.id);
     final unreadCount = controller.unreadCountForDeal(deal.id);
@@ -730,7 +730,7 @@ class _MessageBubble extends StatelessWidget {
         message.hasMediaContent && (message.mediaUrl?.isNotEmpty == true);
     final body = hasText ? text : (hasMedia ? '' : '...');
     final time = DateTime.fromMillisecondsSinceEpoch(
-      message.messageTimestamp * 1000,
+      _normalizeUnixToMillis(message.messageTimestamp),
     );
     final hh = time.hour.toString().padLeft(2, '0');
     final mm = time.minute.toString().padLeft(2, '0');
@@ -1520,11 +1520,18 @@ class _Composer extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 8.h),
-                  ...List.generate(controller.selectedAttachments.length, (index) {
+                  ...List.generate(controller.selectedAttachments.length, (
+                    index,
+                  ) {
                     final file = controller.selectedAttachments[index];
                     final isImage = controller.isImageAttachment(file);
                     return Container(
-                      margin: EdgeInsets.only(bottom: index == controller.selectedAttachments.length - 1 ? 0 : 6.h),
+                      margin: EdgeInsets.only(
+                        bottom:
+                            index == controller.selectedAttachments.length - 1
+                            ? 0
+                            : 6.h,
+                      ),
                       child: Row(
                         children: [
                           if (isImage)
@@ -1562,7 +1569,8 @@ class _Composer extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            onPressed: () => controller.removeAttachmentAt(index),
+                            onPressed: () =>
+                                controller.removeAttachmentAt(index),
                             icon: const Icon(Icons.close_rounded),
                           ),
                         ],
@@ -1847,6 +1855,12 @@ String _sanitizeInvalidUtf16(String input) {
     buffer.writeCharCode(unit);
   }
   return buffer.toString();
+}
+
+int _normalizeUnixToMillis(int rawTimestamp) {
+  if (rawTimestamp <= 0) return 0;
+  // Some backends return seconds while others return milliseconds.
+  return rawTimestamp >= 1000000000000 ? rawTimestamp : rawTimestamp * 1000;
 }
 
 bool _isSuperAdminUser() {
