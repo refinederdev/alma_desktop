@@ -1,6 +1,7 @@
 name: Build macOS Setup
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
