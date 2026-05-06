@@ -55,6 +55,23 @@ class EnLang {
     'crm': 'CRM',
     'chat': 'Chat',
     'profile': 'Profile',
+    'updates': 'Updates',
+    'updates_subtitle':
+        'Check for the latest release and install updates directly from inside the app.',
+    'check_for_updates': 'Check for updates',
+    'update_now': 'Update now',
+    'current_version': 'Current version',
+    'latest_version': 'Latest version',
+    'app_is_up_to_date': 'You are already on the latest version.',
+    'new_update_available': 'A new version (@version) is available.',
+    'downloading_update': 'Downloading update... @percent%',
+    'installing_update': 'Installing update. Please wait...',
+    'update_check_failed': 'Could not check for updates right now.',
+    'update_download_unavailable':
+        'Download file is not available in the latest release.',
+    'update_install_failed': 'Update installation failed. Please try again.',
+    'update_downloaded_open_in_finder':
+        'Update downloaded. Please install it manually from the opened file.',
     'edit_profile': 'Edit profile',
     'logout': 'Logout',
     'crm_kanban_title': 'CRM Kanban Board',

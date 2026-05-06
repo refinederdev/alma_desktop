@@ -6,6 +6,7 @@ import 'package:alma_desktop/features/main/presentation/views/chat_view.dart';
 import 'package:alma_desktop/features/main/presentation/views/crm_kanban_view.dart';
 import 'package:alma_desktop/features/main/presentation/views/dashboard_view.dart';
 import 'package:alma_desktop/features/main/presentation/views/profile_view.dart';
+import 'package:alma_desktop/features/main/presentation/views/update_view.dart';
 
 class MainController extends GetxController {
   int selectedIndex = 0;
@@ -20,6 +21,7 @@ class MainController extends GetxController {
       const CrmKanbanView(),
       const ChatView(),
       const ProfileView(),
+      const UpdateView(),
     ];
   }
 

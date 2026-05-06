@@ -85,6 +85,23 @@ class ArLang {
     'agent': 'الوكيل',
     'account_information': 'معلومات الحساب',
     'profile': 'الملف الشخصي',
+    'updates': 'التحديثات',
+    'updates_subtitle':
+        'تحقق من آخر إصدار وثبّت التحديث مباشرة من داخل التطبيق.',
+    'check_for_updates': 'التحقق من التحديثات',
+    'update_now': 'تحديث الآن',
+    'current_version': 'الإصدار الحالي',
+    'latest_version': 'أحدث إصدار',
+    'app_is_up_to_date': 'أنت تستخدم أحدث إصدار بالفعل.',
+    'new_update_available': 'يوجد إصدار جديد (@version) متاح.',
+    'downloading_update': 'جاري تنزيل التحديث... @percent%',
+    'installing_update': 'جاري تثبيت التحديث. يرجى الانتظار...',
+    'update_check_failed': 'تعذر التحقق من التحديثات حالياً.',
+    'update_download_unavailable':
+        'ملف التنزيل غير متوفر داخل آخر إصدار على GitHub.',
+    'update_install_failed': 'فشل تثبيت التحديث. حاول مرة أخرى.',
+    'update_downloaded_open_in_finder':
+        'تم تنزيل التحديث. يرجى تثبيته يدويًا من الملف الذي تم فتحه.',
     'check_out': 'الخروج',
     'edit_profile': 'تعديل الملف الشخصي',
     'account_settings': 'إعدادات الحساب',

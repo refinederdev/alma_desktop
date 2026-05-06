@@ -8,6 +8,7 @@ import 'package:alma_desktop/features/main/presentation/controllers/chat_control
 import 'package:alma_desktop/features/main/presentation/controllers/dashboard_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/main_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/profile_controller.dart';
+import 'package:alma_desktop/features/main/presentation/controllers/update_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/crm_kanban_controller.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_deals_stats_use_case.dart';
 import 'package:alma_desktop/features/main/presentation/views/main_view.dart';
@@ -28,6 +29,7 @@ import 'package:alma_desktop/features/main/domain/usecases/assign_deal_use_case.
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_deal_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
+import 'package:alma_desktop/core/services/app_update_service.dart';
 import 'package:get/get.dart';
 
 class AppRoutes {
@@ -111,6 +113,12 @@ class AppRoutes {
         Get.lazyPut(
           () => ProfileController(
             updateProfileUseCase: Get.find<UpdateProfileUseCase>(),
+          ),
+          fenix: true,
+        );
+        Get.lazyPut(
+          () => UpdateController(
+            updateService: AppUpdateService(),
           ),
           fenix: true,
         );

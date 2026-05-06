@@ -1,0 +1,77 @@
+name: Build macOS Setup
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos-setup:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Read app metadata from pubspec
+        shell: bash
+        run: |
+          PUBSPEC="pubspec.yaml"
+          APP_NAME=$(python3 - <<'PY'
+          import re
+          import pathlib
+          s = pathlib.Path("pubspec.yaml").read_text(encoding="utf-8")
+          m = re.search(r"(?m)^name:\s*([A-Za-z0-9_\-\.]+)\s*$", s)
+          print(m.group(1) if m else "")
+          PY
+          )
+          APP_VERSION=$(python3 - <<'PY'
+          import re
+          import pathlib
+          s = pathlib.Path("pubspec.yaml").read_text(encoding="utf-8")
+          m = re.search(r"(?m)^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+[0-9]+)?\s*$", s)
+          print(m.group(1) if m else "")
+          PY
+          )
+          echo "APP_NAME=$APP_NAME" >> "$GITHUB_ENV"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+
+      - name: Build macOS app (release)
+        run: flutter build macos --release
+
+      - name: Package .app into zip
+        shell: bash
+        run: |
+          APP_BUNDLE="build/macos/Build/Products/Release/${APP_NAME}.app"
+          if [ ! -d "$APP_BUNDLE" ]; then
+            echo "::error::Missing .app bundle: $APP_BUNDLE"
+            ls -la build/macos/Build/Products/Release || true
+            exit 1
+          fi
+          mkdir -p macos-dist
+          ZIP_NAME="${APP_NAME}-macos-setup-${GITHUB_REF_NAME}.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "macos-dist/$ZIP_NAME"
+
+      - name: Publish GitHub Release with macOS zip
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ env.APP_NAME }} ${{ github.ref_name }}
+          body: |
+            Automated release for version ${{ env.APP_VERSION }}.
+            Includes macOS build packaged as a zip.
+          files: macos-dist/*.zip
+          fail_on_unmatched_files: true
+

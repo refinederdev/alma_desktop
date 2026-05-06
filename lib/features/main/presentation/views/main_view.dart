@@ -60,6 +60,11 @@ class _MainSidebar extends StatelessWidget {
         icon: Icons.person_rounded,
         index: 3,
       ),
+      _SidebarItemData(
+        label: 'updates'.tr,
+        icon: Icons.system_update_rounded,
+        index: 4,
+      ),
     ];
 
     return Container(
@@ -98,7 +103,7 @@ class _MainSidebar extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               itemCount: items.length,
-              separatorBuilder: (_, __) => SizedBox(height: 8.h),
+              separatorBuilder: (_, separatorIndex) => SizedBox(height: 8.h),
               itemBuilder: (context, i) {
                 final item = items[i];
                 final isSelected = controller.selectedIndex == item.index;

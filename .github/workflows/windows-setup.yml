@@ -6,6 +6,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build-windows-setup:
     runs-on: windows-latest
@@ -102,3 +105,14 @@ jobs:
           name: ${{ env.APP_NAME }}-windows-setup-${{ env.APP_VERSION }}
           path: installer/output/*.exe
           if-no-files-found: error
+
+      - name: Publish GitHub Release with setup.exe
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ env.APP_NAME }} ${{ github.ref_name }}
+          body: |
+            Automated release for version ${{ env.APP_VERSION }}.
+            Includes Windows setup installer.
+          files: installer/output/*.exe
+          fail_on_unmatched_files: true
