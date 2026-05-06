@@ -60,7 +60,27 @@ class AppUpdateService {
       );
     } on DioException {
       // Fallback for environments where GitHub API is rate-limited/blocked.
-      return _checkForUpdateFromReleasePage(currentVersion: currentVersion);
+      try {
+        return _checkForUpdateFromReleasePage(currentVersion: currentVersion);
+      } on DioException {
+        try {
+          return _checkForUpdateFromRawPubspec(currentVersion: currentVersion);
+        } catch (_) {
+          return _safeNoUpdate(currentVersion);
+        }
+      } catch (_) {
+        try {
+          return _checkForUpdateFromRawPubspec(currentVersion: currentVersion);
+        } catch (_) {
+          return _safeNoUpdate(currentVersion);
+        }
+      }
+    } catch (_) {
+      try {
+        return _checkForUpdateFromRawPubspec(currentVersion: currentVersion);
+      } catch (_) {
+        return _safeNoUpdate(currentVersion);
+      }
     }
   }
 
@@ -198,6 +218,74 @@ class AppUpdateService {
       currentVersion: currentVersion,
       latestVersion: latestVersion,
       downloadUrl: downloadUrl,
+      releaseNotes: '',
+    );
+  }
+
+  Future<UpdateInfo> _checkForUpdateFromRawPubspec({
+    required String currentVersion,
+  }) async {
+    final rawPubspecUrl =
+        'https://raw.githubusercontent.com/${AppConfig.githubRepoOwner}/${AppConfig.githubRepoName}/main/pubspec.yaml';
+    final response = await _dio.get<String>(
+      rawPubspecUrl,
+      options: Options(
+        headers: {'User-Agent': 'alma-desktop-updater'},
+        responseType: ResponseType.plain,
+      ),
+    );
+
+    final content = response.data ?? '';
+    final versionMatch = RegExp(
+      r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+[0-9]+)?\s*$',
+      multiLine: true,
+    ).firstMatch(content);
+    final latestVersion = versionMatch?.group(1) ?? currentVersion;
+
+    String? downloadUrl;
+    if (Platform.isWindows) {
+      final candidate =
+          'https://github.com/${AppConfig.githubRepoOwner}/${AppConfig.githubRepoName}/releases/download/main/alma_desktop_setup_v$latestVersion.exe';
+      if (await _isReachableDownload(candidate)) {
+        downloadUrl = candidate;
+      }
+    } else if (Platform.isMacOS) {
+      final candidate =
+          'https://github.com/${AppConfig.githubRepoOwner}/${AppConfig.githubRepoName}/releases/download/main/alma_desktop-macos-setup-main.zip';
+      if (await _isReachableDownload(candidate)) {
+        downloadUrl = candidate;
+      }
+    }
+
+    return UpdateInfo(
+      currentVersion: currentVersion,
+      latestVersion: latestVersion,
+      downloadUrl: downloadUrl,
+      releaseNotes: '',
+    );
+  }
+
+  Future<bool> _isReachableDownload(String url) async {
+    try {
+      final response = await _dio.head(
+        url,
+        options: Options(
+          headers: {'User-Agent': 'alma-desktop-updater'},
+          followRedirects: true,
+          validateStatus: (code) => code != null && code >= 200 && code < 400,
+        ),
+      );
+      return (response.statusCode ?? 500) < 400;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  UpdateInfo _safeNoUpdate(String currentVersion) {
+    return UpdateInfo(
+      currentVersion: currentVersion,
+      latestVersion: currentVersion,
+      downloadUrl: null,
       releaseNotes: '',
     );
   }
