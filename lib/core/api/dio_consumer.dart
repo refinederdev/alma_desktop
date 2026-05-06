@@ -243,7 +243,7 @@ class DioConsumer implements ApiConsumer {
         log("Connection Timeout Exception - Dio Consumer");
         throw RequestTimeoutException("request_timeout".tr);
       case DioExceptionType.unknown:
-        throw NetworkErrorHandler.networkHandler(err.error);
+        throw NetworkErrorHandler.networkHandler(err);
       case DioExceptionType.connectionError:
         throw NoInternetException("${"no_internet_access".tr} ${err.error}");
       default:
