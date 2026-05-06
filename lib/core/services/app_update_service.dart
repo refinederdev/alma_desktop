@@ -34,50 +34,21 @@ class AppUpdateService {
     return packageInfo.version;
   }
 
-  List<String> _preferredAssetExtensions() {
-    if (Platform.isWindows) return const ['.exe'];
-    if (Platform.isMacOS) return const ['.zip', '.pkg', '.dmg'];
-    return const [];
-  }
-
   Future<UpdateInfo> checkForUpdate() async {
     final currentVersion = await getCurrentVersion();
     try {
-      final response = await _dio.get(
-        AppConfig.latestReleaseApi,
-        options: Options(
-          headers: {
-            'Accept': 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-            'User-Agent': 'alma-desktop-updater',
-          },
-        ),
-      );
-
-      return _parseApiReleaseResponse(
-        response: response,
+      final manifest = await _fetchServerManifest();
+      return _buildUpdateInfoFromManifest(
         currentVersion: currentVersion,
+        manifest: manifest,
       );
-    } on DioException {
-      // Fallback for environments where GitHub API is rate-limited/blocked.
-      try {
-        return _checkForUpdateFromReleasePage(currentVersion: currentVersion);
-      } on DioException {
-        try {
-          return _checkForUpdateFromRawPubspec(currentVersion: currentVersion);
-        } catch (_) {
-          return _safeNoUpdate(currentVersion);
-        }
-      } catch (_) {
-        try {
-          return _checkForUpdateFromRawPubspec(currentVersion: currentVersion);
-        } catch (_) {
-          return _safeNoUpdate(currentVersion);
-        }
-      }
     } catch (_) {
       try {
-        return _checkForUpdateFromRawPubspec(currentVersion: currentVersion);
+        final files = await _fetchServerFilesFromDirectory();
+        return _buildUpdateInfoFromDirectoryFiles(
+          currentVersion: currentVersion,
+          files: files,
+        );
       } catch (_) {
         return _safeNoUpdate(currentVersion);
       }
@@ -138,47 +109,53 @@ class AppUpdateService {
     return normalized.map((e) => e.toString().padLeft(4, '0')).join('.');
   }
 
-  UpdateInfo _parseApiReleaseResponse({
-    required Response<dynamic> response,
+  Future<Map<String, dynamic>> _fetchServerManifest() async {
+    final manifestUrl = '${AppConfig.appUpdatesBaseUrl}/latest.json';
+    final response = await _dio.get(
+      manifestUrl,
+      options: Options(
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'alma-desktop-updater',
+        },
+      ),
+    );
+    return (response.data as Map).cast<String, dynamic>();
+  }
+
+  UpdateInfo _buildUpdateInfoFromManifest({
     required String currentVersion,
+    required Map<String, dynamic> manifest,
   }) {
-    final Map<String, dynamic> data =
-        (response.data as Map).cast<String, dynamic>();
-    final tag = (data['tag_name'] ?? '').toString().trim();
-    final latestVersion = _stripVersionTag(tag);
-    final notes = (data['body'] ?? '').toString();
+    final manifestVersion = _stripVersionTag(
+      (manifest['version'] ?? '').toString().trim(),
+    );
+    final latestVersion = manifestVersion.isEmpty ? currentVersion : manifestVersion;
 
     String? downloadUrl;
-    final preferredExt = _preferredAssetExtensions();
-    final assets = data['assets'];
-    if (assets is List) {
-      for (final dynamic asset in assets) {
-        if (asset is! Map) continue;
-        final fileName = (asset['name'] ?? '').toString().toLowerCase();
-        if (preferredExt.isEmpty) break;
-        if (!preferredExt.any((ext) => fileName.endsWith(ext))) continue;
-        final url = (asset['browser_download_url'] ?? '').toString();
-        if (url.isEmpty) continue;
-        downloadUrl = url;
-        break;
-      }
+    if (Platform.isWindows) {
+      downloadUrl = (manifest['windows_url'] ?? '').toString().trim();
+    } else if (Platform.isMacOS) {
+      downloadUrl =
+          ((manifest['macos_url'] ?? manifest['mac_url']) ?? '').toString().trim();
+    }
+
+    if (downloadUrl != null && downloadUrl.isNotEmpty && !downloadUrl.startsWith('http')) {
+      final normalized = downloadUrl.startsWith('/') ? downloadUrl.substring(1) : downloadUrl;
+      downloadUrl = '${AppConfig.appUpdatesBaseUrl}/$normalized';
     }
 
     return UpdateInfo(
       currentVersion: currentVersion,
-      latestVersion: latestVersion.isEmpty ? currentVersion : latestVersion,
-      downloadUrl: downloadUrl,
-      releaseNotes: notes,
+      latestVersion: latestVersion,
+      downloadUrl: downloadUrl == null || downloadUrl.isEmpty ? null : downloadUrl,
+      releaseNotes: (manifest['notes'] ?? '').toString(),
     );
   }
 
-  Future<UpdateInfo> _checkForUpdateFromReleasePage({
-    required String currentVersion,
-  }) async {
-    final releasePageUrl =
-        'https://github.com/${AppConfig.githubRepoOwner}/${AppConfig.githubRepoName}/releases/latest';
+  Future<List<String>> _fetchServerFilesFromDirectory() async {
     final response = await _dio.get<String>(
-      releasePageUrl,
+      '${AppConfig.appUpdatesBaseUrl}/',
       options: Options(
         headers: {'User-Agent': 'alma-desktop-updater'},
         responseType: ResponseType.plain,
@@ -186,99 +163,68 @@ class AppUpdateService {
     );
 
     final html = response.data ?? '';
-    final preferredExt = _preferredAssetExtensions();
-    String? downloadUrl;
-
-    for (final ext in preferredExt) {
-      final escapedExt = RegExp.escape(ext);
-      final pattern = RegExp(
-        r'href="([^"]*/releases/download/[^"]*' + escapedExt + r')"',
-        caseSensitive: false,
-      );
-      final match = pattern.firstMatch(html);
-      if (match == null) continue;
-      final raw = (match.group(1) ?? '').trim();
-      if (raw.isEmpty) continue;
-      downloadUrl = raw.startsWith('http') ? raw : 'https://github.com$raw';
-      break;
+    final matches = RegExp(r'href="([^"]+)"', caseSensitive: false).allMatches(html);
+    final files = <String>[];
+    for (final match in matches) {
+      final href = (match.group(1) ?? '').trim();
+      if (href.isEmpty || href.startsWith('?') || href.startsWith('#')) continue;
+      files.add(href);
     }
-
-    String latestVersion = currentVersion;
-    if (downloadUrl != null && downloadUrl.isNotEmpty) {
-      final versionMatch = RegExp(
-        r'v?(\d+\.\d+\.\d+)',
-        caseSensitive: false,
-      ).firstMatch(downloadUrl);
-      if (versionMatch != null) {
-        latestVersion = versionMatch.group(1) ?? currentVersion;
-      }
-    }
-
-    return UpdateInfo(
-      currentVersion: currentVersion,
-      latestVersion: latestVersion,
-      downloadUrl: downloadUrl,
-      releaseNotes: '',
-    );
+    return files;
   }
 
-  Future<UpdateInfo> _checkForUpdateFromRawPubspec({
+  UpdateInfo _buildUpdateInfoFromDirectoryFiles({
     required String currentVersion,
-  }) async {
-    final rawPubspecUrl =
-        'https://raw.githubusercontent.com/${AppConfig.githubRepoOwner}/${AppConfig.githubRepoName}/main/pubspec.yaml';
-    final response = await _dio.get<String>(
-      rawPubspecUrl,
-      options: Options(
-        headers: {'User-Agent': 'alma-desktop-updater'},
-        responseType: ResponseType.plain,
-      ),
-    );
+    required List<String> files,
+  }) {
+    final platformFiles = files.where(_isPlatformFile).toList();
+    if (platformFiles.isEmpty) return _safeNoUpdate(currentVersion);
 
-    final content = response.data ?? '';
-    final versionMatch = RegExp(
-      r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+[0-9]+)?\s*$',
-      multiLine: true,
-    ).firstMatch(content);
-    final latestVersion = versionMatch?.group(1) ?? currentVersion;
-
-    String? downloadUrl;
-    if (Platform.isWindows) {
-      final candidate =
-          'https://github.com/${AppConfig.githubRepoOwner}/${AppConfig.githubRepoName}/releases/download/main/alma_desktop_setup_v$latestVersion.exe';
-      if (await _isReachableDownload(candidate)) {
-        downloadUrl = candidate;
+    String? bestUrl;
+    String bestVersion = currentVersion;
+    for (final file in platformFiles) {
+      final version = _extractVersionFromText(file);
+      if (version == null) continue;
+      if (_normalizeVersion(version).compareTo(_normalizeVersion(bestVersion)) <= 0) {
+        continue;
       }
-    } else if (Platform.isMacOS) {
-      final candidate =
-          'https://github.com/${AppConfig.githubRepoOwner}/${AppConfig.githubRepoName}/releases/download/main/alma_desktop-macos-setup-main.zip';
-      if (await _isReachableDownload(candidate)) {
-        downloadUrl = candidate;
-      }
+      bestVersion = version;
+      bestUrl = file;
     }
+
+    if (bestUrl == null) return _safeNoUpdate(currentVersion);
 
     return UpdateInfo(
       currentVersion: currentVersion,
-      latestVersion: latestVersion,
-      downloadUrl: downloadUrl,
+      latestVersion: bestVersion,
+      downloadUrl: _toAbsoluteServerUrl(bestUrl),
       releaseNotes: '',
     );
   }
 
-  Future<bool> _isReachableDownload(String url) async {
-    try {
-      final response = await _dio.head(
-        url,
-        options: Options(
-          headers: {'User-Agent': 'alma-desktop-updater'},
-          followRedirects: true,
-          validateStatus: (code) => code != null && code >= 200 && code < 400,
-        ),
-      );
-      return (response.statusCode ?? 500) < 400;
-    } catch (_) {
-      return false;
+  bool _isPlatformFile(String href) {
+    final value = href.toLowerCase();
+    if (Platform.isWindows) {
+      return value.endsWith('.exe');
     }
+    if (Platform.isMacOS) {
+      if (!(value.endsWith('.zip') || value.endsWith('.dmg') || value.endsWith('.pkg'))) {
+        return false;
+      }
+      return value.contains('mac');
+    }
+    return false;
+  }
+
+  String? _extractVersionFromText(String text) {
+    final match = RegExp(r'v(\d+\.\d+\.\d+)', caseSensitive: false).firstMatch(text);
+    return match?.group(1);
+  }
+
+  String _toAbsoluteServerUrl(String href) {
+    if (href.startsWith('http')) return href;
+    final cleanHref = href.startsWith('/') ? href.substring(1) : href;
+    return '${AppConfig.appUpdatesBaseUrl}/$cleanHref';
   }
 
   UpdateInfo _safeNoUpdate(String currentVersion) {

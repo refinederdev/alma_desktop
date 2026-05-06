@@ -1,6 +1,7 @@
 class AppConfig {
   static const String baseURL = "https://almacrm.com/api/";
   static int appVersion = 1;
+  static const String appUpdatesBaseUrl = 'https://refineder.ai/alma-desktop';
   static const String githubRepoOwner = 'refinederdev';
   static const String githubRepoName = 'alma_desktop';
   static const String latestReleaseApi =
