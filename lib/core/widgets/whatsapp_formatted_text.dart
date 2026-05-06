@@ -58,10 +58,18 @@ class _WhatsAppFormattedTextState extends State<WhatsAppFormattedText> {
         ) ??
         TextStyle(fontFamily: WhatsAppFormattedText._defaultFontFamily);
 
-    return SelectableText.rich(
-      _parseText(safeText, baseStyle),
-      textAlign: widget.textAlign ?? TextAlign.start,
-      maxLines: widget.maxLines,
+    return SelectionArea(
+      child: Builder(
+        builder: (context) => RichText(
+          text: _parseText(safeText, baseStyle),
+          textAlign: widget.textAlign ?? TextAlign.start,
+          maxLines: widget.maxLines,
+          overflow: widget.overflow ?? TextOverflow.clip,
+          selectionRegistrar: SelectionContainer.maybeOf(context),
+          selectionColor: Theme.of(context).textSelectionTheme.selectionColor ??
+              Colors.blue.withValues(alpha: 0.30),
+        ),
+      ),
     );
   }
 

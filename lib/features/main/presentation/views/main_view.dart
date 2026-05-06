@@ -45,11 +45,7 @@ class _MainSidebar extends StatelessWidget {
         icon: Icons.dashboard_rounded,
         index: 0,
       ),
-      _SidebarItemData(
-        label: 'crm'.tr,
-        icon: Icons.groups_rounded,
-        index: 1,
-      ),
+      _SidebarItemData(label: 'crm'.tr, icon: Icons.groups_rounded, index: 1),
       _SidebarItemData(
         label: 'chat'.tr,
         icon: Icons.chat_bubble_rounded,
@@ -77,9 +73,7 @@ class _MainSidebar extends StatelessWidget {
           colors: [AppTheme.brandMain2_600, AppTheme.brandMain2],
         ),
         border: Border(
-          right: BorderSide(
-            color: AppTheme.baseWhite.withValues(alpha: 0.12),
-          ),
+          right: BorderSide(color: AppTheme.baseWhite.withValues(alpha: 0.12)),
         ),
       ),
       child: Column(
@@ -157,11 +151,7 @@ class _SidebarTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                item.icon,
-                color: AppTheme.baseWhite,
-                size: 22.sp,
-              ),
+              Icon(item.icon, color: AppTheme.baseWhite, size: 22.sp),
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(
@@ -202,7 +192,11 @@ class _LogoutButton extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.logout_rounded, color: AppTheme.baseWhite, size: 22.sp),
+              Icon(
+                Icons.logout_rounded,
+                color: AppTheme.baseWhite,
+                size: 22.sp,
+              ),
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(

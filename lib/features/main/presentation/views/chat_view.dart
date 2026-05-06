@@ -27,17 +27,21 @@ class ChatView extends GetView<ChatController> {
   Widget build(BuildContext context) {
     return GetBuilder<ChatController>(
       builder: (c) {
-        return Padding(
-          padding: EdgeInsets.all(20.w),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 370.w,
-                child: _ChatDealsPanel(controller: c),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(child: _ChatMessagesPanel(controller: c)),
-            ],
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 370.w,
+                  child: _ChatDealsPanel(controller: c),
+                ),
+                SizedBox(width: 14.w),
+                Expanded(child: _ChatMessagesPanel(controller: c)),
+              ],
+            ),
           ),
         );
       },
