@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:alma_desktop/core/errors/app_messages.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
 import 'package:alma_desktop/core/services/reverb_service/reverb_service.dart';
@@ -96,7 +98,9 @@ class CrmKanbanController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _notificationPlayer = AudioPlayer();
+    if (!Platform.isWindows) {
+      _notificationPlayer = AudioPlayer();
+    }
     loadBoard().then((_) => initializeReverb());
   }
 
@@ -883,6 +887,7 @@ class CrmKanbanController extends GetxController {
     Map<String, dynamic>? messageData,
     Map<String, dynamic>? dealData,
   }) async {
+    if (Platform.isWindows) return;
     final messageId = messageData?['id'] as String? ?? messageData?['message_id'] as String?;
     final dealId = (dealData?['id'] as num?)?.toInt();
     final ts = (messageData?['timestamp'] as num?)?.toInt();

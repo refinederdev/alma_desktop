@@ -100,7 +100,9 @@ class ChatController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _notificationPlayer = AudioPlayer();
+    if (!Platform.isWindows) {
+      _notificationPlayer = AudioPlayer();
+    }
     messagesScrollController.addListener(_onMessagesScroll);
     loadDeals().then((_) => initializeReverb());
   }
@@ -1194,6 +1196,7 @@ class ChatController extends GetxController {
   }
 
   Future<void> _playNotificationSound() async {
+    if (Platform.isWindows) return;
     try {
       await _notificationPlayer?.play(AssetSource('sound/notifi.wav'));
     } catch (e) {

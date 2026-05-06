@@ -1057,7 +1057,7 @@ class _AudioPreview extends StatefulWidget {
 }
 
 class _AudioPreviewState extends State<_AudioPreview> {
-  final AudioPlayer _player = AudioPlayer();
+  AudioPlayer? _player;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
   bool _isPlaying = false;
@@ -1066,36 +1066,14 @@ class _AudioPreviewState extends State<_AudioPreview> {
   @override
   void initState() {
     super.initState();
-    _player.onDurationChanged.listen((duration) {
-      if (!mounted) return;
-      setState(() {
-        _duration = duration;
-      });
-    });
-    _player.onPositionChanged.listen((position) {
-      if (!mounted) return;
-      setState(() {
-        _position = position;
-      });
-    });
-    _player.onPlayerComplete.listen((_) {
-      if (!mounted) return;
-      setState(() {
-        _isPlaying = false;
-        _position = Duration.zero;
-      });
-    });
-    _player.onPlayerStateChanged.listen((state) {
-      if (!mounted) return;
-      setState(() {
-        _isPlaying = state == PlayerState.playing;
-      });
-    });
+    if (!Platform.isWindows) {
+      _ensurePlayer();
+    }
   }
 
   @override
   void dispose() {
-    _player.dispose();
+    _player?.dispose();
     super.dispose();
   }
 
@@ -1178,7 +1156,7 @@ class _AudioPreviewState extends State<_AudioPreview> {
                     value: progressValue,
                     onChanged: (value) async {
                       final target = Duration(milliseconds: value.toInt());
-                      await _player.seek(target);
+                      await _player?.seek(target);
                     },
                   ),
                 ),
@@ -1201,14 +1179,20 @@ class _AudioPreviewState extends State<_AudioPreview> {
   }
 
   Future<void> _togglePlayback() async {
+    if (Platform.isWindows) {
+      await _openMediaExternally(widget.mediaUrl);
+      return;
+    }
+
+    final player = _ensurePlayer();
     if (_isPlaying) {
-      await _player.pause();
+      await player.pause();
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      await _player.play(UrlSource(widget.mediaUrl));
+      await player.play(UrlSource(widget.mediaUrl));
     } catch (_) {
       AppMessages.showSnackBar(
         type: ErrorType.error,
@@ -1226,6 +1210,60 @@ class _AudioPreviewState extends State<_AudioPreview> {
     final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  AudioPlayer _ensurePlayer() {
+    final existing = _player;
+    if (existing != null) return existing;
+
+    final created = AudioPlayer();
+    created.onDurationChanged.listen((duration) {
+      if (!mounted) return;
+      setState(() {
+        _duration = duration;
+      });
+    });
+    created.onPositionChanged.listen((position) {
+      if (!mounted) return;
+      setState(() {
+        _position = position;
+      });
+    });
+    created.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = false;
+        _position = Duration.zero;
+      });
+    });
+    created.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = state == PlayerState.playing;
+      });
+    });
+    _player = created;
+    return created;
+  }
+
+  Future<void> _openMediaExternally(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'Invalid media URL.',
+      );
+      return;
+    }
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched) {
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'Could not open this audio message.',
+      );
+    }
   }
 }
 
