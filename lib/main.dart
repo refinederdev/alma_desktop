@@ -5,9 +5,11 @@ import 'package:alma_desktop/core/config/desktop_window.dart';
 import 'package:alma_desktop/core/config/injector_container.dart';
 import 'package:alma_desktop/core/services/windows_crash_logger/windows_crash_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
 
   await WindowsCrashLogger.instance.initialize();
 

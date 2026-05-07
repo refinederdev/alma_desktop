@@ -1,17 +1,18 @@
 ; Inno Setup template. Placeholders replaced by GitHub Actions:
-; __APP_NAME__, __APP_VERSION__, __REPO_ROOT__ (absolute workspace path on Windows)
+; __APP_NAME__, __APP_DISPLAY_NAME__, __APP_EXE_NAME__, __APP_VERSION__, __REPO_ROOT__
+; (__REPO_ROOT__ is an absolute workspace path on Windows)
 
 [Setup]
 AppId=__APP_NAME__.desktop
-AppName=__APP_NAME__
+AppName=__APP_DISPLAY_NAME__
 AppVersion=__APP_VERSION__
-AppPublisher=__APP_NAME__
-DefaultDirName={autopf}\__APP_NAME__
-DefaultGroupName=__APP_NAME__
+AppPublisher=__APP_DISPLAY_NAME__
+DefaultDirName={autopf}\__APP_DISPLAY_NAME__
+DefaultGroupName=__APP_DISPLAY_NAME__
 DisableProgramGroupPage=yes
 ; __REPO_ROOT__ is replaced in CI with the absolute workspace path (no relative-path ambiguity).
 OutputDir=__REPO_ROOT__\installer\output
-OutputBaseFilename=__APP_NAME___setup_v__APP_VERSION__
+OutputBaseFilename=__APP_EXE_NAME___setup_v__APP_VERSION__
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -27,8 +28,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "__REPO_ROOT__\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\__APP_NAME__"; Filename: "{app}\__APP_NAME__.exe"
-Name: "{autodesktop}\__APP_NAME__"; Filename: "{app}\__APP_NAME__.exe"; Tasks: desktopicon
+Name: "{autoprograms}\__APP_DISPLAY_NAME__"; Filename: "{app}\__APP_EXE_NAME__.exe"
+Name: "{autodesktop}\__APP_DISPLAY_NAME__"; Filename: "{app}\__APP_EXE_NAME__.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\__APP_NAME__.exe"; Description: "{cm:LaunchProgram,__APP_NAME__}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\__APP_EXE_NAME__.exe"; Description: "{cm:LaunchProgram,__APP_DISPLAY_NAME__}"; Flags: nowait postinstall skipifsilent

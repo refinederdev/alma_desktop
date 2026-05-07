@@ -42,6 +42,8 @@ jobs:
 
           "APP_NAME=$($nameMatch.Groups[1].Value)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "APP_VERSION=$($versionMatch.Groups[1].Value)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "APP_DISPLAY_NAME=ALMA CRM" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "APP_EXE_NAME=ALMA_CRM" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Build Windows app (release)
         run: flutter build windows --release
@@ -69,7 +71,7 @@ jobs:
           }
 
           $template = Get-Content -LiteralPath $templatePath -Raw
-          $script = $template.Replace('__APP_NAME__', $env:APP_NAME).Replace('__APP_VERSION__', $env:APP_VERSION).Replace('__REPO_ROOT__', $rootWin)
+          $script = $template.Replace('__APP_NAME__', $env:APP_NAME).Replace('__APP_DISPLAY_NAME__', $env:APP_DISPLAY_NAME).Replace('__APP_EXE_NAME__', $env:APP_EXE_NAME).Replace('__APP_VERSION__', $env:APP_VERSION).Replace('__REPO_ROOT__', $rootWin)
 
           $issPath = Join-Path $rootWin 'windows_installer.generated.iss'
           Set-Content -LiteralPath $issPath -Value $script -Encoding utf8
@@ -102,7 +104,7 @@ jobs:
       - name: Upload setup artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-windows-setup-${{ env.APP_VERSION }}
+          name: ${{ env.APP_EXE_NAME }}-windows-setup-${{ env.APP_VERSION }}
           path: installer/output/*.exe
           if-no-files-found: error
 
@@ -110,7 +112,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: ${{ env.APP_NAME }} ${{ github.ref_name }}
+          name: ${{ env.APP_DISPLAY_NAME }} ${{ github.ref_name }}
           body: |
             Automated release for version ${{ env.APP_VERSION }}.
             Includes Windows setup installer.

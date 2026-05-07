@@ -14,7 +14,7 @@ abstract final class AppDesktopLayout {
   /// Do not shrink below 1280×720 (HD) so layouts stay usable.
   static const Size minimumWindowSize = Size(1280, 720);
 
-  static const String windowTitle = 'Alma';
+  static const String windowTitle = 'ALMA CRM';
 }
 
 bool get _isDesktopHost =>

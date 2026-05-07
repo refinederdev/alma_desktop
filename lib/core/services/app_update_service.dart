@@ -101,7 +101,12 @@ class AppUpdateService {
   }
 
   static String _normalizeVersion(String input) {
-    final parts = input.split('.');
+    final cleanedInput = input.trim();
+    // Ignore SemVer build metadata/prerelease (e.g. 0.1.2+1, 1.0.0-beta.1)
+    // so numeric comparison is consistent across installed/app store formats.
+    final comparablePart =
+        cleanedInput.split('+').first.split('-').first.trim();
+    final parts = comparablePart.split('.');
     final normalized = List<int>.generate(3, (index) {
       if (index >= parts.length) return 0;
       return int.tryParse(parts[index].replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;

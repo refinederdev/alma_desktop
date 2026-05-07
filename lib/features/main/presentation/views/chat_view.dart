@@ -14,6 +14,7 @@ import 'package:alma_desktop/features/main/domain/entities/company_location.dart
 import 'package:dio/dio.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:media_kit/media_kit.dart' as mk;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -1059,10 +1060,12 @@ class _AudioPreview extends StatefulWidget {
 
 class _AudioPreviewState extends State<_AudioPreview> {
   AudioPlayer? _player;
+  mk.Player? _windowsPlayer;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
   bool _isPlaying = false;
   bool _isLoading = false;
+  bool _windowsMediaOpened = false;
 
   @override
   void initState() {
@@ -1073,6 +1076,7 @@ class _AudioPreviewState extends State<_AudioPreview> {
   @override
   void dispose() {
     _player?.dispose();
+    _windowsPlayer?.dispose();
     super.dispose();
   }
 
@@ -1155,7 +1159,7 @@ class _AudioPreviewState extends State<_AudioPreview> {
                     value: progressValue,
                     onChanged: (value) async {
                       final target = Duration(milliseconds: value.toInt());
-                      await _player?.seek(target);
+                      await _seekTo(target);
                     },
                   ),
                 ),
@@ -1178,6 +1182,11 @@ class _AudioPreviewState extends State<_AudioPreview> {
   }
 
   Future<void> _togglePlayback() async {
+    if (Platform.isWindows) {
+      await _toggleWindowsPlayback();
+      return;
+    }
+
     final player = _ensurePlayer();
     if (_isPlaying) {
       await player.pause();
@@ -1188,21 +1197,52 @@ class _AudioPreviewState extends State<_AudioPreview> {
     try {
       await player.play(UrlSource(widget.mediaUrl));
     } catch (_) {
-      if (Platform.isWindows) {
-        await _openMediaExternally(widget.mediaUrl);
-      }
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: Platform.isWindows
-            ? 'Could not play this audio message inside the app. Tried opening it externally.'
-            : 'Could not play this audio message.',
+        message: 'Could not play this audio message.',
       );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _toggleWindowsPlayback() async {
+    final player = _ensureWindowsPlayer();
+    if (_isPlaying) {
+      await player.pause();
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      if (!_windowsMediaOpened) {
+        await player.open(mk.Media(widget.mediaUrl), play: true);
+        _windowsMediaOpened = true;
+      } else {
+        await player.play();
+      }
+    } catch (_) {
+      AppMessages.showSnackBar(
+        type: ErrorType.error,
+        title: 'error'.tr,
+        message: 'Could not play this audio message.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _seekTo(Duration target) async {
+    if (Platform.isWindows) {
+      await _windowsPlayer?.seek(target);
+      return;
+    }
+    await _player?.seek(target);
   }
 
   String _formatDuration(Duration duration) {
@@ -1246,24 +1286,34 @@ class _AudioPreviewState extends State<_AudioPreview> {
     return created;
   }
 
-  Future<void> _openMediaExternally(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) {
-      AppMessages.showSnackBar(
-        type: ErrorType.error,
-        title: 'error'.tr,
-        message: 'Invalid media URL.',
-      );
-      return;
-    }
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      AppMessages.showSnackBar(
-        type: ErrorType.error,
-        title: 'error'.tr,
-        message: 'Could not open this audio message.',
-      );
-    }
+  mk.Player _ensureWindowsPlayer() {
+    final existing = _windowsPlayer;
+    if (existing != null) return existing;
+
+    final created = mk.Player();
+    created.stream.duration.listen((duration) {
+      if (!mounted) return;
+      setState(() => _duration = duration);
+    });
+    created.stream.position.listen((position) {
+      if (!mounted) return;
+      setState(() => _position = position);
+    });
+    created.stream.playing.listen((playing) {
+      if (!mounted) return;
+      setState(() => _isPlaying = playing);
+    });
+    created.stream.completed.listen((completed) {
+      if (!mounted || !completed) return;
+      setState(() {
+        _isPlaying = false;
+        _position = Duration.zero;
+      });
+      created.seek(Duration.zero);
+    });
+
+    _windowsPlayer = created;
+    return created;
   }
 }
 
