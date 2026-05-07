@@ -27,6 +27,7 @@ import 'package:alma_desktop/features/main/domain/usecases/get_lost_deals_use_ca
 import 'package:alma_desktop/features/main/domain/usecases/get_open_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/assign_deal_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/delete_message_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/get_company_locations_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_deal_use_case.dart';
@@ -112,6 +113,7 @@ class AppRoutes {
             sendMessageUseCase: Get.find<SendMessageUseCase>(),
             updateMessageUseCase: Get.find<UpdateMessageUseCase>(),
             deleteMessageUseCase: Get.find<DeleteMessageUseCase>(),
+            getCompanyLocationsUseCase: Get.find<GetCompanyLocationsUseCase>(),
           ),
           fenix: true,
         );

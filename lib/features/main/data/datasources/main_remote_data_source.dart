@@ -6,6 +6,7 @@ import 'package:alma_desktop/features/main/data/models/agent_model.dart';
 import 'package:alma_desktop/features/main/data/models/attendance_model.dart';
 import 'package:alma_desktop/features/main/data/models/attendance_time_total_model.dart';
 import 'package:alma_desktop/features/main/data/models/attendance_weekly_stat_model.dart';
+import 'package:alma_desktop/features/main/data/models/company_location_model.dart';
 import 'package:alma_desktop/features/main/data/models/deal_message_model.dart';
 import 'package:alma_desktop/features/main/data/models/deal_model.dart';
 import 'package:alma_desktop/features/main/data/models/deal_stats_model.dart';
@@ -16,6 +17,11 @@ import 'package:alma_desktop/features/main/data/models/notification_unread_count
 import 'package:dio/dio.dart' as dio;
 
 abstract class MainRemoteDataSource {
+  Future<List<CompanyLocationModel>> getCompanyLocations({
+    bool? activeOnly,
+    bool? isActive,
+  });
+
   Future<PaginatorModel<DealModel>> getOpenDeals({
     int page = 1,
     int perPage = 15,
@@ -45,6 +51,7 @@ abstract class MainRemoteDataSource {
     String? messageType,
     required bool fromMe,
     String? mediaPath,
+    int? locationId,
   });
 
   Future<DealMessageModel> updateMessage({
@@ -109,6 +116,30 @@ class MainRemoteDataSourceImpl implements MainRemoteDataSource {
   final ApiConsumer apiConsumer;
 
   MainRemoteDataSourceImpl({required this.apiConsumer});
+
+  @override
+  Future<List<CompanyLocationModel>> getCompanyLocations({
+    bool? activeOnly,
+    bool? isActive,
+  }) async {
+    final query = <String, dynamic>{};
+    if (activeOnly != null) query['active_only'] = activeOnly;
+    if (isActive != null) query['is_active'] = isActive;
+
+    final response = await apiConsumer.get(
+      'company-locations',
+      queryParameters: query.isNotEmpty ? query : null,
+    );
+    final data = response as List<dynamic>? ?? const [];
+    return data
+        .whereType<Map>()
+        .map(
+          (json) => CompanyLocationModel.fromJson(
+            Map<String, dynamic>.from(json),
+          ),
+        )
+        .toList();
+  }
 
   @override
   Future<PaginatorModel<DealModel>> getOpenDeals({
@@ -184,6 +215,7 @@ class MainRemoteDataSourceImpl implements MainRemoteDataSource {
     String? messageType,
     required bool fromMe,
     String? mediaPath,
+    int? locationId,
   }) async {
     // إعداد Map للبيانات
     // ملاحظة: FormData.fromMap() يحول boolean إلى string
@@ -200,6 +232,10 @@ class MainRemoteDataSourceImpl implements MainRemoteDataSource {
 
     if (messageType != null && messageType.isNotEmpty) {
       formDataMap['message_type'] = messageType;
+    }
+
+    if (locationId != null) {
+      formDataMap['location_id'] = locationId;
     }
 
     // إضافة الملف إذا كان موجوداً

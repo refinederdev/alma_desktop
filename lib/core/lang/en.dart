@@ -86,6 +86,7 @@ class EnLang {
     'failed_to_load_open_deals': 'Failed to load open deals.',
     'failed_to_load_won_deals': 'Failed to load won deals.',
     'failed_to_load_lost_deals': 'Failed to load lost deals.',
+    'failed_to_load_locations': 'Failed to load company locations.',
     'failed_to_move_deal': 'Failed to move deal. Please try again.',
     'deal_closed_cannot_send': 'Deal is closed - cannot send messages',
     'deal_closed_cannot_transfer': 'Deal is closed - cannot transfer',

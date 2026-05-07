@@ -18,6 +18,7 @@ class SendMessageUseCase implements UseCase<DealMessage, SendMessageParams> {
       messageType: params.messageType,
       fromMe: params.fromMe,
       mediaPath: params.mediaPath,
+      locationId: params.locationId,
     );
   }
 }
@@ -28,6 +29,7 @@ class SendMessageParams extends Equatable {
   final String? messageType;
   final bool fromMe;
   final String? mediaPath;
+  final int? locationId;
 
   const SendMessageParams({
     required this.dealId,
@@ -35,6 +37,7 @@ class SendMessageParams extends Equatable {
     this.messageType,
     required this.fromMe,
     this.mediaPath,
+    this.locationId,
   });
 
   @override
@@ -44,5 +47,6 @@ class SendMessageParams extends Equatable {
     messageType,
     fromMe,
     mediaPath,
+    locationId,
   ];
 }

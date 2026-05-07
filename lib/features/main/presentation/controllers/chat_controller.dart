@@ -10,6 +10,7 @@ import 'package:alma_desktop/features/global/presentation/controllers/global_con
 import 'package:alma_desktop/features/main/data/models/deal_last_message_model.dart';
 import 'package:alma_desktop/features/main/data/models/deal_model.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
+import 'package:alma_desktop/features/main/domain/entities/company_location.dart';
 import 'package:alma_desktop/features/main/domain/entities/crm_session.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_deal_messages_use_case.dart';
@@ -17,6 +18,7 @@ import 'package:alma_desktop/features/main/domain/usecases/get_lost_deals_use_ca
 import 'package:alma_desktop/features/main/domain/usecases/get_open_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_deals_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/get_company_locations_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/delete_message_use_case.dart';
@@ -37,6 +39,7 @@ class ChatController extends GetxController {
     required this.sendMessageUseCase,
     required this.updateMessageUseCase,
     required this.deleteMessageUseCase,
+    required this.getCompanyLocationsUseCase,
   });
 
   final GetOpenDealsUseCase getOpenDealsUseCase;
@@ -46,6 +49,7 @@ class ChatController extends GetxController {
   final SendMessageUseCase sendMessageUseCase;
   final UpdateMessageUseCase updateMessageUseCase;
   final DeleteMessageUseCase deleteMessageUseCase;
+  final GetCompanyLocationsUseCase getCompanyLocationsUseCase;
   final FilePickerService _filePickerService = FilePickerService();
 
   final TextEditingController messageController = TextEditingController();
@@ -65,10 +69,13 @@ class ChatController extends GetxController {
   bool showEmojiPicker = false;
   bool isUpdatingMessage = false;
   int? deletingMessageId;
+  bool isLoadingCompanyLocations = false;
+  String? companyLocationsErrorMessage;
 
   List<Deal> allDeals = const [];
   List<Deal> filteredDeals = const [];
   List<DealMessage> messages = const [];
+  List<CompanyLocation> companyLocations = const [];
 
   String searchQuery = '';
   Deal? selectedDeal;
@@ -115,7 +122,7 @@ class ChatController extends GetxController {
       }
       _subscribedChannelNames.clear();
     }
-    _reverbService?.disconnect();
+    _reverbService?.dispose();
     _notificationPlayer?.dispose();
     messagesScrollController.removeListener(_onMessagesScroll);
     messageController.dispose();
@@ -682,6 +689,7 @@ class ChatController extends GetxController {
     required String? messageBody,
     required String? messageType,
     required String? mediaPath,
+    int? locationId,
   }) async {
     var result = await sendMessageUseCase(
       SendMessageParams(
@@ -693,6 +701,7 @@ class ChatController extends GetxController {
         messageType: messageType,
         fromMe: true,
         mediaPath: mediaPath,
+        locationId: locationId,
       ),
     );
 
@@ -711,10 +720,89 @@ class ChatController extends GetxController {
           messageType: null,
           fromMe: true,
           mediaPath: mediaPath,
+          locationId: locationId,
         ),
       );
     }
     return result;
+  }
+
+  Future<void> loadCompanyLocations({bool force = false}) async {
+    if (isLoadingCompanyLocations) return;
+    if (!force && companyLocations.isNotEmpty) return;
+
+    isLoadingCompanyLocations = true;
+    companyLocationsErrorMessage = null;
+    update();
+
+    final result = await getCompanyLocationsUseCase(
+      const GetCompanyLocationsParams(activeOnly: true),
+    );
+
+    result.fold(
+      (failure) {
+        companyLocationsErrorMessage =
+            failure.message ?? 'failed_to_load_locations'.tr;
+        isLoadingCompanyLocations = false;
+        update();
+        AppMessages.showSnackBar(
+          type: ErrorType.error,
+          title: 'error'.tr,
+          message: companyLocationsErrorMessage,
+        );
+      },
+      (locations) {
+        companyLocations = locations;
+        isLoadingCompanyLocations = false;
+        update();
+      },
+    );
+  }
+
+  Future<void> sendLocationMessage(int locationId) async {
+    final deal = selectedDeal;
+    if (deal == null || isSendingMessage) return;
+    if (!deal.isOpen) {
+      AppMessages.showSnackBar(
+        type: ErrorType.warning,
+        title: 'info'.tr,
+        message: 'deal_closed_cannot_send'.tr,
+      );
+      return;
+    }
+
+    isSendingMessage = true;
+    update();
+
+    final result = await _sendMessageWithOptionalRetry(
+      dealId: deal.id,
+      messageBody: null,
+      messageType: null,
+      mediaPath: null,
+      locationId: locationId,
+    );
+
+    result.fold(
+      (failure) {
+        isSendingMessage = false;
+        update();
+        AppMessages.showSnackBar(
+          type: ErrorType.error,
+          title: 'error'.tr,
+          message: failure.message ?? 'failed_to_send_message'.tr,
+        );
+      },
+      (message) {
+        messages = _sortedUniqueMessages([...messages, message]);
+        _updateSelectedDealLastMessage(message);
+        if (selectedDeal != null) {
+          _messagesCache[selectedDeal!.id] = messages;
+        }
+        isSendingMessage = false;
+        update();
+        _scrollToBottom();
+      },
+    );
   }
 
   void startEditingMessage(DealMessage message) {

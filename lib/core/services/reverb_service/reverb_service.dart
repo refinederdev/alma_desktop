@@ -17,16 +17,22 @@ class ReverbService {
   bool _isConnected = false;
   bool _isReconnecting = false;
   bool _shouldReconnect = true;
+  bool _isDisposed = false;
+
+  StreamSubscription? _socketSubscription;
+  Completer<String>? _socketIdCompleter;
 
   // إعادة الاتصال
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 5;
-  static const Duration _reconnectDelay = Duration(seconds: 3);
+  static const Duration _reconnectBaseDelay = Duration(seconds: 1);
+  static const Duration _reconnectMaxDelay = Duration(seconds: 30);
 
   // Ping/Pong لإبقاء الاتصال نشطاً
   Timer? _pingTimer;
   static const Duration _pingInterval = Duration(seconds: 30);
+  DateTime? _lastPongAt;
+  static const Duration _pongTimeout = Duration(seconds: 75);
 
   // تتبع القنوات المشتركة لإعادة الاشتراك بعد إعادة الاتصال
   final Set<String> _subscribedChannels = <String>{};
@@ -51,25 +57,32 @@ class ReverbService {
       final wsUrl = _buildWebSocketUrl();
 
       // إغلاق الاتصال السابق إن وجد
-      _channel?.sink.close();
+      await _closeCurrentSocket();
 
       // إنشاء WebSocket connection
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
+      _socketIdCompleter = Completer<String>();
+      _lastPongAt = DateTime.now();
+
       // الاستماع إلى الرسائل الواردة
-      _channel!.stream.listen(
+      _socketSubscription = _channel!.stream.listen(
         (message) {
-          _handleMessage(message);
+          unawaited(_handleMessage(message));
         },
         onError: (error) {
           _isConnected = false;
           _stopPingTimer();
+          _socketIdCompleter?.completeError(error);
           onConnectionError?.call(error);
           _scheduleReconnect();
         },
         onDone: () {
           _isConnected = false;
           _stopPingTimer();
+          if (_socketIdCompleter != null && !_socketIdCompleter!.isCompleted) {
+            _socketIdCompleter!.completeError(StateError('Socket closed'));
+          }
           onConnectionClosed?.call();
 
           // إعادة الاتصال إذا كان يجب ذلك
@@ -80,27 +93,11 @@ class ReverbService {
         cancelOnError: false, // لا إلغاء عند الخطأ، نتعامل معه يدوياً
       );
 
-      _isConnected = true;
-      _reconnectAttempts = 0; // إعادة تعيين محاولات إعادة الاتصال
-
       // بدء ping timer
       _startPingTimer();
 
-      onConnected?.call();
-
-      // إعادة الاشتراك في القنوات المشتركة سابقاً
-      if (_subscribedChannels.isNotEmpty) {
-        await Future.delayed(
-          const Duration(milliseconds: 500),
-        ); // انتظار قليلاً
-        for (final channel in _subscribedChannels) {
-          try {
-            await subscribeToPrivateChannel(channel);
-          } catch (e) {
-            if (kDebugMode) print('❌ Error re-subscribing to $channel: $e');
-          }
-        }
-      }
+      // نعتبر الاتصال "جاهز" فقط بعد استلام socket_id
+      await _socketIdCompleter!.future;
     } catch (e) {
       if (kDebugMode) print('❌ Error connecting to Reverb: $e');
       _isConnected = false;
@@ -123,7 +120,7 @@ class ReverbService {
   }
 
   /// معالجة الرسائل الواردة
-  void _handleMessage(dynamic message) {
+  Future<void> _handleMessage(dynamic message) async {
     try {
       final data = jsonDecode(message);
       final event = data['event'] as String?;
@@ -133,10 +130,37 @@ class ReverbService {
         _socketId = socketData['socket_id'] as String?;
         if (kDebugMode) print('✅ Socket ID: $_socketId');
         _isReconnecting = false; // إعادة الاتصال نجحت
-        onSocketIdReceived?.call(_socketId!);
+        _isConnected = true;
+        _reconnectAttempts = 0; // إعادة تعيين محاولات إعادة الاتصال بعد نجاح فعلي
+        _lastPongAt = DateTime.now();
+        if (_socketId != null) {
+          if (_socketIdCompleter != null && !_socketIdCompleter!.isCompleted) {
+            _socketIdCompleter!.complete(_socketId!);
+          }
+          onSocketIdReceived?.call(_socketId!);
+        }
+        onConnected?.call();
+
+        // إعادة الاشتراك في القنوات المشتركة سابقاً بعد جاهزية socket_id
+        if (_subscribedChannels.isNotEmpty) {
+          for (final channel in _subscribedChannels) {
+            try {
+              await subscribeToPrivateChannel(channel);
+            } catch (e) {
+              if (kDebugMode) print('❌ Error re-subscribing to $channel: $e');
+            }
+          }
+        }
       } else if (event == 'pusher:pong') {
         // استجابة ping - الاتصال لا يزال نشطاً
+        _lastPongAt = DateTime.now();
         if (kDebugMode) print('🏓 Pong received');
+      } else if (event == 'pusher:ping') {
+        // بعض السيرفرات ترسل ping من طرفها
+        try {
+          final pongMessage = jsonEncode({'event': 'pusher:pong', 'data': {}});
+          _channel?.sink.add(pongMessage);
+        } catch (_) {}
       } else if (event == 'pusher:error') {
         final errorData = jsonDecode(data['data'] as String);
         if (kDebugMode) print('❌ Pusher error: $errorData');
@@ -189,6 +213,11 @@ class ReverbService {
 
   /// الاشتراك في قناة خاصة (Private Channel)
   Future<void> subscribeToPrivateChannel(String channelName) async {
+    if (_socketId == null) {
+      if (_socketIdCompleter != null) {
+        await _socketIdCompleter!.future;
+      }
+    }
     if (!_isConnected || _socketId == null) {
       throw Exception('Not connected to Reverb. Socket ID: $_socketId');
     }
@@ -301,8 +330,7 @@ class ReverbService {
     _shouldReconnect = false; // منع إعادة الاتصال
     _stopPingTimer();
     _stopReconnectTimer();
-    _channel?.sink.close();
-    _channel = null;
+    _closeCurrentSocket();
     _socketId = null;
     _isConnected = false;
     _subscribedChannels.clear();
@@ -311,28 +339,18 @@ class ReverbService {
 
   /// جدولة إعادة الاتصال
   void _scheduleReconnect() {
-    if (!_shouldReconnect || _isReconnecting) {
-      return;
-    }
-
-    if (_reconnectAttempts >= _maxReconnectAttempts) {
-      if (kDebugMode) {
-        print('❌ Max reconnect attempts reached. Stopping reconnection.');
-      }
-      _shouldReconnect = false;
+    if (_isDisposed || !_shouldReconnect || _isReconnecting) {
       return;
     }
 
     _reconnectAttempts++;
     _isReconnecting = true;
 
-    final delay = Duration(
-      milliseconds: _reconnectDelay.inMilliseconds * _reconnectAttempts,
-    );
+    final delay = _computeReconnectDelay(_reconnectAttempts);
 
     if (kDebugMode) {
       print(
-        '🔄 Scheduling reconnect attempt $_reconnectAttempts/$_maxReconnectAttempts in ${delay.inSeconds}s...',
+        '🔄 Scheduling reconnect attempt $_reconnectAttempts in ${delay.inSeconds}s...',
       );
     }
 
@@ -355,6 +373,15 @@ class ReverbService {
     _pingTimer = Timer.periodic(_pingInterval, (timer) {
       if (_isConnected && _channel != null) {
         try {
+          final lastPong = _lastPongAt;
+          if (lastPong != null &&
+              DateTime.now().difference(lastPong) > _pongTimeout) {
+            if (kDebugMode) {
+              print('⚠️ Pong timeout exceeded, forcing reconnect...');
+            }
+            _forceReconnect();
+            return;
+          }
           final pingMessage = jsonEncode({'event': 'pusher:ping', 'data': {}});
           _channel?.sink.add(pingMessage);
           if (kDebugMode) print('🏓 Ping sent');
@@ -393,4 +420,42 @@ class ReverbService {
 
   bool get isConnected => _isConnected;
   String? get socketId => _socketId;
+
+  Duration _computeReconnectDelay(int attempt) {
+    // Backoff أسي مع سقف (تقريباً: 1s, 2s, 4s, 8s... حتى 30s)
+    final ms =
+        (_reconnectBaseDelay.inMilliseconds * (1 << (attempt - 1))).clamp(
+          _reconnectBaseDelay.inMilliseconds,
+          _reconnectMaxDelay.inMilliseconds,
+        );
+    return Duration(milliseconds: ms);
+  }
+
+  void _forceReconnect() {
+    if (_isDisposed) return;
+    _isConnected = false;
+    _stopPingTimer();
+    _closeCurrentSocket();
+    if (_shouldReconnect) {
+      _isReconnecting = false;
+      _scheduleReconnect();
+    }
+  }
+
+  Future<void> _closeCurrentSocket() async {
+    try {
+      await _socketSubscription?.cancel();
+    } catch (_) {}
+    _socketSubscription = null;
+
+    try {
+      await _channel?.sink.close();
+    } catch (_) {}
+    _channel = null;
+  }
+
+  void dispose() {
+    _isDisposed = true;
+    disconnect();
+  }
 }

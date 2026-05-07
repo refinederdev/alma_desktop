@@ -1,7 +1,7 @@
 name: alma_desktop
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.4
+version: 0.1.5
 
 environment:
   sdk: ^3.11.4
@@ -13,6 +13,7 @@ dependencies:
   emoji_picker_flutter: ^4.4.0
   equatable: ^2.0.8
   file_picker: ^11.0.2
+  http: ^1.5.0
   flutter:
     sdk: flutter
   flutter_localizations:

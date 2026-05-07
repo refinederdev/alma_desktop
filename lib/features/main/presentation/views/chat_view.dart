@@ -10,6 +10,7 @@ import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/chat_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/crm_kanban_controller.dart';
+import 'package:alma_desktop/features/main/domain/entities/company_location.dart';
 import 'package:dio/dio.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -1066,9 +1067,7 @@ class _AudioPreviewState extends State<_AudioPreview> {
   @override
   void initState() {
     super.initState();
-    if (!Platform.isWindows) {
-      _ensurePlayer();
-    }
+    _ensurePlayer();
   }
 
   @override
@@ -1179,11 +1178,6 @@ class _AudioPreviewState extends State<_AudioPreview> {
   }
 
   Future<void> _togglePlayback() async {
-    if (Platform.isWindows) {
-      await _openMediaExternally(widget.mediaUrl);
-      return;
-    }
-
     final player = _ensurePlayer();
     if (_isPlaying) {
       await player.pause();
@@ -1194,14 +1188,20 @@ class _AudioPreviewState extends State<_AudioPreview> {
     try {
       await player.play(UrlSource(widget.mediaUrl));
     } catch (_) {
+      if (Platform.isWindows) {
+        await _openMediaExternally(widget.mediaUrl);
+      }
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: 'Could not play this audio message.',
+        message: Platform.isWindows
+            ? 'Could not play this audio message inside the app. Tried opening it externally.'
+            : 'Could not play this audio message.',
       );
     } finally {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -1328,8 +1328,9 @@ class _MediaDownloadButtonState extends State<_MediaDownloadButton> {
         message: 'فشل تنزيل الملف: $message',
       );
     } finally {
-      if (!mounted) return;
-      setState(() => _isDownloading = false);
+      if (mounted) {
+        setState(() => _isDownloading = false);
+      }
     }
   }
 }
@@ -1633,6 +1634,13 @@ class _Composer extends StatelessWidget {
                 icon: Icon(Icons.emoji_emotions_outlined, size: 20.sp),
               ),
               IconButton(
+                tooltip: 'إرسال موقع فرع',
+                onPressed: disabled
+                    ? null
+                    : () => _openCompanyLocationsPicker(context, controller),
+                icon: Icon(Icons.location_on_outlined, size: 20.sp),
+              ),
+              IconButton(
                 tooltip: 'Media',
                 onPressed: disabled
                     ? null
@@ -1860,6 +1868,119 @@ class _AttachmentTile extends StatelessWidget {
       trailing: Icon(Icons.chevron_right_rounded, color: AppTheme.gray300),
     );
   }
+}
+
+Future<void> _openCompanyLocationsPicker(
+  BuildContext context,
+  ChatController controller,
+) async {
+  await controller.loadCompanyLocations();
+  if (!context.mounted) return;
+
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppTheme.baseWhite,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+    ),
+    builder: (_) {
+      return SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(12.w),
+          child: SizedBox(
+            height: 420.h,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'اختر فرعاً لإرسال موقعه',
+                        style: AppStyles.titleSmall.copyWith(
+                          color: AppTheme.gray800,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'تحديث',
+                      onPressed: controller.isLoadingCompanyLocations
+                          ? null
+                          : () => controller.loadCompanyLocations(force: true),
+                      icon: controller.isLoadingCompanyLocations
+                          ? SizedBox(
+                              width: 16.w,
+                              height: 16.w,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Icon(Icons.refresh_rounded, size: 18.sp),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Expanded(
+                  child: controller.isLoadingCompanyLocations
+                      ? const Center(child: CircularProgressIndicator())
+                      : controller.companyLocations.isEmpty
+                      ? Center(
+                          child: Text(
+                            controller.companyLocationsErrorMessage ??
+                                'لا توجد فروع.',
+                            style: AppStyles.bodyMedium.copyWith(
+                              color: AppTheme.gray300,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: controller.companyLocations.length,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1.h,
+                            color: AppTheme.gray50,
+                          ),
+                          itemBuilder: (context, index) {
+                            final CompanyLocation loc =
+                                controller.companyLocations[index];
+                            return ListTile(
+                              leading: Icon(
+                                Icons.location_on_rounded,
+                                color: AppTheme.brandMain2_600,
+                              ),
+                              title: Text(
+                                loc.name,
+                                style: AppStyles.titleSmall.copyWith(
+                                  color: AppTheme.gray700,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: (loc.address != null &&
+                                      loc.address!.trim().isNotEmpty)
+                                  ? Text(
+                                      loc.address!,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppStyles.bodySmall.copyWith(
+                                        color: AppTheme.gray400,
+                                      ),
+                                    )
+                                  : null,
+                              onTap: () async {
+                                Get.back();
+                                await controller.sendLocationMessage(loc.id);
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 String _sanitizeInvalidUtf16(String input) {

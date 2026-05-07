@@ -4,6 +4,7 @@ import 'package:alma_desktop/features/main/domain/entities/agent.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance_time_total.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance_weekly_stat.dart';
+import 'package:alma_desktop/features/main/domain/entities/company_location.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_stats.dart';
@@ -14,6 +15,11 @@ import 'package:alma_desktop/features/main/domain/entities/notification_unread_c
 import 'package:dartz/dartz.dart';
 
 abstract class MainRepository {
+  Future<Either<Failure, List<CompanyLocation>>> getCompanyLocations({
+    bool? activeOnly,
+    bool? isActive,
+  });
+
   Future<Either<Failure, Paginator<Deal>>> getOpenDeals({
     int page = 1,
     int perPage = 15,
@@ -43,6 +49,7 @@ abstract class MainRepository {
     String? messageType,
     required bool fromMe,
     String? mediaPath,
+    int? locationId,
   });
 
   Future<Either<Failure, DealMessage>> updateMessage({

@@ -6,6 +6,7 @@ import 'package:alma_desktop/features/main/domain/entities/agent.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance_time_total.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance_weekly_stat.dart';
+import 'package:alma_desktop/features/main/domain/entities/company_location.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_stats.dart';
@@ -20,6 +21,22 @@ class MainRepositoryImpl implements MainRepository {
   final MainRemoteDataSource mainRemoteDataSource;
 
   MainRepositoryImpl({required this.mainRemoteDataSource});
+
+  @override
+  Future<Either<Failure, List<CompanyLocation>>> getCompanyLocations({
+    bool? activeOnly,
+    bool? isActive,
+  }) async {
+    try {
+      final result = await mainRemoteDataSource.getCompanyLocations(
+        activeOnly: activeOnly,
+        isActive: isActive,
+      );
+      return Right(List<CompanyLocation>.from(result));
+    } on CustomException catch (e) {
+      return Left(ServerFailure(exception: e, message: e.message));
+    }
+  }
 
   @override
   Future<Either<Failure, Paginator<Deal>>> getOpenDeals({
@@ -144,6 +161,7 @@ class MainRepositoryImpl implements MainRepository {
     String? messageType,
     required bool fromMe,
     String? mediaPath,
+    int? locationId,
   }) async {
     try {
       final result = await mainRemoteDataSource.sendMessage(
@@ -152,6 +170,7 @@ class MainRepositoryImpl implements MainRepository {
         messageType: messageType,
         fromMe: fromMe,
         mediaPath: mediaPath,
+        locationId: locationId,
       );
       return Right(result);
     } on CustomException catch (e) {

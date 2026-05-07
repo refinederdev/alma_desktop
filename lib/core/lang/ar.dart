@@ -121,6 +121,7 @@ class ArLang {
     'failed_to_load_open_deals': 'تعذر تحميل الصفقات المفتوحة.',
     'failed_to_load_won_deals': 'تعذر تحميل الصفقات المربوحة.',
     'failed_to_load_lost_deals': 'تعذر تحميل الصفقات المفقودة.',
+    'failed_to_load_locations': 'تعذر تحميل الفروع.',
     'failed_to_move_deal': 'تعذر نقل الصفقة. حاول مرة أخرى.',
     'open_deals': 'الصفقات المفتوحة',
     'open_chat': 'فتح المحادثة',

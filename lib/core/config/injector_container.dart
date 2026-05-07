@@ -29,6 +29,7 @@ import 'package:alma_desktop/features/main/domain/usecases/get_messages_stats_us
 import 'package:alma_desktop/features/main/domain/usecases/get_weekly_stats_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_deal_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_agents_use_case.dart';
+import 'package:alma_desktop/features/main/domain/usecases/get_company_locations_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/delete_notification_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_deal_by_id_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_deal_messages_use_case.dart';
@@ -204,6 +205,10 @@ class MainFeatureInjector {
     // UseCases
     Get.lazyPut(
       () => GetDealByIdUseCase(mainRepository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => GetCompanyLocationsUseCase(mainRepository: Get.find()),
       fenix: true,
     );
     Get.lazyPut(
