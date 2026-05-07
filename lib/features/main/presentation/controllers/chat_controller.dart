@@ -174,11 +174,20 @@ class ChatController extends GetxController {
 
     allDeals = deduplicated;
     _lastDealsLoadedAt = DateTime.now();
+
+    // Keep the currently opened chat pinned in state even if it is not in the
+    // first fetched page (pagination), so realtime updates don't force-reset it.
+    if (selectedDeal != null &&
+        !allDeals.any((deal) => deal.id == selectedDeal!.id)) {
+      allDeals = [selectedDeal!, ...allDeals];
+      _sortDealsByLatestMessage();
+    }
+
     _applySearch();
 
     if (selectedDeal == null && filteredDeals.isNotEmpty) {
       await selectDeal(filteredDeals.first, silentLoading: true);
-    } else if (selectedDeal != null) {
+    } else if (selectedDeal != null && !refresh) {
       final stillExists = allDeals.any((deal) => deal.id == selectedDeal!.id);
       if (!stillExists) {
         selectedDeal = null;
@@ -460,6 +469,7 @@ class ChatController extends GetxController {
       return;
     }
 
+    _upsertDealLocally(deal);
     selectedDeal = deal;
     _markDealAsRead(deal.id);
     final cachedMessages = _messagesCache[deal.id];
@@ -1052,6 +1062,9 @@ class ChatController extends GetxController {
 
     if (existingIndex >= 0) {
       baseDeal = allDeals[existingIndex];
+    } else if (selectedDeal?.id == dealId) {
+      // Selected chat may be outside the loaded page list.
+      baseDeal = selectedDeal;
     } else {
       if (!DealModel.canParseFromJson(dealData)) return false;
       try {
@@ -1060,6 +1073,8 @@ class ChatController extends GetxController {
         return false;
       }
     }
+
+    if (baseDeal == null) return false;
 
     if (!baseDeal.isOpen || baseDeal.status != 'open') return false;
 
@@ -1300,6 +1315,18 @@ class ChatController extends GetxController {
       map[deal.id] = deal;
     }
     return map.values.toList();
+  }
+
+  void _upsertDealLocally(Deal deal) {
+    final existingIndex = allDeals.indexWhere((item) => item.id == deal.id);
+    if (existingIndex >= 0) {
+      final next = List<Deal>.from(allDeals)..removeAt(existingIndex);
+      allDeals = [deal, ...next];
+    } else {
+      allDeals = [deal, ...allDeals];
+    }
+    _sortDealsByLatestMessage();
+    _applySearch();
   }
 
   void _applySearch() {

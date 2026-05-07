@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:alma_desktop/core/config/app_config.dart';
 import 'package:dio/dio.dart';
@@ -10,14 +11,17 @@ class UpdateInfo {
     required this.latestVersion,
     required this.downloadUrl,
     required this.releaseNotes,
+    this.checkError,
   });
 
   final String currentVersion;
   final String latestVersion;
   final String? downloadUrl;
   final String releaseNotes;
+  final String? checkError;
 
   bool get hasUpdate =>
+      checkError == null &&
       AppUpdateService
           ._normalizeVersion(latestVersion)
           .compareTo(AppUpdateService._normalizeVersion(currentVersion)) >
@@ -25,7 +29,15 @@ class UpdateInfo {
 }
 
 class AppUpdateService {
-  AppUpdateService({Dio? dio}) : _dio = dio ?? Dio();
+  AppUpdateService({Dio? dio})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              connectTimeout: const Duration(seconds: 12),
+              receiveTimeout: const Duration(seconds: 20),
+            ),
+          );
 
   final Dio _dio;
 
@@ -36,21 +48,26 @@ class AppUpdateService {
 
   Future<UpdateInfo> checkForUpdate() async {
     final currentVersion = await getCurrentVersion();
+    Object? manifestError;
     try {
       final manifest = await _fetchServerManifest();
       return _buildUpdateInfoFromManifest(
         currentVersion: currentVersion,
         manifest: manifest,
       );
-    } catch (_) {
+    } catch (error) {
+      manifestError = error;
       try {
         final files = await _fetchServerFilesFromDirectory();
         return _buildUpdateInfoFromDirectoryFiles(
           currentVersion: currentVersion,
           files: files,
         );
-      } catch (_) {
-        return _safeNoUpdate(currentVersion);
+      } catch (directoryError) {
+        final combinedError =
+            'manifest=${_describeError(manifestError)}; '
+            'directory=${_describeError(directoryError)}';
+        return _safeNoUpdate(currentVersion, checkError: combinedError);
       }
     }
   }
@@ -59,7 +76,7 @@ class AppUpdateService {
     required String url,
     required void Function(int received, int total) onProgress,
   }) async {
-    final fileName = url.split('/').last.isNotEmpty ? url.split('/').last : '';
+    final fileName = _extractFileNameFromUrl(url);
     final dir = await Directory.systemTemp.createTemp('alma_update_');
     final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
     final safeFileName =
@@ -125,7 +142,15 @@ class AppUpdateService {
         },
       ),
     );
-    return (response.data as Map).cast<String, dynamic>();
+    final data = response.data;
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return data.cast<String, dynamic>();
+    if (data is String && data.trim().isNotEmpty) {
+      final decoded = jsonDecode(data);
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) return decoded.cast<String, dynamic>();
+    }
+    throw const FormatException('Invalid updates manifest format.');
   }
 
   UpdateInfo _buildUpdateInfoFromManifest({
@@ -155,6 +180,7 @@ class AppUpdateService {
       latestVersion: latestVersion,
       downloadUrl: downloadUrl == null || downloadUrl.isEmpty ? null : downloadUrl,
       releaseNotes: (manifest['notes'] ?? '').toString(),
+      checkError: null,
     );
   }
 
@@ -208,7 +234,7 @@ class AppUpdateService {
   }
 
   bool _isPlatformFile(String href) {
-    final value = href.toLowerCase();
+    final value = _sanitizeLink(href).toLowerCase();
     if (Platform.isWindows) {
       return value.endsWith('.exe');
     }
@@ -222,7 +248,10 @@ class AppUpdateService {
   }
 
   String? _extractVersionFromText(String text) {
-    final match = RegExp(r'v(\d+\.\d+\.\d+)', caseSensitive: false).firstMatch(text);
+    final match = RegExp(
+      r'(?:^|[^0-9])v?(\d+\.\d+\.\d+(?:\.\d+)?)',
+      caseSensitive: false,
+    ).firstMatch(text);
     return match?.group(1);
   }
 
@@ -232,12 +261,41 @@ class AppUpdateService {
     return '${AppConfig.appUpdatesBaseUrl}/$cleanHref';
   }
 
-  UpdateInfo _safeNoUpdate(String currentVersion) {
+  UpdateInfo _safeNoUpdate(String currentVersion, {String? checkError}) {
     return UpdateInfo(
       currentVersion: currentVersion,
       latestVersion: currentVersion,
       downloadUrl: null,
       releaseNotes: '',
+      checkError: checkError,
     );
+  }
+
+  String _extractFileNameFromUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return '';
+    if (uri.pathSegments.isEmpty) return '';
+    return uri.pathSegments.last;
+  }
+
+  String _sanitizeLink(String href) {
+    final uri = Uri.tryParse(href);
+    if (uri == null) return href;
+    final sanitized = uri.replace(query: null, fragment: null);
+    return sanitized.toString();
+  }
+
+  String _describeError(Object? error) {
+    if (error == null) return 'unknown';
+    if (error is DioException) {
+      final code = error.response?.statusCode;
+      final message = error.message?.trim();
+      if (code != null && message != null && message.isNotEmpty) {
+        return 'http:$code $message';
+      }
+      if (code != null) return 'http:$code';
+      if (message != null && message.isNotEmpty) return message;
+    }
+    return error.toString();
   }
 }
