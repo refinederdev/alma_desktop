@@ -1070,7 +1070,11 @@ class _AudioPreviewState extends State<_AudioPreview> {
   @override
   void initState() {
     super.initState();
-    _ensurePlayer();
+    if (Platform.isWindows) {
+      _ensureWindowsPlayer();
+    } else {
+      _ensurePlayer();
+    }
   }
 
   @override
@@ -1222,6 +1226,12 @@ class _AudioPreviewState extends State<_AudioPreview> {
         await player.open(mk.Media(widget.mediaUrl), play: true);
         _windowsMediaOpened = true;
       } else {
+        final isAtEnd =
+            _duration.inMilliseconds > 0 &&
+            _position.inMilliseconds >= (_duration.inMilliseconds - 500);
+        if (isAtEnd) {
+          await player.seek(Duration.zero);
+        }
         await player.play();
       }
     } catch (_) {
@@ -1309,7 +1319,6 @@ class _AudioPreviewState extends State<_AudioPreview> {
         _isPlaying = false;
         _position = Duration.zero;
       });
-      created.seek(Duration.zero);
     });
 
     _windowsPlayer = created;

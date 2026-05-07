@@ -92,6 +92,25 @@ class UpdateView extends GetView<UpdateController> {
                           ),
                         ),
                     ],
+                    if (c.technicalIssueDetails != null) ...[
+                      SizedBox(height: 10.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(10.w),
+                        decoration: BoxDecoration(
+                          color: AppTheme.gray25,
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(color: AppTheme.gray50),
+                        ),
+                        child: Text(
+                          'Debug: ${c.technicalIssueDetails}',
+                          style: AppStyles.bodySmall.copyWith(
+                            color: AppTheme.gray700,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                    ],
                     if (c.isDownloading) ...[
                       SizedBox(height: 14.h),
                       LinearProgressIndicator(value: c.downloadProgress),

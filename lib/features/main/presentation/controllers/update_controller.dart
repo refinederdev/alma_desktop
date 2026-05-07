@@ -1,5 +1,6 @@
 import 'package:alma_desktop/core/errors/app_messages.dart';
 import 'package:alma_desktop/core/services/app_update_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 
@@ -15,6 +16,13 @@ class UpdateController extends GetxController {
   String? errorMessage;
   UpdateInfo? updateInfo;
   String currentVersion = '--';
+
+  /// Detailed technical reason for update-check failures.
+  /// Exposed in debug mode to speed up troubleshooting.
+  String? get technicalIssueDetails {
+    if (!kDebugMode) return null;
+    return updateInfo?.checkError;
+  }
 
   @override
   void onInit() {
