@@ -1,12 +1,15 @@
 import 'dart:ui';
 
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 
 import 'app_styles.dart';
 
-class AppTheme extends GetxController {
+/// لوحة الألوان الثابتة + بناة [ThemeData] للوضع الفاتح والداكن.
+abstract final class AppTheme {
+  AppTheme._();
+
   /* ----------------------------------------------------
    * BRAND COLORS (From Colors Guide)
    * -------------------------------------------------- */
@@ -113,7 +116,7 @@ class AppTheme extends GetxController {
   );
 
   /* ----------------------------------------------------
-   * SHADOWS
+   * SHADOWS (ثابتة — يُفضّل [AlmaTokens.shadowXS] حسب السمة)
    * -------------------------------------------------- */
 
   static List<BoxShadow> shadowXS = [
@@ -142,65 +145,130 @@ class AppTheme extends GetxController {
    * THEME DATA
    * -------------------------------------------------- */
 
-  static ThemeData appTheme = ThemeData(
-    useMaterial3: false,
-    scaffoldBackgroundColor: baseWhite,
-    fontFamily: "IBMPlexSansArabic",
-    colorScheme: ColorScheme.light(
-      primary: brandMain2,
-      secondary: brandMain,
-      error: error500,
-      surface: baseWhite,
-      onPrimary: baseWhite,
-      onSecondary: baseWhite,
-      onError: baseWhite,
-      onSurface: gray800,
-    ),
-    textTheme: const TextTheme().apply(
-      fontSizeFactor: 1.sp,
-      bodyColor: gray800,
-      displayColor: gray800,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: true,
-      titleTextStyle: AppStyles.titleMedium.copyWith(
-        color: gray800,
-        fontFamily: "IBMPlexSansArabic",
+  static ThemeData get lightTheme => _buildTheme(brightness: Brightness.light);
+
+  static ThemeData get darkTheme => _buildTheme(brightness: Brightness.dark);
+
+  /// للتوافق مع الكود القديم
+  static ThemeData get appTheme => lightTheme;
+
+  static ThemeData _buildTheme({required Brightness brightness}) {
+    final isDark = brightness == Brightness.dark;
+    final tokens = isDark ? AlmaTokens.dark : AlmaTokens.light;
+
+    final colorScheme = isDark
+        ? ColorScheme.dark(
+            primary: brandMain2_400,
+            secondary: brandMain300,
+            error: error400,
+            surface: tokens.surface,
+            onPrimary: baseWhite,
+            onSecondary: gray900,
+            onError: baseWhite,
+            onSurface: tokens.onSurface,
+          )
+        : ColorScheme.light(
+            primary: brandMain2,
+            secondary: brandMain,
+            error: error500,
+            surface: tokens.surface,
+            onPrimary: baseWhite,
+            onSecondary: baseWhite,
+            onError: baseWhite,
+            onSurface: tokens.onSurface,
+          );
+
+    final borderColor = tokens.outlineVariant;
+    final fillColor = tokens.inputFill.withValues(alpha: isDark ? 0.85 : 0.5);
+
+    return ThemeData(
+      useMaterial3: false,
+      brightness: brightness,
+      scaffoldBackgroundColor: tokens.scaffoldBg,
+      fontFamily: 'IBMPlexSansArabic',
+      colorScheme: colorScheme,
+      extensions: <ThemeExtension<dynamic>>[tokens],
+      textTheme: TextTheme(
+        displayLarge: AppStyles.displayLarge.copyWith(color: tokens.onSurface),
+        displayMedium:
+            AppStyles.displayMedium.copyWith(color: tokens.onSurface),
+        displaySmall: AppStyles.displaySmall.copyWith(color: tokens.onSurface),
+        headlineLarge:
+            AppStyles.headlineLarge.copyWith(color: tokens.onSurface),
+        headlineMedium:
+            AppStyles.headlineMedium.copyWith(color: tokens.onSurface),
+        headlineSmall:
+            AppStyles.headlineSmall.copyWith(color: tokens.onSurface),
+        titleLarge: AppStyles.titleLarge.copyWith(color: tokens.onSurface),
+        titleMedium: AppStyles.titleMedium.copyWith(color: tokens.onSurface),
+        titleSmall: AppStyles.titleSmall.copyWith(color: tokens.onSurface),
+        bodyLarge: AppStyles.bodyLarge.copyWith(color: tokens.onSurface),
+        bodyMedium: AppStyles.bodyMedium.copyWith(color: tokens.onSurface),
+        bodySmall: AppStyles.bodySmall.copyWith(color: tokens.onSurface),
+        labelLarge: AppStyles.labelLarge.copyWith(color: tokens.onSurface),
+        labelMedium: AppStyles.labelMedium.copyWith(color: tokens.onSurface),
+        labelSmall: AppStyles.labelSmall.copyWith(color: tokens.onSurface),
       ),
-      foregroundColor: gray800,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: brandMain2,
-        foregroundColor: baseWhite,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: AppStyles.titleMedium.copyWith(
+          color: tokens.onSurface,
+          fontFamily: 'IBMPlexSansArabic',
+        ),
+        foregroundColor: tokens.onSurface,
       ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: gray50.withValues(alpha: 0.5),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        borderSide: const BorderSide(color: gray100),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: brandMain2,
+          foregroundColor: baseWhite,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        ),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        borderSide: const BorderSide(color: gray100),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: tokens.onSurface,
+          side: BorderSide(color: tokens.outline),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+        ),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        borderSide: const BorderSide(color: brandMain2),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: fillColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: BorderSide(color: borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: BorderSide(color: borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: const BorderSide(color: brandMain2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: const BorderSide(color: error500),
+        ),
+        iconColor: tokens.onSurfaceHint,
+        hintStyle:
+            AppStyles.labelMedium.copyWith(color: tokens.onSurfaceSecondary),
+        contentPadding:
+            EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        borderSide: const BorderSide(color: error500),
+      dividerTheme: DividerThemeData(color: tokens.divider, thickness: 1),
+      dialogTheme: DialogThemeData(backgroundColor: tokens.surface),
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStatePropertyAll(
+          tokens.onSurfaceHint.withValues(alpha: 0.45),
+        ),
+        radius: Radius.circular(8.r),
       ),
-      iconColor: gray300,
-      hintStyle: AppStyles.labelMedium.copyWith(color: gray500),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-    ),
-  );
+    );
+  }
 }

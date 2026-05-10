@@ -14,6 +14,7 @@ class GlobalController extends GetxController {
 
   String? token;
   Locale currentLocale = Locale('ar', 'SA');
+  ThemeMode themeMode = ThemeMode.system;
   User? user;
 
   Future<void> checkIfUserIsLoggedIn() async {
@@ -32,6 +33,27 @@ class GlobalController extends GetxController {
     if (locale != null) {
       currentLocale = Locale(locale, 'SA');
     }
+    update();
+  }
+
+  void getThemeMode() {
+    final raw = Get.find<LocalStorageService>().getString('themeMode');
+    themeMode = switch (raw) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+    update();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    themeMode = mode;
+    final stored = switch (mode) {
+      ThemeMode.light => 'light',
+      ThemeMode.dark => 'dark',
+      ThemeMode.system => 'system',
+    };
+    Get.find<LocalStorageService>().setString('themeMode', stored);
     update();
   }
 
@@ -63,5 +85,6 @@ class GlobalController extends GetxController {
     // clearLogedIn();
     checkIfUserIsLoggedIn();
     getLocale();
+    getThemeMode();
   }
 }

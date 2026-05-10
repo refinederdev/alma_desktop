@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -78,13 +79,14 @@ class _AppOtpFieldState extends State<AppOtpField> {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.label != null) ...[
           Text(
             widget.label!,
-            style: AppStyles.titleSmall.copyWith(color: AppTheme.gray800),
+            style: AppStyles.titleSmall.copyWith(color: alma.onSurface),
           ),
           SizedBox(height: 8.h),
         ],
@@ -106,7 +108,7 @@ class _AppOtpFieldState extends State<AppOtpField> {
                   style: AppStyles.titleLarge.copyWith(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.baseBlack,
+                    color: alma.otpCaret,
                   ),
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (value) => _handleTextChanged(value, index),
@@ -120,14 +122,14 @@ class _AppOtpFieldState extends State<AppOtpField> {
                   decoration: InputDecoration(
                     counterText: '',
                     filled: true,
-                    fillColor: AppTheme.gray25,
+                    fillColor: alma.inputFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
-                      borderSide: const BorderSide(color: AppTheme.gray100),
+                      borderSide: BorderSide(color: alma.outlineVariant),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
-                      borderSide: const BorderSide(color: AppTheme.gray100),
+                      borderSide: BorderSide(color: alma.outlineVariant),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),

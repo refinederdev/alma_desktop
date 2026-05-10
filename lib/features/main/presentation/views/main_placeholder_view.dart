@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,14 +18,15 @@ class MainPlaceholderView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Center(
       child: Container(
         width: 420.w,
         padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
-          color: AppTheme.gray25,
+          color: alma.surfaceVariant,
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: AppTheme.gray50),
+          border: Border.all(color: alma.outline),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -34,7 +36,7 @@ class MainPlaceholderView extends StatelessWidget {
             Text(
               title,
               style: AppStyles.titleMedium.copyWith(
-                color: AppTheme.gray800,
+                color: alma.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -42,7 +44,8 @@ class MainPlaceholderView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+              style: AppStyles.bodySmall
+                  .copyWith(color: alma.onSurfaceTertiary),
             ),
           ],
         ),

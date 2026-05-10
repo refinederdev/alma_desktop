@@ -19,19 +19,25 @@ class App extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, _) {
-        return GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          getPages: AppRoutes.routes,
-          theme: AppTheme.appTheme,
-          translations: Languages(),
-          locale: GlobalController.to.currentLocale,
-          localizationsDelegates: [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: GlobalController.to.supportedLocales,
-          initialRoute: AppRoutes.splash,
+        return GetBuilder<GlobalController>(
+          builder: (global) {
+            return GetMaterialApp(
+              debugShowCheckedModeBanner: false,
+              getPages: AppRoutes.routes,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: global.themeMode,
+              translations: Languages(),
+              locale: GlobalController.to.currentLocale,
+              localizationsDelegates: [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: GlobalController.to.supportedLocales,
+              initialRoute: AppRoutes.splash,
+            );
+          },
         );
       },
     );

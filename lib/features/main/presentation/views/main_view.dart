@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/alma_brand_logo.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/main_controller.dart';
@@ -11,8 +12,9 @@ class MainView extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Scaffold(
-      backgroundColor: AppTheme.gray25,
+      backgroundColor: alma.scaffoldBg,
       body: GetBuilder<MainController>(
         builder: (c) {
           return Row(
@@ -20,7 +22,7 @@ class MainView extends GetView<MainController> {
               _MainSidebar(controller: c),
               Expanded(
                 child: ColoredBox(
-                  color: AppTheme.baseWhite,
+                  color: alma.surface,
                   child: c.views[c.selectedIndex],
                 ),
               ),
@@ -39,6 +41,7 @@ class _MainSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.alma;
     final items = <_SidebarItemData>[
       _SidebarItemData(
         label: 'dashboard'.tr,
@@ -67,13 +70,13 @@ class _MainSidebar extends StatelessWidget {
       width: 280.w,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppTheme.brandMain2_600, AppTheme.brandMain2],
+          colors: [s.sidebarGradientTop, s.sidebarGradientBottom],
         ),
         border: Border(
-          right: BorderSide(color: AppTheme.baseWhite.withValues(alpha: 0.12)),
+          right: BorderSide(color: s.sidebarEdge),
         ),
       ),
       child: Column(
@@ -83,7 +86,7 @@ class _MainSidebar extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14.r),
-              color: AppTheme.baseWhite.withValues(alpha: 0.12),
+              color: s.sidebarLogoBackdrop,
             ),
             child: const AlmaBrandLogo(
               assetPath: 'assets/images/alma-full-logo.png',
@@ -129,6 +132,7 @@ class _SidebarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.alma;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -140,24 +144,22 @@ class _SidebarTile extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12.r),
-            color: isSelected
-                ? AppTheme.baseWhite.withValues(alpha: 0.14)
-                : Colors.transparent,
+            color: isSelected ? s.sidebarTileSelected : Colors.transparent,
             border: Border.all(
               color: isSelected
-                  ? AppTheme.brandMain300.withValues(alpha: 0.5)
-                  : AppTheme.baseWhite.withValues(alpha: 0.08),
+                  ? s.sidebarTileBorderActive
+                  : s.sidebarTileBorderIdle,
             ),
           ),
           child: Row(
             children: [
-              Icon(item.icon, color: AppTheme.baseWhite, size: 22.sp),
+              Icon(item.icon, color: s.sidebarForeground, size: 22.sp),
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(
                   item.label,
                   style: AppStyles.titleSmall.copyWith(
-                    color: AppTheme.baseWhite,
+                    color: s.sidebarForeground,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
@@ -177,6 +179,7 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.alma;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -194,7 +197,7 @@ class _LogoutButton extends StatelessWidget {
             children: [
               Icon(
                 Icons.logout_rounded,
-                color: AppTheme.baseWhite,
+                color: s.sidebarForeground,
                 size: 22.sp,
               ),
               SizedBox(width: 10.w),
@@ -202,7 +205,7 @@ class _LogoutButton extends StatelessWidget {
                 child: Text(
                   'logout'.tr,
                   style: AppStyles.titleSmall.copyWith(
-                    color: AppTheme.baseWhite,
+                    color: s.sidebarForeground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

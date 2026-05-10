@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance_weekly_stat.dart';
 import 'package:alma_desktop/features/main/domain/entities/message_line_chart_data.dart';
@@ -52,9 +53,9 @@ class _DashboardHeader extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: AppTheme.gray25,
+        color: context.alma.surfaceVariant,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Row(
         children: [
@@ -62,7 +63,7 @@ class _DashboardHeader extends StatelessWidget {
             child: Text(
               'general_overview'.tr,
               style: AppStyles.titleMedium.copyWith(
-                color: AppTheme.gray800,
+                color: context.alma.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -176,7 +177,7 @@ class _DashboardBody extends StatelessWidget {
                 title: 'this_week'.tr,
                 value: controller.weekTotal?.formattedTotalTime ?? '--',
                 icon: Icons.calendar_view_week_rounded,
-                color: AppTheme.gray700,
+                color: context.alma.onSurface,
               ),
             ],
           ),
@@ -207,9 +208,9 @@ class _AgentAttendanceCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: context.alma.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,7 +221,7 @@ class _AgentAttendanceCard extends StatelessWidget {
                 child: Text(
                   'track_working_time'.tr,
                   style: AppStyles.titleSmall.copyWith(
-                    color: AppTheme.gray800,
+                    color: context.alma.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -266,7 +267,7 @@ class _AgentAttendanceCard extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               'clock_in_to_start_timer'.tr,
-              style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+              style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
             ),
           ],
           if (controller.attendanceErrorMessage != null) ...[
@@ -301,9 +302,9 @@ class _StatCard extends StatelessWidget {
       width: 250.w,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: context.alma.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Row(
         children: [
@@ -323,13 +324,13 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+                  style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
                 ),
                 SizedBox(height: 2.h),
                 Text(
                   value,
                   style: AppStyles.titleLarge.copyWith(
-                    color: AppTheme.gray800,
+                    color: context.alma.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -354,9 +355,9 @@ class _MessagesStatsCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: context.alma.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +365,7 @@ class _MessagesStatsCard extends StatelessWidget {
           Text(
             'messages_stats'.tr,
             style: AppStyles.titleSmall.copyWith(
-              color: AppTheme.gray800,
+              color: context.alma.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -401,22 +402,22 @@ class _MiniStat extends StatelessWidget {
       width: 180.w,
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: AppTheme.gray25,
+        color: context.alma.surfaceVariant,
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: AppStyles.labelSmall.copyWith(color: AppTheme.gray400),
+            style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceTertiary),
           ),
           SizedBox(height: 2.h),
           Text(
             valueText ?? (value?.toString() ?? '--'),
             style: AppStyles.titleMedium.copyWith(
-              color: AppTheme.gray800,
+              color: context.alma.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -438,9 +439,9 @@ class _WeeklyAttendanceCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: context.alma.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,7 +449,7 @@ class _WeeklyAttendanceCard extends StatelessWidget {
           Text(
             'weekly_attendance'.tr,
             style: AppStyles.titleSmall.copyWith(
-              color: AppTheme.gray800,
+              color: context.alma.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -456,7 +457,7 @@ class _WeeklyAttendanceCard extends StatelessWidget {
           if (data.isEmpty)
             Text(
               'no_data_available'.tr,
-              style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+              style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
             )
           else
             SizedBox(
@@ -474,7 +475,7 @@ class _WeeklyAttendanceCard extends StatelessWidget {
                         children: [
                           Text(
                             item.hours.toStringAsFixed(1),
-                            style: AppStyles.labelSmall.copyWith(color: AppTheme.gray500),
+                            style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceSecondary),
                           ),
                           SizedBox(height: 6.h),
                           Container(
@@ -487,7 +488,7 @@ class _WeeklyAttendanceCard extends StatelessWidget {
                           SizedBox(height: 6.h),
                           Text(
                             item.day,
-                            style: AppStyles.labelSmall.copyWith(color: AppTheme.gray400),
+                            style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceTertiary),
                           ),
                         ],
                       ),
@@ -513,9 +514,9 @@ class _MessagesTrendCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: context.alma.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,7 +524,7 @@ class _MessagesTrendCard extends StatelessWidget {
           Text(
             'messages_trend'.tr,
             style: AppStyles.titleSmall.copyWith(
-              color: AppTheme.gray800,
+              color: context.alma.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -531,7 +532,7 @@ class _MessagesTrendCard extends StatelessWidget {
           if (data.isEmpty)
             Text(
               'no_data_available'.tr,
-              style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+              style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
             )
           else
             ...data.take(7).map(
@@ -543,7 +544,7 @@ class _MessagesTrendCard extends StatelessWidget {
                       width: 64.w,
                       child: Text(
                         '${item.date.day}/${item.date.month}',
-                        style: AppStyles.labelSmall.copyWith(color: AppTheme.gray500),
+                        style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceSecondary),
                       ),
                     ),
                     Expanded(
@@ -551,14 +552,14 @@ class _MessagesTrendCard extends StatelessWidget {
                         value: _ratio(item.sent, item.received),
                         minHeight: 8.h,
                         borderRadius: BorderRadius.circular(12.r),
-                        backgroundColor: AppTheme.gray50,
+                        backgroundColor: context.alma.outline,
                         color: AppTheme.success500,
                       ),
                     ),
                     SizedBox(width: 10.w),
                     Text(
                       '${item.sent}/${item.received}',
-                      style: AppStyles.labelSmall.copyWith(color: AppTheme.gray500),
+                      style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceSecondary),
                     ),
                   ],
                 ),

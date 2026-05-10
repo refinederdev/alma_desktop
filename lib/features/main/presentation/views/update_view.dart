@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/update_controller.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ class UpdateView extends GetView<UpdateController> {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return GetBuilder<UpdateController>(
       builder: (c) {
         final info = c.updateInfo;
@@ -20,9 +22,9 @@ class UpdateView extends GetView<UpdateController> {
             child: Container(
               padding: EdgeInsets.all(18.w),
               decoration: BoxDecoration(
-                color: AppTheme.baseWhite,
+                color: alma.surface,
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: AppTheme.gray50),
+                border: Border.all(color: alma.outline),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,14 +32,15 @@ class UpdateView extends GetView<UpdateController> {
                   Text(
                     'updates'.tr,
                     style: AppStyles.titleLarge.copyWith(
-                      color: AppTheme.gray900,
+                      color: alma.onSurfaceTitle,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
                     'updates_subtitle'.tr,
-                    style: AppStyles.bodyMedium.copyWith(color: AppTheme.gray400),
+                    style: AppStyles.bodyMedium
+                        .copyWith(color: alma.onSurfaceTertiary),
                   ),
                   SizedBox(height: 16.h),
                   if (c.isChecking)
@@ -82,13 +85,14 @@ class UpdateView extends GetView<UpdateController> {
                           width: double.infinity,
                           padding: EdgeInsets.all(12.w),
                           decoration: BoxDecoration(
-                            color: AppTheme.gray25,
+                            color: alma.surfaceVariant,
                             borderRadius: BorderRadius.circular(10.r),
-                            border: Border.all(color: AppTheme.gray50),
+                            border: Border.all(color: alma.outline),
                           ),
                           child: Text(
                             info.releaseNotes.trim(),
-                            style: AppStyles.bodySmall.copyWith(color: AppTheme.gray700),
+                            style: AppStyles.bodySmall
+                                .copyWith(color: alma.onSurface),
                           ),
                         ),
                     ],
@@ -98,14 +102,14 @@ class UpdateView extends GetView<UpdateController> {
                         width: double.infinity,
                         padding: EdgeInsets.all(10.w),
                         decoration: BoxDecoration(
-                          color: AppTheme.gray25,
+                          color: alma.surfaceVariant,
                           borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: AppTheme.gray50),
+                          border: Border.all(color: alma.outline),
                         ),
                         child: Text(
                           'Debug: ${c.technicalIssueDetails}',
                           style: AppStyles.bodySmall.copyWith(
-                            color: AppTheme.gray700,
+                            color: alma.onSurface,
                             fontFamily: 'monospace',
                           ),
                         ),
@@ -119,14 +123,16 @@ class UpdateView extends GetView<UpdateController> {
                         'downloading_update'.trParams({
                           'percent': (c.downloadProgress * 100).toStringAsFixed(0),
                         }),
-                        style: AppStyles.bodySmall.copyWith(color: AppTheme.gray500),
+                        style: AppStyles.bodySmall
+                            .copyWith(color: alma.onSurfaceSecondary),
                       ),
                     ],
                     if (c.isInstalling) ...[
                       SizedBox(height: 10.h),
                       Text(
                         'installing_update'.tr,
-                        style: AppStyles.bodySmall.copyWith(color: AppTheme.gray500),
+                        style: AppStyles.bodySmall
+                            .copyWith(color: alma.onSurfaceSecondary),
                       ),
                     ],
                     SizedBox(height: 16.h),
@@ -177,20 +183,22 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Row(
       children: [
         SizedBox(
           width: 180.w,
           child: Text(
             label,
-            style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+            style: AppStyles.bodySmall
+                .copyWith(color: alma.onSurfaceTertiary),
           ),
         ),
         Expanded(
           child: Text(
             value,
             style: AppStyles.bodyMedium.copyWith(
-              color: AppTheme.gray800,
+              color: alma.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),

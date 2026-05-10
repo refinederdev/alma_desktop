@@ -1,3 +1,4 @@
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_styles.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/app_button.dart';
@@ -18,7 +19,7 @@ class LoginView extends GetView<LoginController> {
     final isRtl = Directionality.of(context) == TextDirection.rtl;
 
     return Scaffold(
-      backgroundColor: AppTheme.gray25,
+      backgroundColor: context.alma.scaffoldBg,
       body: Row(
         textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
         children: [
@@ -134,8 +135,9 @@ class _GlowCircle extends StatelessWidget {
 class _FormPanel extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return ColoredBox(
-      color: AppTheme.gray25,
+      color: alma.scaffoldBg,
       child: Stack(
         children: [
           Positioned(
@@ -147,7 +149,7 @@ class _FormPanel extends GetView<LoginController> {
               onPressed: () => ChangeLocaleBottomSheet.show(context),
               icon: Icon(
                 Icons.language_rounded,
-                color: AppTheme.gray500,
+                color: alma.onSurfaceSecondary,
                 size: 26.sp,
               ),
             ),
@@ -160,10 +162,10 @@ class _FormPanel extends GetView<LoginController> {
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 36.w, vertical: 40.h),
                   decoration: BoxDecoration(
-                    color: AppTheme.baseWhite,
+                    color: alma.surface,
                     borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: AppTheme.shadowSM,
-                    border: Border.all(color: AppTheme.gray100),
+                    boxShadow: alma.shadowSM,
+                    border: Border.all(color: alma.outlineVariant),
                   ),
                   child: Form(
                     key: controller.formKey,
@@ -175,7 +177,7 @@ class _FormPanel extends GetView<LoginController> {
                             'login'.tr,
                             textAlign: TextAlign.center,
                             style: AppStyles.headlineSmall.copyWith(
-                              color: AppTheme.gray900,
+                              color: alma.onSurfaceTitle,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -184,7 +186,7 @@ class _FormPanel extends GetView<LoginController> {
                             'please_enter_your_details_to_login'.tr,
                             textAlign: TextAlign.center,
                             style: AppStyles.bodyMedium.copyWith(
-                              color: AppTheme.gray500,
+                              color: alma.onSurfaceSecondary,
                             ),
                           ),
                           SizedBox(height: 28.h),
@@ -201,7 +203,7 @@ class _FormPanel extends GetView<LoginController> {
                               validator: c.validateEmail,
                               prefixIcon: Icon(
                                 Icons.alternate_email_rounded,
-                                color: AppTheme.gray300,
+                                color: alma.onSurfaceHint,
                                 size: 22.sp,
                               ),
                             ),
@@ -227,7 +229,7 @@ class _FormPanel extends GetView<LoginController> {
                             onFieldSubmitted: (_) => c.login(),
                             prefixIcon: Icon(
                               Icons.lock_outline_rounded,
-                              color: AppTheme.gray300,
+                              color: alma.onSurfaceHint,
                               size: 22.sp,
                             ),
                             suffixIcon: IconButton(
@@ -237,7 +239,7 @@ class _FormPanel extends GetView<LoginController> {
                                 c.isPasswordVisible
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: AppTheme.gray400,
+                                color: alma.onSurfaceTertiary,
                                 size: 22.sp,
                               ),
                             ),
@@ -268,14 +270,15 @@ class _FormPanel extends GetView<LoginController> {
 class _MethodToggle extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return GetBuilder<LoginController>(
       builder: (c) {
         return Container(
           padding: EdgeInsets.all(4.w),
           decoration: BoxDecoration(
-            color: AppTheme.gray50.withValues(alpha: 0.8),
+            color: alma.outline.withValues(alpha: 0.65),
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: AppTheme.gray100),
+            border: Border.all(color: alma.outlineVariant),
           ),
           child: Row(
             children: [
@@ -315,6 +318,7 @@ class _ToggleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -325,15 +329,15 @@ class _ToggleChip extends StatelessWidget {
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(vertical: 12.h),
           decoration: BoxDecoration(
-            color: selected ? AppTheme.baseWhite : Colors.transparent,
+            color: selected ? alma.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(10.r),
-            boxShadow: selected ? AppTheme.shadowXS : null,
+            boxShadow: selected ? alma.shadowXS : null,
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: AppStyles.titleSmall.copyWith(
-              color: selected ? AppTheme.gray900 : AppTheme.gray500,
+              color: selected ? alma.onSurfaceTitle : alma.onSurfaceSecondary,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),

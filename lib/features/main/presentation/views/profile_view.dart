@@ -1,3 +1,4 @@
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_styles.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/app_button.dart';
@@ -26,17 +27,20 @@ class ProfileView extends GetView<ProfileController> {
                 Text(
                   'profile'.tr,
                   style: AppStyles.titleLarge.copyWith(
-                    color: AppTheme.gray900,
+                    color: context.alma.onSurfaceTitle,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 6.h),
                 Text(
                   user?.fullName ?? '',
-                  style: AppStyles.bodyMedium.copyWith(color: AppTheme.gray400),
+                  style: AppStyles.bodyMedium
+                      .copyWith(color: context.alma.onSurfaceTertiary),
                 ),
                 SizedBox(height: 16.h),
                 _ProfileCard(controller: c),
+                SizedBox(height: 14.h),
+                const _AppearanceCard(),
                 SizedBox(height: 14.h),
                 _LanguageCard(),
               ],
@@ -55,12 +59,13 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Container(
       padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: alma.surface,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: alma.outline),
       ),
       child: Form(
         key: controller.formKey,
@@ -70,7 +75,7 @@ class _ProfileCard extends StatelessWidget {
             Text(
               'edit_profile'.tr,
               style: AppStyles.titleMedium.copyWith(
-                color: AppTheme.gray800,
+                color: alma.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -137,19 +142,119 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
+class _AppearanceCard extends StatelessWidget {
+  const _AppearanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final alma = context.alma;
+    return GetBuilder<GlobalController>(
+      builder: (global) {
+        return Container(
+          padding: EdgeInsets.all(18.w),
+          decoration: BoxDecoration(
+            color: alma.surface,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: alma.outline),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'appearance'.tr,
+                style: AppStyles.titleMedium.copyWith(
+                  color: alma.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                'choose_theme_description'.tr,
+                style: AppStyles.bodySmall
+                    .copyWith(color: alma.onSurfaceTertiary),
+              ),
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 10.w,
+                runSpacing: 10.h,
+                children: [
+                  _ThemeModeChoice(
+                    label: 'theme_system'.tr,
+                    selected: global.themeMode == ThemeMode.system,
+                    onTap: () => global.setThemeMode(ThemeMode.system),
+                  ),
+                  _ThemeModeChoice(
+                    label: 'theme_light'.tr,
+                    selected: global.themeMode == ThemeMode.light,
+                    onTap: () => global.setThemeMode(ThemeMode.light),
+                  ),
+                  _ThemeModeChoice(
+                    label: 'theme_dark'.tr,
+                    selected: global.themeMode == ThemeMode.dark,
+                    onTap: () => global.setThemeMode(ThemeMode.dark),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ThemeModeChoice extends StatelessWidget {
+  const _ThemeModeChoice({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final alma = context.alma;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999.r),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999.r),
+          color: selected ? alma.selectionSoftBg : alma.surface,
+          border: Border.all(
+            color: selected ? AppTheme.brandMain2_600 : alma.outline,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppStyles.labelLarge.copyWith(
+            color: selected ? AppTheme.brandMain2_600 : alma.onSurfaceSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LanguageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return GetBuilder<GlobalController>(
-      init: GlobalController.to,
       builder: (global) {
         final isArabic = global.currentLocale.languageCode == 'ar';
         return Container(
           padding: EdgeInsets.all(18.w),
           decoration: BoxDecoration(
-            color: AppTheme.baseWhite,
+            color: alma.surface,
             borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: AppTheme.gray50),
+            border: Border.all(color: alma.outline),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,14 +262,15 @@ class _LanguageCard extends StatelessWidget {
               Text(
                 'change_language'.tr,
                 style: AppStyles.titleMedium.copyWith(
-                  color: AppTheme.gray800,
+                  color: alma.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(height: 6.h),
               Text(
                 'choose_interface_language'.tr,
-                style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+                style: AppStyles.bodySmall
+                    .copyWith(color: alma.onSurfaceTertiary),
               ),
               SizedBox(height: 12.h),
               Wrap(
@@ -204,6 +310,7 @@ class _LanguageChoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999.r),
@@ -212,15 +319,16 @@ class _LanguageChoice extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999.r),
-          color: selected ? AppTheme.brandMain2_100 : AppTheme.baseWhite,
+          color: selected ? alma.selectionSoftBg : alma.surface,
           border: Border.all(
-            color: selected ? AppTheme.brandMain2_600 : AppTheme.gray50,
+            color: selected ? AppTheme.brandMain2_600 : alma.outline,
           ),
         ),
         child: Text(
           label,
           style: AppStyles.labelLarge.copyWith(
-            color: selected ? AppTheme.brandMain2_600 : AppTheme.gray600,
+            color:
+                selected ? AppTheme.brandMain2_600 : alma.onSurfaceSecondary,
             fontWeight: FontWeight.w600,
           ),
         ),

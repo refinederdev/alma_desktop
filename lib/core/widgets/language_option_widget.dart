@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -22,6 +23,7 @@ class LanguageOptionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     final flagSize = desktopStyle ? 44.0 : 32.0;
     final vPad = desktopStyle ? 20.h : 12.h;
     final hPad = desktopStyle ? 20.w : 16.w;
@@ -35,12 +37,12 @@ class LanguageOptionWidget extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppTheme.brandMain2_100
-                : (desktopStyle ? AppTheme.gray25 : Colors.white),
+                ? alma.selectionSoftBg
+                : (desktopStyle ? alma.surfaceVariant : alma.surface),
             border: isSelected
                 ? Border.all(color: AppTheme.brandMain2, width: 2)
                 : desktopStyle
-                    ? Border.all(color: AppTheme.gray100, width: 1)
+                    ? Border.all(color: alma.outlineVariant, width: 1)
                     : null,
             borderRadius: BorderRadius.circular(desktopStyle ? 14.r : 16.r),
           ),
@@ -56,7 +58,7 @@ class LanguageOptionWidget extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) => Icon(
                     Icons.flag_outlined,
                     size: flagSize.sp,
-                    color: AppTheme.gray300,
+                    color: alma.onSurfaceHint,
                   ),
                 ),
               ),
@@ -66,7 +68,7 @@ class LanguageOptionWidget extends StatelessWidget {
                   languageName,
                   style: (desktopStyle ? AppStyles.titleLarge : AppStyles.titleMedium)
                       .copyWith(
-                    color: AppTheme.gray800,
+                    color: alma.onSurface,
                     fontWeight: desktopStyle ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
@@ -88,6 +90,7 @@ class _CustomRadio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     final outer = desktopStyle ? 22.0 : 20.0;
     final inner = desktopStyle ? 12.0 : 12.0;
     return Container(
@@ -96,7 +99,7 @@ class _CustomRadio extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: isSelected ? AppTheme.brandMain2 : AppTheme.gray300,
+          color: isSelected ? AppTheme.brandMain2 : alma.onSurfaceHint,
           width: 2,
         ),
         color: Colors.transparent,

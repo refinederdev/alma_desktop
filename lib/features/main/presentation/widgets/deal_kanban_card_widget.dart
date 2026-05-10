@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
@@ -26,16 +27,17 @@ class DealKanbanCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Opacity(
       opacity: isDragging ? 0.32 : 1,
       child: Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: alma.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
-        boxShadow: isDragging ? AppTheme.shadowSM : AppTheme.shadowXS,
+        border: Border.all(color: alma.outline),
+        boxShadow: isDragging ? alma.shadowSM : alma.shadowXS,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +50,7 @@ class DealKanbanCardWidget extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppStyles.titleSmall.copyWith(
-                    color: AppTheme.gray800,
+                    color: alma.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -65,14 +67,14 @@ class DealKanbanCardWidget extends StatelessWidget {
                 PopupMenuButton<_DealAction>(
                   icon: Icon(
                     Icons.more_vert_rounded,
-                    color: AppTheme.gray400,
+                    color: alma.onSurfaceTertiary,
                     size: 18.sp,
                   ),
-                  color: AppTheme.baseWhite,
+                  color: alma.surface,
                   elevation: 8,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
-                    side: const BorderSide(color: AppTheme.gray50),
+                    side: BorderSide(color: alma.outline),
                   ),
                   position: PopupMenuPosition.under,
                   tooltip: 'action'.tr,
@@ -83,14 +85,14 @@ class DealKanbanCardWidget extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.chat_bubble_outline_rounded,
-                            color: AppTheme.gray500,
+                            color: alma.onSurfaceSecondary,
                             size: 18.sp,
                           ),
                           SizedBox(width: 8.w),
                           Text(
                             'open_chat'.tr,
                             style: AppStyles.labelLarge.copyWith(
-                              color: AppTheme.gray700,
+                              color: alma.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -103,14 +105,14 @@ class DealKanbanCardWidget extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.edit_outlined,
-                            color: AppTheme.gray500,
+                            color: alma.onSurfaceSecondary,
                             size: 18.sp,
                           ),
                           SizedBox(width: 8.w),
                           Text(
                             'edit_deal'.tr,
                             style: AppStyles.labelLarge.copyWith(
-                              color: AppTheme.gray700,
+                              color: alma.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -123,14 +125,14 @@ class DealKanbanCardWidget extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.swap_horiz_rounded,
-                            color: AppTheme.gray500,
+                            color: alma.onSurfaceSecondary,
                             size: 18.sp,
                           ),
                           SizedBox(width: 8.w),
                           Text(
                             'transfer_deal'.tr,
                             style: AppStyles.labelLarge.copyWith(
-                              color: AppTheme.gray700,
+                              color: alma.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -181,7 +183,7 @@ class DealKanbanCardWidget extends StatelessWidget {
             children: [
               Expanded(
                 child: _Badge(
-                  color: AppTheme.brandMain2_100,
+                  color: alma.selectionSoftBg,
                   textColor: AppTheme.brandMain2_600,
                   text: deal.status,
                 ),
@@ -189,7 +191,8 @@ class DealKanbanCardWidget extends StatelessWidget {
               SizedBox(width: 8.w),
               Text(
                 '#${deal.id}',
-                style: AppStyles.labelMedium.copyWith(color: AppTheme.gray400),
+                style: AppStyles.labelMedium
+                    .copyWith(color: alma.onSurfaceTertiary),
               ),
             ],
           ),
@@ -278,16 +281,18 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Row(
       children: [
-        Icon(icon, size: 16.sp, color: AppTheme.gray300),
+        Icon(icon, size: 16.sp, color: alma.onSurfaceHint),
         SizedBox(width: 6.w),
         Expanded(
           child: Text(
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppStyles.bodySmall.copyWith(color: AppTheme.gray500),
+            style: AppStyles.bodySmall
+                .copyWith(color: alma.onSurfaceSecondary),
           ),
         ),
       ],

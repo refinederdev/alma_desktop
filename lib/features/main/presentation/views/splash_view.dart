@@ -1,3 +1,4 @@
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/splash_controller.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +16,14 @@ class SplashView extends GetView<SplashController> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.brandMain25,
-              AppTheme.baseWhite,
-              AppTheme.brandMain2_100,
+              context.alma.splashA,
+              context.alma.splashB,
+              context.alma.splashC,
             ],
           ),
         ),

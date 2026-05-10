@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/agent_check_in_status_banner.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/crm_kanban_controller.dart';
@@ -12,6 +13,7 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return GetBuilder<CrmKanbanController>(
       builder: (c) {
         return Padding(
@@ -33,9 +35,9 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                         width: double.infinity,
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: AppTheme.baseWhite,
+                          color: alma.surface,
                           borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(color: AppTheme.gray50),
+                          border: Border.all(color: alma.outline),
                         ),
                         child: Scrollbar(
                           thumbVisibility: true,
@@ -51,8 +53,8 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                                   status: CrmDealStatus.open,
                                   onDealDropped: c.moveDealToStatus,
                                   isDealUpdating: c.isDealUpdating,
-                                  headerColor: AppTheme.warning50,
-                                  headerTextColor: AppTheme.warning800,
+                                  headerColor: alma.kanbanOpenHeaderBg,
+                                  headerTextColor: alma.kanbanOpenHeaderFg,
                                   emptyMessage: 'no_open_deals_found'.tr,
                                   onOpenChat: c.openChatForDeal,
                                   onEditDeal: c.showEditDealDialog,
@@ -70,8 +72,8 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                                   status: CrmDealStatus.won,
                                   onDealDropped: c.moveDealToStatus,
                                   isDealUpdating: c.isDealUpdating,
-                                  headerColor: AppTheme.success50,
-                                  headerTextColor: AppTheme.success800,
+                                  headerColor: alma.kanbanWonHeaderBg,
+                                  headerTextColor: alma.kanbanWonHeaderFg,
                                   emptyMessage: 'no_won_deals_found'.tr,
                                   onOpenChat: c.openChatForDeal,
                                   onEditDeal: c.showEditDealDialog,
@@ -89,8 +91,8 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                                   status: CrmDealStatus.lost,
                                   onDealDropped: c.moveDealToStatus,
                                   isDealUpdating: c.isDealUpdating,
-                                  headerColor: AppTheme.error50,
-                                  headerTextColor: AppTheme.error800,
+                                  headerColor: alma.kanbanLostHeaderBg,
+                                  headerTextColor: alma.kanbanLostHeaderFg,
                                   emptyMessage: 'no_lost_deals_found'.tr,
                                   onOpenChat: c.openChatForDeal,
                                   onEditDeal: c.showEditDealDialog,
@@ -127,13 +129,14 @@ class _CrmKanbanHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: AppTheme.gray25,
+        color: alma.surfaceVariant,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: alma.outline),
       ),
       child: Row(
         children: [
@@ -144,19 +147,21 @@ class _CrmKanbanHeader extends StatelessWidget {
                 Text(
                   'crm_kanban_title'.tr,
                   style: AppStyles.titleMedium.copyWith(
-                    color: AppTheme.gray800,
+                    color: alma.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   'total_deals_count'.trParams({'count': totalDeals.toString()}),
-                  style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+                  style: AppStyles.bodySmall
+                      .copyWith(color: alma.onSurfaceTertiary),
                 ),
                 SizedBox(height: 2.h),
                 Text(
                   'drag_drop_hint'.tr,
-                  style: AppStyles.labelSmall.copyWith(color: AppTheme.gray300),
+                  style: AppStyles.labelSmall
+                      .copyWith(color: alma.onSurfaceHint),
                 ),
               ],
             ),

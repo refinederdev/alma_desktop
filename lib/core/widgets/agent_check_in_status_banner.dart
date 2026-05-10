@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/dashboard_controller.dart';
 import 'package:flutter/material.dart';
@@ -24,22 +25,23 @@ class AgentCheckInStatusBanner extends StatelessWidget {
     return GetBuilder<DashboardController>(
       builder: (dash) {
         if (!_shouldShow(dash)) return const SizedBox.shrink();
+        final alma = context.alma;
         return Padding(
           padding: EdgeInsets.only(bottom: 12.h),
           child: Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
             decoration: BoxDecoration(
-              color: AppTheme.warning50,
+              color: alma.warningBannerBg,
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppTheme.warning200),
+              border: Border.all(color: alma.warningBannerBorder),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.schedule_rounded,
-                  color: AppTheme.warning800,
+                  color: alma.warningBannerBody,
                   size: 22.sp,
                 ),
                 SizedBox(width: 10.w),
@@ -50,7 +52,7 @@ class AgentCheckInStatusBanner extends StatelessWidget {
                       Text(
                         'not_clocked_in'.tr,
                         style: AppStyles.titleSmall.copyWith(
-                          color: AppTheme.warning900,
+                          color: alma.warningBannerTitle,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -58,7 +60,7 @@ class AgentCheckInStatusBanner extends StatelessWidget {
                       Text(
                         'agent_check_in_workspace_notice'.tr,
                         style: AppStyles.bodySmall.copyWith(
-                          color: AppTheme.warning800,
+                          color: alma.warningBannerBody,
                           height: 1.35,
                         ),
                       ),
@@ -88,7 +90,7 @@ class AgentCheckInStatusBanner extends StatelessWidget {
                       : Icon(Icons.login_rounded, size: 18.sp),
                   label: Text('check_in'.tr),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.warning800,
+                    backgroundColor: AppTheme.warning700,
                     foregroundColor: AppTheme.baseWhite,
                   ),
                 ),

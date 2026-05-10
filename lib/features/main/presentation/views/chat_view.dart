@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/agent_check_in_status_banner.dart';
 import 'package:alma_desktop/core/widgets/whatsapp_formatted_text.dart';
@@ -71,9 +72,9 @@ class _ChatDealsPanel extends StatelessWidget {
     final isSuperAdmin = _isSuperAdminUser();
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: context.alma.surface,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: Column(
         children: [
@@ -86,7 +87,7 @@ class _ChatDealsPanel extends StatelessWidget {
                   'chat'.tr,
                   style: AppStyles.titleMedium.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.gray800,
+                    color: context.alma.onSurface,
                   ),
                 ),
                 SizedBox(height: 4.h),
@@ -94,7 +95,7 @@ class _ChatDealsPanel extends StatelessWidget {
                   'total_deals_count'.trParams({
                     'count': controller.filteredDeals.length.toString(),
                   }),
-                  style: AppStyles.bodySmall.copyWith(color: AppTheme.gray400),
+                  style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
                 ),
                 SizedBox(height: 10.h),
                 Row(
@@ -134,7 +135,7 @@ class _ChatDealsPanel extends StatelessWidget {
               ],
             ),
           ),
-          Divider(height: 1.h, color: AppTheme.gray50),
+          Divider(height: 1.h, color: context.alma.outline),
           Expanded(
             child: controller.isLoadingDeals
                 ? const Center(child: CircularProgressIndicator())
@@ -143,7 +144,7 @@ class _ChatDealsPanel extends StatelessWidget {
                     child: Text(
                       'no_deals_found'.tr,
                       style: AppStyles.bodyMedium.copyWith(
-                        color: AppTheme.gray300,
+                        color: context.alma.onSurfaceHint,
                       ),
                     ),
                   )
@@ -164,7 +165,7 @@ class _ChatDealsPanel extends StatelessWidget {
                               ? 1
                               : 0),
                       separatorBuilder: (_, _) =>
-                          Divider(height: 1.h, color: AppTheme.gray50),
+                          Divider(height: 1.h, color: context.alma.outline),
                       itemBuilder: (context, index) {
                         if (index >= controller.filteredDeals.length) {
                           if (controller.isLoadingMoreDeals) {
@@ -264,7 +265,7 @@ class _DealTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppStyles.titleSmall.copyWith(
-                        color: AppTheme.gray700,
+                        color: context.alma.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -275,7 +276,7 @@ class _DealTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppStyles.labelSmall.copyWith(
-                          color: AppTheme.gray400,
+                          color: context.alma.onSurfaceTertiary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -290,7 +291,7 @@ class _DealTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppStyles.bodySmall.copyWith(
-                        color: hasUnread ? AppTheme.gray700 : AppTheme.gray300,
+                        color: hasUnread ? context.alma.onSurface : context.alma.onSurfaceHint,
                         fontWeight: hasUnread
                             ? FontWeight.w600
                             : FontWeight.w400,
@@ -332,7 +333,7 @@ class _DealTile extends StatelessWidget {
                     Text(
                       _formatTime(messageTime),
                       style: AppStyles.labelSmall.copyWith(
-                        color: AppTheme.gray300,
+                        color: context.alma.onSurfaceHint,
                       ),
                     ),
                   SizedBox(height: 4.h),
@@ -410,18 +411,18 @@ class _DealStatusBadge extends StatelessWidget {
 
     switch (normalized) {
       case 'won':
-        bg = AppTheme.success50;
-        fg = AppTheme.success800;
+        bg = context.alma.statusWonBg;
+        fg = context.alma.statusWonFg;
         label = 'won'.tr;
         break;
       case 'lost':
-        bg = AppTheme.error50;
-        fg = AppTheme.error800;
+        bg = context.alma.statusLostBg;
+        fg = context.alma.statusLostFg;
         label = 'lost'.tr;
         break;
       default:
-        bg = AppTheme.warning50;
-        fg = AppTheme.warning800;
+        bg = context.alma.statusOpenBg;
+        fg = context.alma.statusOpenFg;
         label = 'open'.tr;
     }
 
@@ -482,31 +483,31 @@ class _ChatMessagesPanel extends StatelessWidget {
     final selectedDeal = controller.selectedDeal;
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.baseWhite,
+        color: context.alma.surface,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: selectedDeal == null
           ? Center(
               child: Text(
                 'select_chat_to_view_messages'.tr,
-                style: AppStyles.bodyMedium.copyWith(color: AppTheme.gray300),
+                style: AppStyles.bodyMedium.copyWith(color: context.alma.onSurfaceHint),
               ),
             )
           : Column(
               children: [
                 _ChatHeader(deal: selectedDeal, controller: controller),
-                Divider(height: 1.h, color: AppTheme.gray50),
+                Divider(height: 1.h, color: context.alma.outline),
                 if (controller.showContactDealHistory) ...[
                   _FullCustomerHistoryBanner(controller: controller),
-                  Divider(height: 1.h, color: AppTheme.gray50),
+                  Divider(height: 1.h, color: context.alma.outline),
                 ],
                 Expanded(
                   child: controller.isLoadingMessages
                       ? const Center(child: CircularProgressIndicator())
                       : _MessagesList(controller: controller),
                 ),
-                Divider(height: 1.h, color: AppTheme.gray50),
+                Divider(height: 1.h, color: context.alma.outline),
                 _Composer(controller: controller),
               ],
             ),
@@ -551,7 +552,7 @@ class _ChatHeader extends StatelessWidget {
                         : (deal.contactPhone ?? '-'),
                   ),
                   style: AppStyles.titleMedium.copyWith(
-                    color: AppTheme.gray800,
+                    color: context.alma.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -560,7 +561,7 @@ class _ChatHeader extends StatelessWidget {
                   isSuperAdmin
                       ? '${'agent'.tr}: ${_sanitizeInvalidUtf16(secondaryText)}'
                       : _sanitizeInvalidUtf16(secondaryText),
-                  style: AppStyles.bodySmall.copyWith(color: AppTheme.gray300),
+                  style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceHint),
                 ),
               ],
             ),
@@ -569,14 +570,14 @@ class _ChatHeader extends StatelessWidget {
           PopupMenuButton<_ChatHeaderDealAction>(
             icon: Icon(
               Icons.more_vert_rounded,
-              color: AppTheme.gray400,
+              color: context.alma.onSurfaceTertiary,
               size: 18.sp,
             ),
-            color: AppTheme.baseWhite,
+            color: context.alma.surface,
             elevation: 8,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.r),
-              side: const BorderSide(color: AppTheme.gray50),
+              side: BorderSide(color: context.alma.outline),
             ),
             position: PopupMenuPosition.under,
             tooltip: 'action'.tr,
@@ -588,14 +589,14 @@ class _ChatHeader extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.copy_rounded,
-                        color: AppTheme.gray500,
+                        color: context.alma.onSurfaceSecondary,
                         size: 18.sp,
                       ),
                       SizedBox(width: 8.w),
                       Text(
                         'copy_client_phone'.tr,
                         style: AppStyles.labelLarge.copyWith(
-                          color: AppTheme.gray700,
+                          color: context.alma.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -609,14 +610,14 @@ class _ChatHeader extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.history_rounded,
-                        color: AppTheme.gray500,
+                        color: context.alma.onSurfaceSecondary,
                         size: 18.sp,
                       ),
                       SizedBox(width: 8.w),
                       Text(
                         'customer_deal_history'.tr,
                         style: AppStyles.labelLarge.copyWith(
-                          color: AppTheme.gray700,
+                          color: context.alma.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -629,14 +630,14 @@ class _ChatHeader extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.edit_outlined,
-                      color: AppTheme.gray500,
+                      color: context.alma.onSurfaceSecondary,
                       size: 18.sp,
                     ),
                     SizedBox(width: 8.w),
                     Text(
                       'edit_deal'.tr,
                       style: AppStyles.labelLarge.copyWith(
-                        color: AppTheme.gray700,
+                        color: context.alma.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -649,14 +650,14 @@ class _ChatHeader extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.swap_horiz_rounded,
-                      color: AppTheme.gray500,
+                      color: context.alma.onSurfaceSecondary,
                       size: 18.sp,
                     ),
                     SizedBox(width: 8.w),
                     Text(
                       'transfer_deal'.tr,
                       style: AppStyles.labelLarge.copyWith(
-                        color: AppTheme.gray700,
+                        color: context.alma.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -741,14 +742,14 @@ class _FullCustomerHistoryBanner extends StatelessWidget {
                     'customer_deal_history'.tr,
                     style: AppStyles.labelLarge.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.gray800,
+                      color: context.alma.onSurface,
                     ),
                   ),
                   SizedBox(height: 3.h),
                   Text(
                     'full_history_timeline_hint'.tr,
                     style: AppStyles.bodySmall.copyWith(
-                      color: AppTheme.gray500,
+                      color: context.alma.onSurfaceSecondary,
                     ),
                   ),
                 ],
@@ -759,7 +760,7 @@ class _FullCustomerHistoryBanner extends StatelessWidget {
               onPressed: () =>
                   unawaited(controller.hideContactDealHistoryPanel()),
               icon: Icon(Icons.close_rounded, size: 20.sp),
-              color: AppTheme.gray400,
+              color: context.alma.onSurfaceTertiary,
             ),
           ],
         ),
@@ -779,7 +780,7 @@ class _MessagesList extends StatelessWidget {
       return Center(
         child: Text(
           'no_messages_yet'.tr,
-          style: AppStyles.bodyMedium.copyWith(color: AppTheme.gray300),
+          style: AppStyles.bodyMedium.copyWith(color: context.alma.onSurfaceHint),
         ),
       );
     }
@@ -851,10 +852,10 @@ class _MessageBubble extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: isMe ? AppTheme.brandMain2_600 : AppTheme.gray25,
+                color: isMe ? AppTheme.brandMain2_600 : context.alma.chatBubbleOtherBg,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
-                  color: isMe ? AppTheme.brandMain2_600 : AppTheme.gray50,
+                  color: isMe ? AppTheme.brandMain2_600 : context.alma.chatBubbleOtherBorder,
                 ),
               ),
               child: Column(
@@ -882,7 +883,7 @@ class _MessageBubble extends StatelessWidget {
                         style: AppStyles.labelSmall.copyWith(
                           color: isMe
                               ? AppTheme.baseWhite.withValues(alpha: 0.9)
-                              : AppTheme.gray500,
+                              : context.alma.onSurfaceSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -903,9 +904,9 @@ class _MessageBubble extends StatelessWidget {
                       size: 18.sp,
                       color: isMe
                           ? AppTheme.baseWhite.withValues(alpha: 0.85)
-                          : AppTheme.gray400,
+                          : context.alma.onSurfaceTertiary,
                     ),
-                    color: AppTheme.baseWhite,
+                    color: context.alma.surface,
                     onSelected: (action) async {
                       switch (action) {
                         case _MessageAction.edit:
@@ -988,7 +989,7 @@ class _MessageBubble extends StatelessWidget {
                 _sanitizeInvalidUtf16(body),
                 textAlign: isMe ? TextAlign.end : TextAlign.start,
                 style: AppStyles.bodyMedium.copyWith(
-                  color: isMe ? AppTheme.baseWhite : AppTheme.gray700,
+                  color: isMe ? AppTheme.baseWhite : context.alma.onSurface,
                 ),
               ),
             SizedBox(height: 4.h),
@@ -997,7 +998,7 @@ class _MessageBubble extends StatelessWidget {
               style: AppStyles.labelSmall.copyWith(
                 color: isMe
                     ? AppTheme.baseWhite.withValues(alpha: 0.75)
-                    : AppTheme.gray300,
+                    : context.alma.onSurfaceHint,
               ),
             ),
                 ],
@@ -1091,11 +1092,11 @@ class _MediaPreview extends StatelessWidget {
                 errorBuilder: (_, _, _) => Container(
                   width: 260.w,
                   height: 110.h,
-                  color: AppTheme.gray50,
+                  color: context.alma.mediaPlaceholderBg,
                   alignment: Alignment.center,
                   child: Icon(
                     Icons.broken_image_rounded,
-                    color: AppTheme.gray300,
+                    color: context.alma.onSurfaceHint,
                     size: 28.sp,
                   ),
                 ),
@@ -1123,7 +1124,7 @@ class _MediaPreview extends StatelessWidget {
         decoration: BoxDecoration(
           color: fromMe
               ? AppTheme.baseWhite.withValues(alpha: 0.15)
-              : AppTheme.gray50,
+              : context.alma.outline,
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Row(
@@ -1134,7 +1135,7 @@ class _MediaPreview extends StatelessWidget {
                   ? Icons.movie_creation_outlined
                   : Icons.description_outlined,
               size: 18.sp,
-              color: fromMe ? AppTheme.baseWhite : AppTheme.gray500,
+              color: fromMe ? AppTheme.baseWhite : context.alma.onSurfaceSecondary,
             ),
             SizedBox(width: 6.w),
             Text(
@@ -1142,7 +1143,7 @@ class _MediaPreview extends StatelessWidget {
                   ? 'Video attachment - tap to open'
                   : 'Document attachment - tap to open',
               style: AppStyles.labelMedium.copyWith(
-                color: fromMe ? AppTheme.baseWhite : AppTheme.gray600,
+                color: fromMe ? AppTheme.baseWhite : context.alma.onSurface,
               ),
             ),
             SizedBox(width: 8.w),
@@ -1226,10 +1227,10 @@ class _AudioPreviewState extends State<_AudioPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = widget.fromMe ? AppTheme.baseWhite : AppTheme.gray600;
+    final foreground = widget.fromMe ? AppTheme.baseWhite : context.alma.onSurface;
     final background = widget.fromMe
         ? AppTheme.baseWhite.withValues(alpha: 0.15)
-        : AppTheme.gray50;
+        : context.alma.outline;
     final progressMax = _duration.inMilliseconds > 0
         ? _duration.inMilliseconds.toDouble()
         : 1.0;
@@ -1496,13 +1497,13 @@ class _MediaDownloadButtonState extends State<_MediaDownloadButton> {
               height: 14.w,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: widget.fromMe ? AppTheme.baseWhite : AppTheme.gray600,
+                color: widget.fromMe ? AppTheme.baseWhite : context.alma.onSurface,
               ),
             )
           : Icon(
               Icons.download_rounded,
               size: 18.sp,
-              color: widget.fromMe ? AppTheme.baseWhite : AppTheme.gray600,
+              color: widget.fromMe ? AppTheme.baseWhite : context.alma.onSurface,
             ),
     );
   }
@@ -1709,15 +1710,15 @@ class _Composer extends StatelessWidget {
               margin: EdgeInsets.only(bottom: 8.h),
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: AppTheme.warning50,
+                color: context.alma.warningBannerBg,
                 borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: AppTheme.warning300),
+                border: Border.all(color: context.alma.warningBannerBorder),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.edit_note_rounded,
-                    color: AppTheme.warning800,
+                    color: context.alma.warningBannerBody,
                     size: 18.sp,
                   ),
                   SizedBox(width: 8.w),
@@ -1725,7 +1726,7 @@ class _Composer extends StatelessWidget {
                     child: Text(
                       'editing_message_mode'.tr,
                       style: AppStyles.bodySmall.copyWith(
-                        color: AppTheme.warning800,
+                        color: context.alma.warningBannerTitle,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1743,9 +1744,9 @@ class _Composer extends StatelessWidget {
               margin: EdgeInsets.only(bottom: 8.h),
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: AppTheme.gray25,
+                color: context.alma.surfaceVariant,
                 borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: AppTheme.gray50),
+                border: Border.all(color: context.alma.outline),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1753,7 +1754,7 @@ class _Composer extends StatelessWidget {
                   Text(
                     '${controller.selectedAttachments.length} ملف محدد',
                     style: AppStyles.bodySmall.copyWith(
-                      color: AppTheme.gray600,
+                      color: context.alma.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1783,11 +1784,11 @@ class _Composer extends StatelessWidget {
                                 errorBuilder: (_, _, _) => Container(
                                   width: 48.w,
                                   height: 48.w,
-                                  color: AppTheme.gray50,
+                                  color: context.alma.outline,
                                   alignment: Alignment.center,
                                   child: Icon(
                                     Icons.broken_image_rounded,
-                                    color: AppTheme.gray300,
+                                    color: context.alma.onSurfaceHint,
                                     size: 18.sp,
                                   ),
                                 ),
@@ -1802,7 +1803,7 @@ class _Composer extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppStyles.bodySmall.copyWith(
-                                color: AppTheme.gray600,
+                                color: context.alma.onSurface,
                               ),
                             ),
                           ),
@@ -1945,9 +1946,9 @@ class _EmojiPickerPanel extends StatelessWidget {
       padding: EdgeInsets.all(8.w),
       height: 280.h,
       decoration: BoxDecoration(
-        color: AppTheme.gray25,
+        color: context.alma.surfaceVariant,
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: AppTheme.gray50),
+        border: Border.all(color: context.alma.outline),
       ),
       child: EmojiPicker(
         onEmojiSelected: (_, emoji) => onEmojiTap(emoji.emoji),
@@ -1960,21 +1961,21 @@ class _EmojiPickerPanel extends StatelessWidget {
             columns: 9,
             verticalSpacing: 6,
             horizontalSpacing: 6,
-            backgroundColor: AppTheme.gray25,
+            backgroundColor: context.alma.surfaceVariant,
           ),
           categoryViewConfig: CategoryViewConfig(
-            backgroundColor: AppTheme.gray25,
+            backgroundColor: context.alma.surfaceVariant,
             indicatorColor: AppTheme.brandMain2_600,
             iconColorSelected: AppTheme.brandMain2_600,
-            iconColor: AppTheme.gray300,
+            iconColor: context.alma.onSurfaceHint,
           ),
           bottomActionBarConfig: BottomActionBarConfig(
-            backgroundColor: AppTheme.gray25,
-            buttonIconColor: AppTheme.baseWhite,
+            backgroundColor: context.alma.surfaceVariant,
+            buttonIconColor: context.alma.onSurface,
           ),
           skinToneConfig: const SkinToneConfig(enabled: true),
           searchViewConfig: SearchViewConfig(
-            backgroundColor: AppTheme.gray25,
+            backgroundColor: context.alma.surfaceVariant,
             hintText: 'Search emoji',
           ),
         ),
@@ -1989,7 +1990,7 @@ Future<void> _openAttachmentPicker(
 ) async {
   await showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppTheme.baseWhite,
+    backgroundColor: context.alma.surface,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
     ),
@@ -2058,9 +2059,9 @@ class _AttachmentTile extends StatelessWidget {
       leading: Icon(icon, color: AppTheme.brandMain2_600),
       title: Text(
         label,
-        style: AppStyles.titleSmall.copyWith(color: AppTheme.gray700),
+        style: AppStyles.titleSmall.copyWith(color: context.alma.onSurface),
       ),
-      trailing: Icon(Icons.chevron_right_rounded, color: AppTheme.gray300),
+      trailing: Icon(Icons.chevron_right_rounded, color: context.alma.onSurfaceHint),
     );
   }
 }
@@ -2074,7 +2075,7 @@ Future<void> _openCompanyLocationsPicker(
 
   await showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppTheme.baseWhite,
+    backgroundColor: context.alma.surface,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
     ),
@@ -2093,7 +2094,7 @@ Future<void> _openCompanyLocationsPicker(
                       child: Text(
                         'اختر فرعاً لإرسال موقعه',
                         style: AppStyles.titleSmall.copyWith(
-                          color: AppTheme.gray800,
+                          color: context.alma.onSurface,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -2125,7 +2126,7 @@ Future<void> _openCompanyLocationsPicker(
                             controller.companyLocationsErrorMessage ??
                                 'لا توجد فروع.',
                             style: AppStyles.bodyMedium.copyWith(
-                              color: AppTheme.gray300,
+                              color: context.alma.onSurfaceHint,
                             ),
                           ),
                         )
@@ -2133,7 +2134,7 @@ Future<void> _openCompanyLocationsPicker(
                           itemCount: controller.companyLocations.length,
                           separatorBuilder: (_, _) => Divider(
                             height: 1.h,
-                            color: AppTheme.gray50,
+                            color: context.alma.outline,
                           ),
                           itemBuilder: (context, index) {
                             final CompanyLocation loc =
@@ -2146,7 +2147,7 @@ Future<void> _openCompanyLocationsPicker(
                               title: Text(
                                 loc.name,
                                 style: AppStyles.titleSmall.copyWith(
-                                  color: AppTheme.gray700,
+                                  color: context.alma.onSurface,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -2157,7 +2158,7 @@ Future<void> _openCompanyLocationsPicker(
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: AppStyles.bodySmall.copyWith(
-                                        color: AppTheme.gray400,
+                                        color: context.alma.onSurfaceTertiary,
                                       ),
                                     )
                                   : null,

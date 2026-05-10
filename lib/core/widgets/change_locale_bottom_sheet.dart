@@ -1,5 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
-import 'package:alma_desktop/core/theme/app_theme.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/widgets/app_button.dart';
 import 'package:alma_desktop/core/widgets/language_option_widget.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
@@ -19,7 +19,7 @@ abstract final class ChangeLocaleBottomSheet {
       await showDialog<void>(
         context: context,
         barrierDismissible: true,
-        barrierColor: AppTheme.gray900.withValues(alpha: 0.45),
+        barrierColor: context.alma.modalBarrier,
         builder: (ctx) {
           return Dialog(
             backgroundColor: Colors.transparent,
@@ -28,9 +28,9 @@ abstract final class ChangeLocaleBottomSheet {
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: 520.w),
               child: Material(
-                color: AppTheme.baseWhite,
+                color: context.alma.surface,
                 elevation: 28,
-                shadowColor: AppTheme.baseBlack.withValues(alpha: 0.2),
+                shadowColor: context.alma.shadowBase.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(20.r),
                 clipBehavior: Clip.antiAlias,
                 child: const _LocalePickerBody(isDesktop: true),
@@ -51,9 +51,9 @@ abstract final class ChangeLocaleBottomSheet {
         return Padding(
           padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h + bottom),
           child: Material(
-            color: AppTheme.baseWhite,
+            color: ctx.alma.surface,
             elevation: 16,
-            shadowColor: AppTheme.baseBlack.withValues(alpha: 0.12),
+            shadowColor: ctx.alma.shadowBase.withValues(alpha: 0.22),
             borderRadius: BorderRadius.circular(20.r),
             clipBehavior: Clip.antiAlias,
             child: const _LocalePickerBody(isDesktop: false),
@@ -71,6 +71,7 @@ class _LocalePickerBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return GetBuilder<GlobalController>(
       init: Get.find<GlobalController>(),
       builder: (controller) {
@@ -92,7 +93,7 @@ class _LocalePickerBody extends StatelessWidget {
                     height: 4.h,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12.r),
-                      color: AppTheme.gray200,
+                      color: alma.outlineStrong,
                     ),
                   ),
                 ),
@@ -104,7 +105,7 @@ class _LocalePickerBody extends StatelessWidget {
                     child: Text(
                       'change_language'.tr,
                       style: AppStyles.titleLarge.copyWith(
-                        color: AppTheme.gray900,
+                        color: alma.onSurfaceTitle,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -117,7 +118,7 @@ class _LocalePickerBody extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(),
                       icon: Icon(
                         Icons.close_rounded,
-                        color: AppTheme.gray500,
+                        color: alma.onSurfaceSecondary,
                         size: 24.sp,
                       ),
                     ),
@@ -127,7 +128,7 @@ class _LocalePickerBody extends StatelessWidget {
               Text(
                 'choose_interface_language'.tr,
                 style: AppStyles.bodySmall.copyWith(
-                  color: AppTheme.gray400,
+                  color: alma.onSurfaceTertiary,
                   height: 1.4,
                 ),
               ),

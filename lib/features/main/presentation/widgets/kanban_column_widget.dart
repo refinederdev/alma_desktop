@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/crm_kanban_controller.dart';
@@ -49,15 +50,16 @@ class KanbanColumnWidget extends StatelessWidget {
       onAcceptWithDetails: (details) => onDealDropped(details.data, status),
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
+        final alma = context.alma;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: 350.w,
           padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
-            color: isHovering ? AppTheme.brandMain2_100 : AppTheme.gray25,
+            color: isHovering ? AppTheme.brandMain2_100 : alma.surfaceVariant,
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(
-              color: isHovering ? AppTheme.brandMain2_500 : AppTheme.gray50,
+              color: isHovering ? AppTheme.brandMain2_500 : alma.outline,
               width: isHovering ? 1.4 : 1,
             ),
           ),
@@ -161,7 +163,8 @@ class _EmptyColumnState extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: AppStyles.bodySmall.copyWith(color: AppTheme.gray300),
+          style: AppStyles.bodySmall
+              .copyWith(color: context.alma.onSurfaceHint),
         ),
       ),
     );

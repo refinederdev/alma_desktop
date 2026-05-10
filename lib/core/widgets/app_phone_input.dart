@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -88,6 +89,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
   Widget _buildCountryPickerSheet() {
     return StatefulBuilder(
       builder: (context, setSheetState) {
+        final alma = context.alma;
         List<Country> filteredCountries = _countries;
 
         void filterCountries(String query) {
@@ -109,7 +111,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
-            color: AppTheme.baseWhite,
+            color: alma.bottomSheetBg,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20.r),
               topRight: Radius.circular(20.r),
@@ -123,7 +125,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: AppTheme.gray300,
+                  color: alma.onSurfaceHint,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -138,12 +140,13 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                       style: AppStyles.titleLarge.copyWith(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
+                        color: alma.onSurface,
                       ),
                     ),
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: AppTheme.gray500),
+                      icon: Icon(Icons.close, color: alma.onSurfaceSecondary),
                     ),
                   ],
                 ),
@@ -160,14 +163,14 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                     hintStyle: AppStyles.bodyMedium.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.gray500,
+                      color: alma.onSurfaceSecondary,
                     ),
-                    prefixIcon: Icon(Icons.search, color: AppTheme.gray500),
+                    prefixIcon: Icon(Icons.search, color: alma.onSurfaceSecondary),
                     filled: true,
-                    fillColor: AppTheme.gray25,
+                    fillColor: alma.inputFill,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
-                      borderSide: const BorderSide(color: AppTheme.gray200),
+                      borderSide: BorderSide(color: alma.outlineStrong),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
@@ -201,7 +204,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.brandMain2_100
+                              ? alma.selectionSoftBg
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
@@ -217,13 +220,13 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                                   width: 32.w,
                                   height: 32.w,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.gray200,
+                                    color: alma.outlineStrong,
                                     borderRadius: BorderRadius.circular(4.r),
                                   ),
                                   child: Icon(
                                     Icons.flag,
                                     size: 20.sp,
-                                    color: AppTheme.gray500,
+                                    color: alma.onSurfaceSecondary,
                                   ),
                                 );
                               },
@@ -236,7 +239,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                                 style: AppStyles.bodyMedium.copyWith(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w500,
-                                  color: AppTheme.gray800,
+                                  color: alma.onSurface,
                                 ),
                               ),
                             ),
@@ -246,7 +249,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                               style: AppStyles.bodyMedium.copyWith(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
-                                color: AppTheme.gray500,
+                                color: alma.onSurfaceSecondary,
                               ),
                             ),
                             if (isSelected) ...[
@@ -273,11 +276,15 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.label != null) ...[
-          Text(widget.label!, style: AppStyles.titleSmall.copyWith()),
+          Text(
+            widget.label!,
+            style: AppStyles.titleSmall.copyWith(color: alma.onSurface),
+          ),
           SizedBox(height: 8.h),
         ],
         Directionality(
@@ -296,7 +303,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
               hintStyle: AppStyles.bodyMedium.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
-                color: AppTheme.gray500,
+                color: alma.onSurfaceSecondary,
               ),
               errorStyle: AppStyles.bodySmall.copyWith(
                 fontSize: 12.sp,
@@ -323,13 +330,13 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                             width: 24.w,
                             height: 24.w,
                             decoration: BoxDecoration(
-                              color: AppTheme.gray200,
+                              color: alma.outlineStrong,
                               borderRadius: BorderRadius.circular(4.r),
                             ),
                             child: Icon(
                               Icons.flag,
                               size: 16.sp,
-                              color: AppTheme.gray500,
+                              color: alma.onSurfaceSecondary,
                             ),
                           );
                         },
@@ -340,14 +347,14 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                         style: AppStyles.bodyMedium.copyWith(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.gray800,
+                          color: alma.onSurface,
                         ),
                       ),
                       SizedBox(width: 4.w),
                       Icon(
                         Icons.keyboard_arrow_down,
                         size: 16.sp,
-                        color: AppTheme.gray500,
+                        color: alma.onSurfaceSecondary,
                       ),
                     ],
                   ),

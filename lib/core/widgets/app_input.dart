@@ -1,5 +1,5 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
-import 'package:alma_desktop/core/theme/app_theme.dart';
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -46,13 +46,14 @@ class AppInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (label != null) ...[
           Text(
             label!,
-            style: AppStyles.titleSmall.copyWith(color: AppTheme.gray800),
+            style: AppStyles.titleSmall.copyWith(color: alma.onSurface),
           ),
           SizedBox(height: 8.h),
         ],
@@ -71,7 +72,7 @@ class AppInputField extends StatelessWidget {
             hintStyle: AppStyles.bodyMedium.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: AppTheme.gray500,
+              color: alma.onSurfaceSecondary,
             ),
             suffixIcon: suffixIcon,
             prefixIcon: prefixIcon,

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/app_button.dart';
 import 'package:flutter/material.dart';
@@ -130,10 +131,11 @@ class _ActionMessageBottomSheetState extends State<ActionMessageBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final alma = context.alma;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: alma.bottomSheetBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
@@ -145,7 +147,7 @@ class _ActionMessageBottomSheetState extends State<ActionMessageBottomSheet> {
             width: 54.w,
             height: 5.h,
             decoration: BoxDecoration(
-              color: AppTheme.gray300,
+              color: alma.onSurfaceHint,
               borderRadius: BorderRadius.circular(12.r),
             ),
           ),
@@ -175,7 +177,7 @@ class _ActionMessageBottomSheetState extends State<ActionMessageBottomSheet> {
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w600,
-              color: AppTheme.gray900,
+              color: alma.onSurfaceTitle,
             ),
             textAlign: TextAlign.center,
           ),
@@ -186,7 +188,7 @@ class _ActionMessageBottomSheetState extends State<ActionMessageBottomSheet> {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w400,
-              color: AppTheme.gray500,
+              color: alma.onSurfaceSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
