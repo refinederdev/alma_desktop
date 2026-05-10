@@ -57,6 +57,7 @@ class MainRepositoryImpl implements MainRepository {
         from: result.from,
         to: result.to,
         hasMorePages: result.hasMorePages,
+        meta: result.meta,
       );
       return Right(paginator);
     } on CustomException catch (e) {
@@ -83,6 +84,7 @@ class MainRepositoryImpl implements MainRepository {
         from: result.from,
         to: result.to,
         hasMorePages: result.hasMorePages,
+        meta: result.meta,
       );
       return Right(paginator);
     } on CustomException catch (e) {
@@ -109,6 +111,7 @@ class MainRepositoryImpl implements MainRepository {
         from: result.from,
         to: result.to,
         hasMorePages: result.hasMorePages,
+        meta: result.meta,
       );
       return Right(paginator);
     } on CustomException catch (e) {
@@ -131,12 +134,14 @@ class MainRepositoryImpl implements MainRepository {
     int dealId, {
     int page = 1,
     int perPage = 50,
+    bool fullHistory = false,
   }) async {
     try {
       final result = await mainRemoteDataSource.getDealMessages(
         dealId,
         page: page,
         perPage: perPage,
+        fullHistory: fullHistory,
       );
       final paginator = Paginator<DealMessage>(
         data: List<DealMessage>.from(result.data),
@@ -147,6 +152,7 @@ class MainRepositoryImpl implements MainRepository {
         from: result.from,
         to: result.to,
         hasMorePages: result.hasMorePages,
+        meta: result.meta,
       );
       return Right(paginator);
     } on CustomException catch (e) {
@@ -368,6 +374,7 @@ class MainRepositoryImpl implements MainRepository {
         from: result.from,
         to: result.to,
         hasMorePages: result.hasMorePages,
+        meta: result.meta,
       );
       return Right(paginator);
     } on CustomException catch (e) {

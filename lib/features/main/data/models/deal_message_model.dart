@@ -1,5 +1,6 @@
 import 'package:alma_desktop/features/main/data/models/crm_session_model.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
+import 'package:alma_desktop/features/main/domain/entities/message_deal_summary.dart';
 
 class DealMessageModel extends DealMessage {
   const DealMessageModel({
@@ -34,9 +35,19 @@ class DealMessageModel extends DealMessage {
     super.pollData,
     super.contextInfo,
     required super.crmSession,
+    super.sourceDeal,
     required super.createdAt,
     required super.updatedAt,
   }) : super();
+
+  static MessageDealSummary? _messageDealFromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    return MessageDealSummary(
+      id: json['id'] as int,
+      title: json['title'] as String?,
+      status: (json['status'] as String?) ?? '',
+    );
+  }
 
   factory DealMessageModel.fromJson(Map<String, dynamic> json) {
     final crmSessionJson = json['crm_session'] as Map<String, dynamic>?;
@@ -80,6 +91,9 @@ class DealMessageModel extends DealMessage {
       crmSession: crmSessionJson != null
           ? CrmSessionModel.fromJson(crmSessionJson)
           : throw ArgumentError('crm_session is required'),
+      sourceDeal: _messageDealFromJson(
+        json['deal'] as Map<String, dynamic>?,
+      ),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );

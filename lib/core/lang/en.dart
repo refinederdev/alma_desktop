@@ -153,8 +153,23 @@ class EnLang {
     'checked_in_now': 'Clocked in',
     'not_clocked_in': 'Not clocked in',
     'clock_in_to_start_timer': 'Clock in to start the live timer.',
+    'agent_check_in_workspace_notice':
+        'You are not clocked in, so you may not receive new chats. Clock in to go available.',
     'weekly_attendance': 'Weekly attendance',
     'messages_trend': 'Messages trend',
     'no_data_available': 'No data available right now.',
+    'customer_deal_history': 'Customer deal history',
+    'contact_phone_required_for_history':
+        'Contact phone is required to load deal history.',
+    'failed_to_load_customer_deal_history':
+        'Could not load customer deal history.',
+    'contact_history_empty': 'No deals found for this contact.',
+    'deal_id_label': 'Deal #@id',
+    'current_deal_badge': 'Current',
+    'customer_deal_history_hint': 'Tap a row to open that deal in chat.',
+    'full_history_timeline_hint':
+        'Messages from every deal that shares this phone number are merged here.',
+    'full_history_forbidden':
+        'You do not have permission to view full customer history.',
   };
 }

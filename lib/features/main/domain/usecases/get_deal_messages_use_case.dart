@@ -20,6 +20,7 @@ class GetDealMessagesUseCase
       params.dealId,
       page: params.page,
       perPage: params.perPage,
+      fullHistory: params.fullHistory,
     );
   }
 }
@@ -28,13 +29,15 @@ class GetDealMessagesParams extends Equatable {
   final int dealId;
   final int page;
   final int perPage;
+  final bool fullHistory;
 
   const GetDealMessagesParams({
     required this.dealId,
     this.page = 1,
     this.perPage = 50,
+    this.fullHistory = false,
   });
 
   @override
-  List<Object?> get props => [dealId, page, perPage];
+  List<Object?> get props => [dealId, page, perPage, fullHistory];
 }

@@ -186,20 +186,47 @@ class DashboardController extends GetxController {
         ? await checkOutUseCase(const CheckOutParams())
         : await checkInUseCase(const CheckInParams());
 
-    result.fold(
-      (failure) {
+    await result.fold<Future<void>>(
+      (failure) async {
         attendanceErrorMessage =
             failure.message ?? 'failed_to_load_dashboard'.tr;
       },
-      (value) {
+      (value) async {
         attendanceStatus = value;
         attendanceErrorMessage = null;
         _syncSessionTimer();
+        await _reloadAttendanceAggregates();
+        await loadAttendanceStatus(silent: true);
       },
     );
 
     isAttendanceActionLoading = false;
     update();
+  }
+
+  /// بعد تسجيل الدخول/الخروج نحدّث أرقام اليوم والأسبوع والرسم لأن الحالة تغيّرت.
+  Future<void> _reloadAttendanceAggregates() async {
+    if (!isAgent) return;
+    final params = NoParams();
+    final results = await Future.wait([
+      getTodayTotalUseCase(params),
+      getWeekTotalUseCase(params),
+      getWeeklyStatsUseCase(params),
+    ]);
+
+    results[0].fold(
+      (_) {},
+      (value) => todayTotal = value as AttendanceTimeTotal,
+    );
+    results[1].fold(
+      (_) {},
+      (value) => weekTotal = value as AttendanceTimeTotal,
+    );
+    results[2].fold(
+      (_) {},
+      (value) =>
+          weeklyStats = List<AttendanceWeeklyStat>.from(value as List),
+    );
   }
 
   void _syncSessionTimer() {

@@ -10,6 +10,7 @@ class Paginator<T> extends Equatable {
   final int? from;
   final int? to;
   final bool hasMorePages;
+  final Map<String, dynamic>? meta;
 
   const Paginator({
     required this.data,
@@ -20,6 +21,7 @@ class Paginator<T> extends Equatable {
     this.from,
     this.to,
     required this.hasMorePages,
+    this.meta,
   });
 
   @override
@@ -32,6 +34,7 @@ class Paginator<T> extends Equatable {
         from,
         to,
         hasMorePages,
+        meta,
       ];
 }
 
@@ -47,6 +50,7 @@ class PaginatorModel<T> extends Paginator<T> {
     super.from,
     super.to,
     required super.hasMorePages,
+    super.meta,
   });
 
   factory PaginatorModel.fromJson(
@@ -68,6 +72,7 @@ class PaginatorModel<T> extends Paginator<T> {
       from: p['from'] as int?,
       to: p['to'] as int?,
       hasMorePages: p['has_more_pages'] as bool? ?? false,
+      meta: json['meta'] as Map<String, dynamic>?,
     );
   }
 }

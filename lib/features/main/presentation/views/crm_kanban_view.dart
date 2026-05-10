@@ -1,5 +1,6 @@
 import 'package:alma_desktop/core/theme/app_styles.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
+import 'package:alma_desktop/core/widgets/agent_check_in_status_banner.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/crm_kanban_controller.dart';
 import 'package:alma_desktop/features/main/presentation/widgets/kanban_column_widget.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const AgentCheckInStatusBanner(),
               _CrmKanbanHeader(
                 isRefreshing: c.isRefreshing,
                 totalDeals: c.totalDeals,

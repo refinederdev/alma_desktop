@@ -96,13 +96,21 @@ class ChatController extends GetxController {
   final Map<int, int> _unreadCountByDealId = <int, int>{};
   final Set<int> _newDealIds = <int>{};
 
-  final Map<int, List<DealMessage>> _messagesCache = <int, List<DealMessage>>{};
-  final Map<int, int> _messagesPageCache = <int, int>{};
-  final Map<int, bool> _hasOlderCache = <int, bool>{};
+  final Map<String, List<DealMessage>> _messagesCache =
+      <String, List<DealMessage>>{};
+  final Map<String, int> _messagesPageCache = <String, int>{};
+  final Map<String, bool> _hasOlderCache = <String, bool>{};
+
+  bool showContactDealHistory = false;
+  String? _fullHistoryAnchorPhone;
+
   bool get isReverbConnected => _isReverbConnected;
   int unreadCountForDeal(int dealId) => _unreadCountByDealId[dealId] ?? 0;
   bool hasUnreadForDeal(int dealId) => unreadCountForDeal(dealId) > 0;
   bool isNewDeal(int dealId) => _newDealIds.contains(dealId);
+
+  String _messageCacheKey(int dealId) =>
+      showContactDealHistory ? '${dealId}_full' : '${dealId}_std';
 
   @override
   void onInit() {
@@ -471,12 +479,23 @@ class ChatController extends GetxController {
 
     _upsertDealLocally(deal);
     selectedDeal = deal;
+    if (showContactDealHistory) {
+      final p = deal.contactPhone?.trim();
+      if (p == null ||
+          p.isEmpty ||
+          _fullHistoryAnchorPhone == null ||
+          p != _fullHistoryAnchorPhone) {
+        showContactDealHistory = false;
+        _fullHistoryAnchorPhone = null;
+      }
+    }
     _markDealAsRead(deal.id);
-    final cachedMessages = _messagesCache[deal.id];
+    final cacheKey = _messageCacheKey(deal.id);
+    final cachedMessages = _messagesCache[cacheKey];
     if (cachedMessages != null) {
       messages = cachedMessages;
-      _currentMessagesPage = _messagesPageCache[deal.id] ?? 1;
-      hasOlderMessages = _hasOlderCache[deal.id] ?? false;
+      _currentMessagesPage = _messagesPageCache[cacheKey] ?? 1;
+      hasOlderMessages = _hasOlderCache[cacheKey] ?? false;
       messagesErrorMessage = null;
       update();
       _scrollToBottom();
@@ -495,6 +514,7 @@ class ChatController extends GetxController {
     final deal = selectedDeal;
     if (deal == null) return;
     final requestId = ++_messagesRequestId;
+    final cacheKey = _messageCacheKey(deal.id);
 
     if (showLoader) {
       isLoadingMessages = true;
@@ -510,6 +530,7 @@ class ChatController extends GetxController {
         dealId: deal.id,
         page: 1,
         perPage: _messagesPerPage,
+        fullHistory: showContactDealHistory,
       ),
     );
     if (requestId != _messagesRequestId || selectedDeal?.id != deal.id) {
@@ -518,6 +539,28 @@ class ChatController extends GetxController {
 
     result.fold(
       (failure) {
+        if (showContactDealHistory && failure.code == 403) {
+          showContactDealHistory = false;
+          _fullHistoryAnchorPhone = null;
+          messagesErrorMessage = null;
+          if (showLoader) {
+            isLoadingMessages = false;
+          }
+          isRefreshing = false;
+          update();
+          AppMessages.showSnackBar(
+            type: ErrorType.warning,
+            title: 'info'.tr,
+            message: 'full_history_forbidden'.tr,
+          );
+          unawaited(
+            loadMessagesForSelectedDeal(
+              refresh: true,
+              showLoader: showLoader,
+            ),
+          );
+          return;
+        }
         messagesErrorMessage = failure.message ?? 'failed_to_load_messages'.tr;
         if (showLoader) {
           isLoadingMessages = false;
@@ -540,9 +583,9 @@ class ChatController extends GetxController {
         messages = loadedMessages;
         _currentMessagesPage = 1;
         hasOlderMessages = paginator.hasMorePages;
-        _messagesCache[deal.id] = loadedMessages;
-        _messagesPageCache[deal.id] = 1;
-        _hasOlderCache[deal.id] = paginator.hasMorePages;
+        _messagesCache[cacheKey] = loadedMessages;
+        _messagesPageCache[cacheKey] = 1;
+        _hasOlderCache[cacheKey] = paginator.hasMorePages;
         if (showLoader) {
           isLoadingMessages = false;
         }
@@ -560,12 +603,14 @@ class ChatController extends GetxController {
     isLoadingOlderMessages = true;
     update();
 
+    final cacheKey = _messageCacheKey(deal.id);
     final nextPage = _currentMessagesPage + 1;
     final result = await getDealMessagesUseCase(
       GetDealMessagesParams(
         dealId: deal.id,
         page: nextPage,
         perPage: _messagesPerPage,
+        fullHistory: showContactDealHistory,
       ),
     );
 
@@ -585,9 +630,9 @@ class ChatController extends GetxController {
         messages = merged;
         _currentMessagesPage = nextPage;
         hasOlderMessages = paginator.hasMorePages;
-        _messagesCache[deal.id] = merged;
-        _messagesPageCache[deal.id] = nextPage;
-        _hasOlderCache[deal.id] = paginator.hasMorePages;
+        _messagesCache[cacheKey] = merged;
+        _messagesPageCache[cacheKey] = nextPage;
+        _hasOlderCache[cacheKey] = paginator.hasMorePages;
         isLoadingOlderMessages = false;
         update();
       },
@@ -644,7 +689,7 @@ class ChatController extends GetxController {
           messages = _sortedUniqueMessages([...messages, message]);
           _updateSelectedDealLastMessage(message);
           if (selectedDeal != null) {
-            _messagesCache[selectedDeal!.id] = messages;
+            _messagesCache[_messageCacheKey(selectedDeal!.id)] = messages;
           }
           isSendingMessage = false;
           update();
@@ -686,7 +731,7 @@ class ChatController extends GetxController {
       messages = _sortedUniqueMessages([...messages, ...sentMessages]);
       _updateSelectedDealLastMessage(sentMessages.last);
       if (selectedDeal != null) {
-        _messagesCache[selectedDeal!.id] = messages;
+        _messagesCache[_messageCacheKey(selectedDeal!.id)] = messages;
       }
     }
     isSendingMessage = false;
@@ -806,7 +851,7 @@ class ChatController extends GetxController {
         messages = _sortedUniqueMessages([...messages, message]);
         _updateSelectedDealLastMessage(message);
         if (selectedDeal != null) {
-          _messagesCache[selectedDeal!.id] = messages;
+          _messagesCache[_messageCacheKey(selectedDeal!.id)] = messages;
         }
         isSendingMessage = false;
         update();
@@ -985,7 +1030,7 @@ class ChatController extends GetxController {
       if (selectedDeal?.id == dealId && !fromMe) {
         final message = _messageFromReverbPayload(messageData, selectedDeal!);
         messages = _sortedUniqueMessages([...messages, message]);
-        _messagesCache[dealId] = messages;
+        _messagesCache[_messageCacheKey(dealId)] = messages;
         update();
         _scrollToBottom();
       }
@@ -1027,7 +1072,7 @@ class ChatController extends GetxController {
       if (selectedDeal?.id == dealId && messageData != null) {
         final message = _messageFromReverbPayload(messageData, selectedDeal!);
         messages = _sortedUniqueMessages([...messages, message]);
-        _messagesCache[dealId] = messages;
+        _messagesCache[_messageCacheKey(dealId)] = messages;
         _markDealAsRead(dealId);
         update();
         _scrollToBottom();
@@ -1184,6 +1229,7 @@ class ChatController extends GetxController {
       pollData: payload['poll_data'],
       contextInfo: payload['quoted_message'],
       crmSession: crmSession,
+      sourceDeal: null,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
@@ -1231,7 +1277,7 @@ class ChatController extends GetxController {
       next[idx] = updatedMessage;
       messages = _sortedUniqueMessages(next);
       if (selectedDeal != null) {
-        _messagesCache[selectedDeal!.id] = messages;
+        _messagesCache[_messageCacheKey(selectedDeal!.id)] = messages;
       }
       _refreshSelectedDealLastMessageFromMessages();
     }
@@ -1240,7 +1286,7 @@ class ChatController extends GetxController {
   void _removeMessageFromState(DealMessage message) {
     messages = messages.where((m) => m.id != message.id).toList();
     if (selectedDeal != null) {
-      _messagesCache[selectedDeal!.id] = messages;
+      _messagesCache[_messageCacheKey(selectedDeal!.id)] = messages;
     }
     _refreshSelectedDealLastMessageFromMessages();
   }
@@ -1307,6 +1353,29 @@ class ChatController extends GetxController {
         print('⚠️ Notification sound failed: $e');
       }
     }
+  }
+
+  Future<void> hideContactDealHistoryPanel() async {
+    showContactDealHistory = false;
+    _fullHistoryAnchorPhone = null;
+    update();
+    await loadMessagesForSelectedDeal(refresh: true, showLoader: false);
+  }
+
+  Future<void> enableFullCustomerHistoryFromMenu() async {
+    final phone = selectedDeal?.contactPhone?.trim();
+    if (phone == null || phone.isEmpty) {
+      AppMessages.showSnackBar(
+        type: ErrorType.warning,
+        title: 'info'.tr,
+        message: 'contact_phone_required_for_history'.tr,
+      );
+      return;
+    }
+    showContactDealHistory = true;
+    _fullHistoryAnchorPhone = phone;
+    update();
+    await loadMessagesForSelectedDeal(refresh: true, showLoader: true);
   }
 
   List<Deal> _deduplicateDeals(List<Deal> deals) {

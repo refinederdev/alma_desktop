@@ -41,6 +41,7 @@ abstract class MainRepository {
     int dealId, {
     int page = 1,
     int perPage = 50,
+    bool fullHistory = false,
   });
 
   Future<Either<Failure, DealMessage>> sendMessage({

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:alma_desktop/core/theme/app_styles.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
+import 'package:alma_desktop/core/widgets/agent_check_in_status_banner.dart';
 import 'package:alma_desktop/core/widgets/whatsapp_formatted_text.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
 import 'package:alma_desktop/core/errors/app_messages.dart';
@@ -34,14 +36,22 @@ class ChatView extends GetView<ChatController> {
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           child: Padding(
             padding: EdgeInsets.all(20.w),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(
-                  width: 370.w,
-                  child: _ChatDealsPanel(controller: c),
+                const AgentCheckInStatusBanner(),
+                Expanded(
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 370.w,
+                        child: _ChatDealsPanel(controller: c),
+                      ),
+                      SizedBox(width: 14.w),
+                      Expanded(child: _ChatMessagesPanel(controller: c)),
+                    ],
+                  ),
                 ),
-                SizedBox(width: 14.w),
-                Expanded(child: _ChatMessagesPanel(controller: c)),
               ],
             ),
           ),
@@ -487,6 +497,10 @@ class _ChatMessagesPanel extends StatelessWidget {
               children: [
                 _ChatHeader(deal: selectedDeal, controller: controller),
                 Divider(height: 1.h, color: AppTheme.gray50),
+                if (controller.showContactDealHistory) ...[
+                  _FullCustomerHistoryBanner(controller: controller),
+                  Divider(height: 1.h, color: AppTheme.gray50),
+                ],
                 Expanded(
                   child: controller.isLoadingMessages
                       ? const Center(child: CircularProgressIndicator())
@@ -588,6 +602,27 @@ class _ChatHeader extends StatelessWidget {
                     ],
                   ),
                 ),
+              if (deal.contactPhone?.trim().isNotEmpty == true)
+                PopupMenuItem<_ChatHeaderDealAction>(
+                  value: _ChatHeaderDealAction.customerDealHistory,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.history_rounded,
+                        color: AppTheme.gray500,
+                        size: 18.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'customer_deal_history'.tr,
+                        style: AppStyles.labelLarge.copyWith(
+                          color: AppTheme.gray700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               PopupMenuItem<_ChatHeaderDealAction>(
                 value: _ChatHeaderDealAction.editDeal,
                 child: Row(
@@ -643,6 +678,13 @@ class _ChatHeader extends StatelessWidget {
                     );
                   }
                   break;
+                case _ChatHeaderDealAction.customerDealHistory:
+                  if (controller.showContactDealHistory) {
+                    await controller.hideContactDealHistoryPanel();
+                  } else {
+                    await controller.enableFullCustomerHistoryFromMenu();
+                  }
+                  break;
                 case _ChatHeaderDealAction.editDeal:
                   await crmController.showEditDealDialog(deal);
                   break;
@@ -650,7 +692,8 @@ class _ChatHeader extends StatelessWidget {
                   await crmController.showTransferDealDialog(deal);
                   break;
               }
-              if (action != _ChatHeaderDealAction.copyClientPhone) {
+              if (action != _ChatHeaderDealAction.copyClientPhone &&
+                  action != _ChatHeaderDealAction.customerDealHistory) {
                 await controller.refreshAll();
               }
             },
@@ -663,7 +706,67 @@ class _ChatHeader extends StatelessWidget {
   }
 }
 
-enum _ChatHeaderDealAction { copyClientPhone, editDeal, transferDeal }
+enum _ChatHeaderDealAction {
+  copyClientPhone,
+  customerDealHistory,
+  editDeal,
+  transferDeal,
+}
+
+class _FullCustomerHistoryBanner extends StatelessWidget {
+  const _FullCustomerHistoryBanner({required this.controller});
+
+  final ChatController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.brandMain2_100.withValues(alpha: 0.45),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(14.w, 10.h, 6.w, 10.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.history_rounded,
+              size: 18.sp,
+              color: AppTheme.brandMain2_600,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'customer_deal_history'.tr,
+                    style: AppStyles.labelLarge.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.gray800,
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    'full_history_timeline_hint'.tr,
+                    style: AppStyles.bodySmall.copyWith(
+                      color: AppTheme.gray500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'cancel'.tr,
+              onPressed: () =>
+                  unawaited(controller.hideContactDealHistoryPanel()),
+              icon: Icon(Icons.close_rounded, size: 20.sp),
+              color: AppTheme.gray400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _MessagesList extends StatelessWidget {
   const _MessagesList({required this.controller});
@@ -740,22 +843,55 @@ class _MessageBubble extends StatelessWidget {
     final canManageMessage = isMe;
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 8.h),
-        constraints: BoxConstraints(maxWidth: 620.w),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: isMe ? AppTheme.brandMain2_600 : AppTheme.gray25,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: isMe ? AppTheme.brandMain2_600 : AppTheme.gray50,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: isMe
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
-          children: [
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 8.h),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 620.w),
+          child: IntrinsicWidth(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: isMe ? AppTheme.brandMain2_600 : AppTheme.gray25,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: isMe ? AppTheme.brandMain2_600 : AppTheme.gray50,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: isMe
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                children: [
+            if (controller.showContactDealHistory &&
+                message.sourceDeal != null &&
+                message.sourceDeal!.id != controller.selectedDeal?.id) ...[
+              Align(
+                alignment:
+                    isMe ? Alignment.centerRight : Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 6.h),
+                  child: Wrap(
+                    spacing: 6.w,
+                    runSpacing: 4.h,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'deal_id_label'
+                            .trParams({'id': '${message.sourceDeal!.id}'}),
+                        style: AppStyles.labelSmall.copyWith(
+                          color: isMe
+                              ? AppTheme.baseWhite.withValues(alpha: 0.9)
+                              : AppTheme.gray500,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      _DealStatusBadge(status: message.sourceDeal!.status),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             if (canManageMessage)
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -850,6 +986,7 @@ class _MessageBubble extends StatelessWidget {
             if (hasText || (!hasText && !hasMedia))
               WhatsAppFormattedText(
                 _sanitizeInvalidUtf16(body),
+                textAlign: isMe ? TextAlign.end : TextAlign.start,
                 style: AppStyles.bodyMedium.copyWith(
                   color: isMe ? AppTheme.baseWhite : AppTheme.gray700,
                 ),
@@ -863,7 +1000,10 @@ class _MessageBubble extends StatelessWidget {
                     : AppTheme.gray300,
               ),
             ),
-          ],
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1721,13 +1861,9 @@ class _Composer extends StatelessWidget {
                   onKeyEvent: (node, event) {
                     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-                    final isPasteShortcut =
-                        (HardwareKeyboard.instance.isMetaPressed ||
-                            HardwareKeyboard.instance.isControlPressed) &&
-                        event.logicalKey == LogicalKeyboardKey.keyV;
-                    if (isPasteShortcut && !disabled) {
-                      controller.pickImageFromClipboard();
-                    }
+                    // Do not handle Ctrl/Cmd+V here: on Windows, reading the
+                    // clipboard for images (Pasteboard.image) races with the
+                    // text field's normal paste and can block pasting text.
 
                     final isEnterKey =
                         event.logicalKey == LogicalKeyboardKey.enter ||

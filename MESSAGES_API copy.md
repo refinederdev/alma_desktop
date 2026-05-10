@@ -139,7 +139,9 @@ curl -X POST "http://localhost/api/messages" \
 
 - **Method:** `PUT`
 - **Endpoint:** `/messages/{id}`
-- **Purpose:** تعديل الرسالة في قاعدة البيانات.
+- **Purpose:** تعديل الرسالة بنفس سلوك الشات (Livewire):  
+  1) تعديل الرسالة على Wasender  
+  2) ثم تحديث قاعدة البيانات محليًا
 
 ### Body
 
@@ -161,8 +163,13 @@ curl -X PUT "http://localhost/api/messages/120" \
 
 ### Important Note
 
-- هذا endpoint يحدث الرسالة في قاعدة البيانات ويضع `edited_at` عند تعديل النص.
-- لا يعتمد على `wasender msgId` داخل هذا الـ endpoint.
+- عند إرسال `message_body` يتم تنفيذ تعديل على Wasender أولًا.
+- شروط التعديل النصي (مثل الشات):
+  - الرسالة تكون `from_me=true`
+  - نوع الرسالة `conversation`
+  - الرسالة غير معدلة سابقًا (`edited_at` فارغ)
+  - `message_id` يكون رقم Wasender صالح
+- إذا فشل Wasender، لن يتم تحديث قاعدة البيانات.
 
 ---
 
@@ -170,7 +177,9 @@ curl -X PUT "http://localhost/api/messages/120" \
 
 - **Method:** `DELETE`
 - **Endpoint:** `/messages/{id}`
-- **Purpose:** حذف الرسالة من قاعدة البيانات.
+- **Purpose:** حذف الرسالة بنفس سلوك الشات (Livewire):  
+  1) حذف الرسالة من Wasender  
+  2) ثم حذفها من قاعدة البيانات
 
 ### Example
 
@@ -179,6 +188,14 @@ curl -X DELETE "http://localhost/api/messages/120" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Accept: application/json"
 ```
+
+### Important Note
+
+- الحذف عبر هذا endpoint يتطلب:
+  - الرسالة تكون `from_me=true`
+  - `message_id` يكون رقم Wasender صالح
+  - وجود CRM session + API key
+- إذا فشل الحذف على Wasender، لن يتم حذف الرسالة محليًا.
 
 ---
 
@@ -227,7 +244,7 @@ curl -G "http://localhost/api/messages/deal/15" \
   --data-urlencode "order_dir=asc"
 ```
 
-### مثال — تطبيق سطح المكتب: تاريخ العميل الكامل عبر كل الصفقات
+### مثال — تطبيق الجوال: تاريخ العميل الكامل عبر كل الصفقات
 
 ```bash
 curl -G "http://localhost/api/messages/deal/15" \
@@ -238,11 +255,12 @@ curl -G "http://localhost/api/messages/deal/15" \
   --data-urlencode "order_dir=desc"
 ```
 
-### ملاحظات للتطبيق
+### ملاحظات لتطبيق الجوال
 
-- استخدم **`full_history=1`** عندما يفعّل المستخدم «سجل صفقات العميل» (دمج الرسائل في نفس المسار).
-- عالج **`403`**: اعرض رسالة أن المستخدم لا يملك صلاحية عرض التاريخ الكامل.
+- استخدم **`full_history=1`** عندما يفعّل المستخدم «عرض كل المحادثات مع هذا الرقم» (أو ما يعادله في الواجهة).
+- عالج **`403`**: إخفِ الخيار أو اعرض رسالة أن المستخدم لا يملك صلاحية عرض التاريخ الكامل.
 - الرسائل قد تأتي من صفقات متعددة؛ استخدم **`deal.id` / `deal.title` / `deal.status`** داخل كل عنصر رسالة لعرض شارة الصفقة إن رغبت.
+- **ما لا يشمله هذا المسار:** أحداث سجل الصفقة النظامية (تعيين، تحويل، دفع…) التي يدمجها الويب في الشات — هذا المسار يوسّع **الرسائل فقط** بين الصفقات.
 
 ---
 

@@ -43,6 +43,7 @@ abstract class MainRemoteDataSource {
     int dealId, {
     int page = 1,
     int perPage = 50,
+    bool fullHistory = false,
   });
 
   Future<DealMessageModel> sendMessage({
@@ -197,10 +198,18 @@ class MainRemoteDataSourceImpl implements MainRemoteDataSource {
     int dealId, {
     int page = 1,
     int perPage = 50,
+    bool fullHistory = false,
   }) async {
+    final query = <String, dynamic>{
+      'page': page,
+      'per_page': perPage,
+    };
+    if (fullHistory) {
+      query['full_history'] = 1;
+    }
     final response = await apiConsumer.get(
       'messages/deal/$dealId',
-      queryParameters: {'page': page, 'per_page': perPage},
+      queryParameters: query,
     );
     return PaginatorModel<DealMessageModel>.fromJson(
       response as Map<String, dynamic>,

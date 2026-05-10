@@ -105,7 +105,7 @@ class ArLang {
     'update_install_failed': 'فشل تثبيت التحديث. حاول مرة أخرى.',
     'update_downloaded_open_in_finder':
         'تم تنزيل التحديث. يرجى تثبيته يدويًا من الملف الذي تم فتحه.',
-    'check_out': 'الخروج',
+    'check_out': 'إنهاء الجلسة',
     'edit_profile': 'تعديل الملف الشخصي',
     'account_settings': 'إعدادات الحساب',
     'edit_password': 'تعديل كلمة المرور',
@@ -199,7 +199,7 @@ class ArLang {
     'passwords_do_not_match': 'كلمات المرور غير متطابقة',
     'password_updated_successfully': 'تم تحديث كلمة المرور بنجاح',
     'password_update_failed': 'فشل تحديث كلمة المرور',
-    'check_in': 'تسجيل الدخول',
+    'check_in': 'بدء الجلسة',
     'total_messages': 'إجمالي الرسائل',
     'sent_messages': 'الرسائل المرسلة',
     'received_messages': 'الرسائل المستقبلة',
@@ -210,6 +210,8 @@ class ArLang {
     'checked_in_now': 'مسجل حضور الآن',
     'not_clocked_in': 'غير مسجل حضور',
     'clock_in_to_start_timer': 'سجل حضورك لبدء المؤقت المباشر.',
+    'agent_check_in_workspace_notice':
+        'أنت غير مسجل حضورًا، لذلك قد لا تصلك محادثات جديدة. سجّل حضورك ليصبح وضعك متاحًا.',
     'last_message': 'آخر رسالة',
     'action': 'الاجراء',
     'view_all': 'عرض الكل',
@@ -228,5 +230,19 @@ class ArLang {
     'weekly_attendance': 'الحضور الأسبوعي',
     'messages_trend': 'اتجاه الرسائل',
     'no_data_available': 'لا توجد بيانات متاحة حالياً.',
+    'customer_deal_history': 'سجل صفقات العميل',
+    'contact_phone_required_for_history':
+        'يُطلب رقم الجوال لعرض سجل الصفقات.',
+    'failed_to_load_customer_deal_history':
+        'تعذر تحميل سجل صفقات العميل.',
+    'contact_history_empty': 'لا توجد صفقات لهذا الرقم.',
+    'deal_id_label': 'صفقة #@id',
+    'current_deal_badge': 'الحالية',
+    'customer_deal_history_hint':
+        'اضغط على صفقة لفتح محادثتها.',
+    'full_history_timeline_hint':
+        'تُدمج هنا رسائل كل الصفقات المرتبطة بنفس رقم الجوال.',
+    'full_history_forbidden':
+        'لا تملك صلاحية عرض المحادثة الكاملة لهذا الرقم.',
   };
 }

@@ -1,4 +1,5 @@
 import 'package:alma_desktop/features/main/domain/entities/crm_session.dart';
+import 'package:alma_desktop/features/main/domain/entities/message_deal_summary.dart';
 import 'package:equatable/equatable.dart';
 
 class DealMessage extends Equatable {
@@ -33,6 +34,7 @@ class DealMessage extends Equatable {
   final dynamic pollData;
   final dynamic contextInfo;
   final CrmSession crmSession;
+  final MessageDealSummary? sourceDeal;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -68,6 +70,7 @@ class DealMessage extends Equatable {
     this.pollData,
     this.contextInfo,
     required this.crmSession,
+    this.sourceDeal,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -105,6 +108,7 @@ class DealMessage extends Equatable {
     pollData,
     contextInfo,
     crmSession,
+    sourceDeal,
     createdAt,
     updatedAt,
   ];

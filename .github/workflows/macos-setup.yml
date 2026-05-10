@@ -1,4 +1,4 @@
-name: Build macOS Setup
+name: Build macOS Setup DMG
 
 on:
   workflow_dispatch:
@@ -48,31 +48,39 @@ jobs:
           )
           echo "APP_NAME=$APP_NAME" >> "$GITHUB_ENV"
           echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+          echo "APP_DISPLAY_NAME=ALMA CRM" >> "$GITHUB_ENV"
 
       - name: Build macOS app (release)
         run: flutter build macos --release
 
-      - name: Package .app into zip
+      - name: Package .app into dmg
         shell: bash
         run: |
-          APP_BUNDLE="build/macos/Build/Products/Release/${APP_NAME}.app"
+          RELEASE_DIR="build/macos/Build/Products/Release"
+          APP_BUNDLE="${RELEASE_DIR}/${APP_DISPLAY_NAME}.app"
+          if [ ! -d "$APP_BUNDLE" ]; then
+            APP_BUNDLE="${RELEASE_DIR}/${APP_NAME}.app"
+          fi
           if [ ! -d "$APP_BUNDLE" ]; then
             echo "::error::Missing .app bundle: $APP_BUNDLE"
-            ls -la build/macos/Build/Products/Release || true
+            ls -la "$RELEASE_DIR" || true
             exit 1
           fi
           mkdir -p macos-dist
-          ZIP_NAME="${APP_NAME}-macos-setup-${GITHUB_REF_NAME}.zip"
-          ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "macos-dist/$ZIP_NAME"
+          mkdir -p macos-dmg-src
+          rm -rf "macos-dmg-src/${APP_DISPLAY_NAME}.app"
+          cp -R "$APP_BUNDLE" "macos-dmg-src/"
+          DMG_NAME="${APP_NAME}-macos-setup-${GITHUB_REF_NAME}.dmg"
+          hdiutil create -volname "$APP_DISPLAY_NAME" -srcfolder macos-dmg-src -ov -format UDZO "macos-dist/$DMG_NAME"
 
-      - name: Publish GitHub Release with macOS zip
+      - name: Publish GitHub Release with macOS dmg
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: ${{ env.APP_NAME }} ${{ github.ref_name }}
+          name: ${{ env.APP_DISPLAY_NAME }} ${{ github.ref_name }}
           body: |
             Automated release for version ${{ env.APP_VERSION }}.
-            Includes macOS build packaged as a zip.
-          files: macos-dist/*.zip
+            Includes macOS build packaged as a dmg.
+          files: macos-dist/*.dmg
           fail_on_unmatched_files: true
 

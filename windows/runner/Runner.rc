@@ -89,7 +89,7 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.almacrm.desktop" "\0"
+            VALUE "CompanyName", "ALMA CRM" "\0"
             VALUE "FileDescription", "ALMA CRM" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ALMA CRM" "\0"
