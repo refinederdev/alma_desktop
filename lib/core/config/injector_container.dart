@@ -13,6 +13,8 @@ import 'package:alma_desktop/features/global/data/datasources/global_local_data_
 import 'package:alma_desktop/features/global/data/repositories/global_repository_impl.dart';
 import 'package:alma_desktop/features/global/domain/repositories/global_repository.dart';
 import 'package:alma_desktop/features/global/domain/usecases/check_if_user_is_logged_in_use_case.dart';
+import 'package:alma_desktop/core/config/app_config.dart';
+import 'package:alma_desktop/core/services/server_config_service/server_config_service.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:alma_desktop/features/main/data/datasources/main_remote_data_source.dart';
 import 'package:alma_desktop/features/main/data/repositories/main_repository_impl.dart';
@@ -72,6 +74,11 @@ class InjectorContainer {
       () => LocalStorageServiceSharedPreferencesImpl(preferences),
       fenix: true,
     );
+    Get.lazyPut<ServerConfigService>(
+      () => ServerConfigService(Get.find()),
+      fenix: true,
+    );
+    await AppConfig.init(Get.find<ServerConfigService>());
 
     // Firebase (يعتمد على LocalStorageService)
     // try {

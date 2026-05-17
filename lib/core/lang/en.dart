@@ -176,5 +176,19 @@ class EnLang {
         'Messages from every deal that shares this phone number are merged here.',
     'full_history_forbidden':
         'You do not have permission to view full customer history.',
+    'server_config_title': 'Server settings',
+    'server_config_subtitle':
+        'Change the API base URL to connect this app to your company backend. New requests use it immediately after save.',
+    'server_config_url_label': 'API base URL',
+    'server_config_url_hint': 'https://company.example.com',
+    'server_config_url_required': 'Server URL is required',
+    'server_config_url_invalid': 'Please enter a valid URL',
+    'server_config_default_label': 'Default',
+    'server_config_reset_button': 'Restore default',
+    'server_config_saved_title': 'Saved',
+    'server_config_saved_message':
+        'Server URL updated. Sign in again if needed.',
+    'server_config_reset_title': 'Restored',
+    'server_config_reset_message': 'Server URL was reset to the default.',
   };
 }

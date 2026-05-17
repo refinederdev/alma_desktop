@@ -249,5 +249,19 @@ class ArLang {
         'تُدمج هنا رسائل كل الصفقات المرتبطة بنفس رقم الجوال.',
     'full_history_forbidden':
         'لا تملك صلاحية عرض المحادثة الكاملة لهذا الرقم.',
+    'server_config_title': 'إعدادات الخادم',
+    'server_config_subtitle':
+        'غيّر عنوان واجهة الـ API لربط التطبيق بخادم شركتك. يُطبَّق فور الحفظ على الطلبات الجديدة.',
+    'server_config_url_label': 'عنوان الـ API',
+    'server_config_url_hint': 'https://company.example.com',
+    'server_config_url_required': 'عنوان الخادم مطلوب',
+    'server_config_url_invalid': 'صيغة العنوان غير صحيحة',
+    'server_config_default_label': 'الافتراضي',
+    'server_config_reset_button': 'استعادة الافتراضي',
+    'server_config_saved_title': 'تم الحفظ',
+    'server_config_saved_message':
+        'تم تحديث عنوان الخادم. أعد تسجيل الدخول إن لزم.',
+    'server_config_reset_title': 'تمت الاستعادة',
+    'server_config_reset_message': 'عاد عنوان الخادم إلى القيمة الافتراضية.',
   };
 }

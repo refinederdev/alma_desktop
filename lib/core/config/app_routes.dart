@@ -2,7 +2,10 @@ import 'package:alma_desktop/core/middlewares/check_auth_middleware.dart';
 import 'package:alma_desktop/features/auth/presentation/controllers/login_controller.dart';
 import 'package:alma_desktop/features/auth/domain/usecases/update_profile_use_case.dart';
 import 'package:alma_desktop/features/auth/presentation/views/login_view.dart';
+import 'package:alma_desktop/core/services/server_config_service/server_config_service.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
+import 'package:alma_desktop/features/global/presentation/controllers/server_config_controller.dart';
+import 'package:alma_desktop/features/global/presentation/views/server_config_view.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/splash_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/chat_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/dashboard_controller.dart';
@@ -48,6 +51,7 @@ class AppRoutes {
   static const String editProfile = '/edit_profile';
   static const String updatePassword = '/update_password';
   static const String notifications = '/notifications';
+  static const String serverConfig = '/server-config';
   static final List<GetPage> routes = [
     GetPage(
       name: splash,
@@ -134,5 +138,16 @@ class AppRoutes {
     // GetPage(name: editProfile, page: () => const EditProfileView()),
     // GetPage(name: updatePassword, page: () => const UpdatePasswordView()),
     // GetPage(name: notifications, page: () => const NotificationsView()),
+    GetPage(
+      name: serverConfig,
+      page: () => const ServerConfigView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(
+          () => ServerConfigController(
+            serverConfigService: Get.find<ServerConfigService>(),
+          ),
+        );
+      }),
+    ),
   ];
 }

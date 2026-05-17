@@ -1,5 +1,12 @@
+import 'package:alma_desktop/core/services/server_config_service/server_config_service.dart';
+
 class AppConfig {
-  static const String baseURL = "https://almacrm.com/api/";
+  static const String defaultBaseURL = 'https://almacrm.com/api/';
+
+  static String _baseURL = defaultBaseURL;
+
+  static String get baseURL => _baseURL;
+
   static int appVersion = 1;
   static const String appUpdatesBaseUrl = 'https://refineder.ai/alma-desktop';
   static const String githubRepoOwner = 'refinederdev';
@@ -13,6 +20,39 @@ class AppConfig {
   static const int reverbPort = 443; // REVERB_PORT
   static const String reverbScheme =
       'wss'; // REVERB_SCHEME (wss للاتصال الآمن بـ WebSocket)
-  // Base URL بدون /api للـ broadcasting/auth
-  static String get baseUrlWithoutApi => baseURL.replaceAll('/api/', '');
+
+  static String get baseUrlWithoutApi {
+    if (_baseURL.endsWith('/api/')) {
+      return _baseURL.substring(0, _baseURL.length - 5);
+    }
+    if (_baseURL.endsWith('/api')) {
+      return _baseURL.substring(0, _baseURL.length - 4);
+    }
+    return _baseURL;
+  }
+
+  static Future<void> init(ServerConfigService serverConfigService) async {
+    final saved = serverConfigService.savedBaseUrl;
+    if (saved != null && saved.isNotEmpty) {
+      _baseURL = saved;
+    } else {
+      _baseURL = defaultBaseURL;
+    }
+  }
+
+  static Future<void> applyBaseUrl(
+    String url,
+    ServerConfigService serverConfigService,
+  ) async {
+    final normalized = ServerConfigService.normalizeApiBaseUrl(url);
+    await serverConfigService.saveBaseUrl(normalized);
+    _baseURL = normalized;
+  }
+
+  static Future<void> resetBaseUrl(
+    ServerConfigService serverConfigService,
+  ) async {
+    await serverConfigService.clearSavedBaseUrl();
+    _baseURL = defaultBaseURL;
+  }
 }
