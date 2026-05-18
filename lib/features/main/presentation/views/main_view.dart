@@ -55,14 +55,19 @@ class _MainSidebar extends StatelessWidget {
         index: 2,
       ),
       _SidebarItemData(
+        label: 'calls'.tr,
+        icon: Icons.call_rounded,
+        index: 3,
+      ),
+      _SidebarItemData(
         label: 'profile'.tr,
         icon: Icons.person_rounded,
-        index: 3,
+        index: 4,
       ),
       _SidebarItemData(
         label: 'updates'.tr,
         icon: Icons.system_update_rounded,
-        index: 4,
+        index: 5,
       ),
     ];
 

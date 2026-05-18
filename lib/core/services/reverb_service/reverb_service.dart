@@ -173,7 +173,12 @@ class ReverbService {
         // هذا حدث مخصص (مثل message.received)
         final channelName = data['channel'] as String?;
         final eventData = data['data'];
-        _handleCustomEvent(event!, eventData, channelName);
+        // Laravel قد يبث أحداثاً بنقطة قائدة عند استخدام broadcastAs (مثل
+        // ".call.event"). نزيلها كي تتطابق فحوصات الاسم في الأسفل.
+        final normalizedEvent = event!.startsWith('.')
+            ? event.substring(1)
+            : event;
+        _handleCustomEvent(normalizedEvent, eventData, channelName);
       }
     } catch (e) {
       if (kDebugMode) print('❌ Error handling message: $e');
@@ -201,8 +206,29 @@ class ReverbService {
         onMessageReceived?.call(eventData);
       } else if (event == 'deal.history.updated') {
         onDealHistoryUpdated?.call(eventData);
+      } else if (event == 'call.event') {
+        // أحداث المكالمات (incoming_call, call_connected, call_accepted, ...)
+        if (kDebugMode) {
+          print(
+            '📞 call.event received on $channelName, '
+            'type=${eventData['type']}',
+          );
+        }
+        onCallEvent?.call(eventData, channelName);
+      } else if (channelName != null &&
+          channelName.startsWith('private-calls.')) {
+        // أي حدث آخر على قناة مكالمات نمرّره كذلك حتى لا نُسقط شيئاً
+        if (kDebugMode) {
+          print(
+            '📞 Forwarding event "$event" on $channelName to call handler',
+          );
+        }
+        onCallEvent?.call(eventData, channelName);
       } else {
         // حدث غير معروف
+        if (kDebugMode) {
+          print('❔ Unknown event "$event" on $channelName');
+        }
         onUnknownEvent?.call(event, eventData);
       }
     } catch (e) {
@@ -313,6 +339,12 @@ class ReverbService {
     await subscribeToPrivateChannel(channelName);
   }
 
+  /// الاشتراك في قناة مكالمات جلسة الـ CRM (private-calls.{sessionId})
+  Future<void> subscribeToCallSession(int sessionId) async {
+    final channelName = 'private-calls.$sessionId';
+    await subscribeToPrivateChannel(channelName);
+  }
+
   /// إلغاء الاشتراك من قناة
   void unsubscribeFromChannel(String channelName) {
     final unsubscribeMessage = jsonEncode({
@@ -414,6 +446,7 @@ class ReverbService {
   Function(String)? onSocketIdReceived;
   Function(Map<String, dynamic>)? onMessageReceived;
   Function(Map<String, dynamic>)? onDealHistoryUpdated;
+  Function(Map<String, dynamic>, String?)? onCallEvent;
   Function(String, Map<String, dynamic>)? onUnknownEvent;
   Function(Map<String, dynamic>)? onError;
   Function(String)? onSubscriptionSucceeded;

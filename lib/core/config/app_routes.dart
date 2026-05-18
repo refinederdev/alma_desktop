@@ -35,6 +35,8 @@ import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case
 import 'package:alma_desktop/features/main/domain/usecases/update_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_deal_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
+import 'package:alma_desktop/features/calls/domain/usecases/calls_use_cases.dart';
+import 'package:alma_desktop/features/calls/presentation/controllers/calls_history_controller.dart';
 import 'package:alma_desktop/core/services/app_update_service.dart';
 import 'package:get/get.dart';
 
@@ -129,6 +131,12 @@ class AppRoutes {
         );
         Get.lazyPut(
           () => UpdateController(updateService: AppUpdateService()),
+          fenix: true,
+        );
+        Get.lazyPut(
+          () => CallsHistoryController(
+            getCallHistoryUseCase: Get.find<GetCallHistoryUseCase>(),
+          ),
           fenix: true,
         );
       }),

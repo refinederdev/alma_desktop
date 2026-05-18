@@ -98,6 +98,7 @@ class LoginController extends GetxController {
 
         globalController.setUser(loginResponse.user);
         globalController.token = loginResponse.accessToken;
+        globalController.bootstrapCallsModule();
 
         AppMessages.showSnackBar(
           type: ErrorType.success,

@@ -15,6 +15,11 @@ import 'package:alma_desktop/features/global/domain/repositories/global_reposito
 import 'package:alma_desktop/features/global/domain/usecases/check_if_user_is_logged_in_use_case.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
 import 'package:alma_desktop/core/services/server_config_service/server_config_service.dart';
+import 'package:alma_desktop/features/calls/data/datasources/calls_remote_data_source.dart';
+import 'package:alma_desktop/features/calls/data/repositories/calls_repository_impl.dart';
+import 'package:alma_desktop/features/calls/domain/repositories/calls_repository.dart';
+import 'package:alma_desktop/features/calls/domain/usecases/calls_use_cases.dart';
+import 'package:alma_desktop/features/calls/presentation/controllers/call_controller.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:alma_desktop/features/main/data/datasources/main_remote_data_source.dart';
 import 'package:alma_desktop/features/main/data/repositories/main_repository_impl.dart';
@@ -93,6 +98,7 @@ class InjectorContainer {
     GlobalInjector.init();
     MainFeatureInjector.init();
     AuthFeatureInjector.init();
+    CallsFeatureInjector.init();
   }
 }
 
@@ -334,5 +340,80 @@ class MainFeatureInjector {
     //   ),
     //   fenix: true,
     // );
+  }
+}
+
+class CallsFeatureInjector {
+  static void init() {
+    // Data Sources
+    Get.lazyPut<CallsRemoteDataSource>(
+      () => CallsRemoteDataSourceImpl(apiConsumer: Get.find()),
+      fenix: true,
+    );
+
+    // Repositories
+    Get.lazyPut<CallsRepository>(
+      () => CallsRepositoryImpl(remoteDataSource: Get.find()),
+      fenix: true,
+    );
+
+    // UseCases
+    Get.lazyPut(
+      () => GetCallSessionsUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => GetActiveCallUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => GetCallSdpUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => InitiateCallUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => AcceptCallUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => RejectCallUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => TerminateCallUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => GetCallHistoryUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => CheckCallPermissionUseCase(repository: Get.find()),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => RequestCallPermissionUseCase(repository: Get.find()),
+      fenix: true,
+    );
+
+    // Permanent global call controller — يعيش طوال عمر التطبيق
+    // لتتمكن من استقبال المكالمات من أي شاشة بسرعة.
+    Get.put<CallController>(
+      CallController(
+        getCallSessionsUseCase: Get.find(),
+        getActiveCallUseCase: Get.find(),
+        getCallSdpUseCase: Get.find(),
+        initiateCallUseCase: Get.find(),
+        acceptCallUseCase: Get.find(),
+        rejectCallUseCase: Get.find(),
+        terminateCallUseCase: Get.find(),
+        checkCallPermissionUseCase: Get.find(),
+        requestCallPermissionUseCase: Get.find(),
+      ),
+      permanent: true,
+    );
   }
 }

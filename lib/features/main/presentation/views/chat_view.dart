@@ -8,6 +8,8 @@ import 'package:alma_desktop/core/widgets/agent_check_in_status_banner.dart';
 import 'package:alma_desktop/core/widgets/whatsapp_formatted_text.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
 import 'package:alma_desktop/core/errors/app_messages.dart';
+import 'package:alma_desktop/features/calls/presentation/controllers/call_controller.dart';
+import 'package:alma_desktop/features/calls/presentation/widgets/outbound_dialer_dialog.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal.dart';
 import 'package:alma_desktop/features/main/domain/entities/deal_message.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
@@ -567,6 +569,9 @@ class _ChatHeader extends StatelessWidget {
             ),
           ),
           SizedBox(width: 6.w),
+          if (deal.contactPhone?.trim().isNotEmpty == true)
+            _ChatCallButton(deal: deal),
+          SizedBox(width: 6.w),
           PopupMenuButton<_ChatHeaderDealAction>(
             icon: Icon(
               Icons.more_vert_rounded,
@@ -712,6 +717,68 @@ enum _ChatHeaderDealAction {
   customerDealHistory,
   editDeal,
   transferDeal,
+}
+
+class _ChatCallButton extends StatelessWidget {
+  const _ChatCallButton({required this.deal});
+
+  final Deal deal;
+
+  @override
+  Widget build(BuildContext context) {
+    return GetBuilder<CallController>(
+      builder: (cc) {
+        final disabled = cc.sessions.isEmpty || cc.hasActiveCall;
+        final color = disabled
+            ? context.alma.onSurfaceHint
+            : AppTheme.success500;
+        return Tooltip(
+          message: 'call_customer'.tr,
+          child: Material(
+            color: color.withValues(alpha: disabled ? 0.10 : 0.14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10.r),
+              onTap: disabled
+                  ? null
+                  : () {
+                      Get.dialog(
+                        OutboundDialerDialog(
+                          initialPhone: deal.contactPhone,
+                          initialSessionId: deal.crmSessionId,
+                          contactName: deal.contactName ?? deal.contactPhone,
+                          dealId: deal.id,
+                        ),
+                      );
+                    },
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10.w,
+                  vertical: 8.h,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.call_rounded, color: color, size: 16.sp),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'call'.tr,
+                      style: AppStyles.labelMedium.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _FullCustomerHistoryBanner extends StatelessWidget {

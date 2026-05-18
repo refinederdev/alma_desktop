@@ -30,5 +30,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>يحتاج التطبيق إلى الميكروفون لإجراء مكالمات الواتساب الصوتية مع العملاء.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>قد يحتاج التطبيق إلى الكاميرا لإجراء المكالمات.</string>
 </dict>
 </plist>
