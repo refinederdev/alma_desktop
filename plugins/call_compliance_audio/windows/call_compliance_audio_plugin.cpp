@@ -280,6 +280,7 @@ std::wstring NewRecordingIdentifier() {
 
 bool PrepareRecordingPaths(std::wstring* local,
                            std::wstring* remote,
+                           std::wstring* mixed_wav,
                            std::wstring* output,
                            std::string* error) {
   wchar_t temporary[MAX_PATH + 1] = {};
@@ -299,7 +300,8 @@ bool PrepareRecordingPaths(std::wstring* local,
   const std::wstring base = directory + L"\\" + NewRecordingIdentifier();
   *local = base + L"-local.pcm";
   *remote = base + L"-remote.pcm";
-  *output = base + L".wav";
+  *mixed_wav = base + L"-mixed.wav";
+  *output = base + L".m4a";
   return true;
 }
 
@@ -327,6 +329,109 @@ void WriteWavHeader(FILE* file, uint32_t sample_count) {
   WriteUint32(file, data_size);
 }
 
+bool EncodeWavToAac(const std::wstring& wav_path,
+                    const std::wstring& output_path,
+                    std::string* error) {
+  ComScope com;
+  MediaFoundationScope media_foundation;
+  if (FAILED(media_foundation.result())) {
+    *error = "Unable to start Windows audio encoding: " +
+             HresultMessage(media_foundation.result());
+    return false;
+  }
+
+  ComPtr<IMFSourceReader> reader;
+  HRESULT result =
+      MFCreateSourceReaderFromURL(wav_path.c_str(), nullptr, &reader);
+  if (FAILED(result)) {
+    *error = "Unable to open the mixed call audio: " +
+             HresultMessage(result);
+    return false;
+  }
+  reader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+  result = reader->SetStreamSelection(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+                                      TRUE);
+
+  ComPtr<IMFMediaType> input_type;
+  if (SUCCEEDED(result)) {
+    result = reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+                                         &input_type);
+  }
+
+  ComPtr<IMFSinkWriter> writer;
+  if (SUCCEEDED(result)) {
+    result = MFCreateSinkWriterFromURL(output_path.c_str(), nullptr, nullptr,
+                                       &writer);
+  }
+
+  ComPtr<IMFMediaType> output_type;
+  if (SUCCEEDED(result)) result = MFCreateMediaType(&output_type);
+  if (SUCCEEDED(result)) {
+    result = output_type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_AAC);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND,
+                                    kRecordingSampleRate);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetUINT32(MF_MT_AUDIO_NUM_CHANNELS, 1);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetUINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 24000);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetUINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 1);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetUINT32(MF_MT_AAC_PAYLOAD_TYPE, 0);
+  }
+  if (SUCCEEDED(result)) {
+    result = output_type->SetUINT32(
+        MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 0x29);
+  }
+
+  DWORD output_stream = 0;
+  if (SUCCEEDED(result)) {
+    result = writer->AddStream(output_type.Get(), &output_stream);
+  }
+  if (SUCCEEDED(result)) {
+    result = writer->SetInputMediaType(output_stream, input_type.Get(),
+                                       nullptr);
+  }
+  if (SUCCEEDED(result)) result = writer->BeginWriting();
+  if (FAILED(result)) {
+    *error = "Unable to start Windows AAC encoding: " +
+             HresultMessage(result);
+    return false;
+  }
+
+  while (true) {
+    DWORD flags = 0;
+    ComPtr<IMFSample> sample;
+    result = reader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0,
+                                nullptr, &flags, nullptr, &sample);
+    if (FAILED(result)) break;
+    if (sample != nullptr) {
+      result = writer->WriteSample(output_stream, sample.Get());
+      if (FAILED(result)) break;
+    }
+    if ((flags & MF_SOURCE_READERF_ENDOFSTREAM) != 0) break;
+  }
+  if (SUCCEEDED(result)) result = writer->Finalize();
+  if (FAILED(result)) {
+    *error = "Unable to finish Windows AAC encoding: " +
+             HresultMessage(result);
+    return false;
+  }
+  return true;
+}
+
 struct AudioChunk {
   bool local = false;
   std::vector<int16_t> samples;
@@ -336,6 +441,7 @@ struct RecordingResult {
   bool has_recording = false;
   std::string path;
   int64_t duration_ms = 0;
+  std::string mime_type;
   std::string error;
 };
 
@@ -373,10 +479,11 @@ class ComplianceSession {
 
     std::wstring local_path;
     std::wstring remote_path;
+    std::wstring mixed_wav_path;
     std::wstring output_path;
     if (record &&
-        !PrepareRecordingPaths(&local_path, &remote_path, &output_path,
-                               error)) {
+        !PrepareRecordingPaths(&local_path, &remote_path, &mixed_wav_path,
+                               &output_path, error)) {
       std::lock_guard<std::mutex> lock(mutex_);
       gate_armed_ = false;
       return false;
@@ -410,6 +517,7 @@ class ComplianceSession {
     remote_file_ = remote_file;
     local_path_ = std::move(local_path);
     remote_path_ = std::move(remote_path);
+    mixed_wav_path_ = std::move(mixed_wav_path);
     output_path_ = std::move(output_path);
     announcement_source_ = std::move(announcement.samples);
     announcement_source_rate_ = announcement.sample_rate;
@@ -521,6 +629,7 @@ class ComplianceSession {
     CloseRawFiles();
     DeleteFileW(local_path_.c_str());
     DeleteFileW(remote_path_.c_str());
+    DeleteFileW(mixed_wav_path_.c_str());
     DeleteFileW(output_path_.c_str());
     std::lock_guard<std::mutex> lock(mutex_);
     stopping_ = false;
@@ -644,7 +753,7 @@ class ComplianceSession {
     if (remote_sample_count_ > 0) {
       _wfopen_s(&remote, remote_path_.c_str(), L"rb");
     }
-    if (_wfopen_s(&output, output_path_.c_str(), L"wb") != 0 ||
+    if (_wfopen_s(&output, mixed_wav_path_.c_str(), L"wb") != 0 ||
         output == nullptr) {
       if (local != nullptr) fclose(local);
       if (remote != nullptr) fclose(remote);
@@ -677,10 +786,19 @@ class ComplianceSession {
     DeleteFileW(remote_path_.c_str());
 
     result.has_recording = true;
-    result.path = WideToUtf8(output_path_);
     result.duration_ms = static_cast<int64_t>(std::llround(
         static_cast<double>(total_samples) * 1000.0 /
         kRecordingSampleRate));
+    std::string encoding_error;
+    if (EncodeWavToAac(mixed_wav_path_, output_path_, &encoding_error)) {
+      DeleteFileW(mixed_wav_path_.c_str());
+      result.path = WideToUtf8(output_path_);
+      result.mime_type = "audio/mp4";
+    } else {
+      DeleteFileW(output_path_.c_str());
+      result.path = WideToUtf8(mixed_wav_path_);
+      result.mime_type = "audio/wav";
+    }
     return result;
   }
 
@@ -707,6 +825,7 @@ class ComplianceSession {
   FILE* remote_file_ = nullptr;
   std::wstring local_path_;
   std::wstring remote_path_;
+  std::wstring mixed_wav_path_;
   std::wstring output_path_;
   uint64_t local_first_offset_ = 0;
   uint64_t remote_first_offset_ = 0;
@@ -869,7 +988,7 @@ class CallComplianceAudioPlugin : public flutter::Plugin {
           response[EncodableValue("duration_ms")] =
               EncodableValue(recording.duration_ms);
           response[EncodableValue("mime_type")] =
-              EncodableValue("audio/wav");
+              EncodableValue(recording.mime_type);
           result->Success(EncodableValue(response));
         }
       }).detach();
