@@ -366,22 +366,19 @@ class CallsFeatureInjector {
       () => GetActiveCallUseCase(repository: Get.find()),
       fenix: true,
     );
+    Get.lazyPut(() => GetCallByIdUseCase(repository: Get.find()), fenix: true);
+    Get.lazyPut(() => GetCallSdpUseCase(repository: Get.find()), fenix: true);
     Get.lazyPut(
-      () => GetCallSdpUseCase(repository: Get.find()),
+      () => GetCallingSettingsUseCase(repository: Get.find()),
       fenix: true,
     );
     Get.lazyPut(
-      () => InitiateCallUseCase(repository: Get.find()),
+      () => SetCallingEnabledUseCase(repository: Get.find()),
       fenix: true,
     );
-    Get.lazyPut(
-      () => AcceptCallUseCase(repository: Get.find()),
-      fenix: true,
-    );
-    Get.lazyPut(
-      () => RejectCallUseCase(repository: Get.find()),
-      fenix: true,
-    );
+    Get.lazyPut(() => InitiateCallUseCase(repository: Get.find()), fenix: true);
+    Get.lazyPut(() => AcceptCallUseCase(repository: Get.find()), fenix: true);
+    Get.lazyPut(() => RejectCallUseCase(repository: Get.find()), fenix: true);
     Get.lazyPut(
       () => TerminateCallUseCase(repository: Get.find()),
       fenix: true,
@@ -405,7 +402,10 @@ class CallsFeatureInjector {
       CallController(
         getCallSessionsUseCase: Get.find(),
         getActiveCallUseCase: Get.find(),
+        getCallByIdUseCase: Get.find(),
         getCallSdpUseCase: Get.find(),
+        getCallingSettingsUseCase: Get.find(),
+        setCallingEnabledUseCase: Get.find(),
         initiateCallUseCase: Get.find(),
         acceptCallUseCase: Get.find(),
         rejectCallUseCase: Get.find(),

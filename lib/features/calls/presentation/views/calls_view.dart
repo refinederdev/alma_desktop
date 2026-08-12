@@ -25,7 +25,9 @@ class CallsView extends GetView<CallsHistoryController> {
                 children: [
                   _Header(historyController: c, callController: cc),
                   SizedBox(height: 14.h),
-                  Expanded(child: _Body(controller: c, callController: cc)),
+                  Expanded(
+                    child: _Body(controller: c, callController: cc),
+                  ),
                 ],
               ),
             );
@@ -47,6 +49,15 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedSessionId =
+        historyController.selectedSessionId ??
+        (callController.sessions.isEmpty
+            ? null
+            : callController.sessions.first.id);
+    final callingEnabled = callController.isCallingEnabledFor(
+      selectedSessionId,
+    );
+
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
@@ -83,9 +94,7 @@ class _Header extends StatelessWidget {
                 SizedBox(height: 2.h),
                 Row(
                   children: [
-                    _StatusDot(
-                      connected: callController.isReverbConnected,
-                    ),
+                    _StatusDot(connected: callController.isReverbConnected),
                     SizedBox(width: 6.w),
                     Text(
                       callController.isReverbConnected
@@ -146,6 +155,16 @@ class _Header extends StatelessWidget {
                 },
               ),
             ),
+          if (selectedSessionId != null && callingEnabled != null) ...[
+            _CallingStatusButton(
+              enabled: callingEnabled,
+              loading: callController.callingSettingsInFlight.contains(
+                selectedSessionId,
+              ),
+              onEnable: () => callController.enableCalling(selectedSessionId),
+            ),
+            SizedBox(width: 8.w),
+          ],
           ElevatedButton.icon(
             onPressed: callController.sessions.isEmpty
                 ? null
@@ -182,6 +201,49 @@ class _Header extends StatelessWidget {
                 : Icon(Icons.refresh_rounded, size: 20.sp),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CallingStatusButton extends StatelessWidget {
+  const _CallingStatusButton({
+    required this.enabled,
+    required this.loading,
+    required this.onEnable,
+  });
+
+  final bool enabled;
+  final bool loading;
+  final VoidCallback onEnable;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled ? AppTheme.success500 : AppTheme.error500;
+
+    return OutlinedButton.icon(
+      onPressed: enabled || loading ? null : onEnable,
+      icon: loading
+          ? SizedBox(
+              width: 14.w,
+              height: 14.w,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          : Icon(
+              enabled ? Icons.check_circle_outline : Icons.phone_disabled,
+              size: 16.sp,
+              color: color,
+            ),
+      label: Text(
+        enabled ? 'calling_enabled'.tr : 'enable_calling'.tr,
+        style: AppStyles.labelSmall.copyWith(color: color),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: color.withValues(alpha: 0.45)),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
       ),
     );
   }
@@ -293,10 +355,8 @@ class _Body extends StatelessWidget {
         child: ListView.separated(
           padding: EdgeInsets.symmetric(vertical: 6.h),
           itemCount: controller.calls.length + (controller.hasMore ? 1 : 0),
-          separatorBuilder: (_, _) => Divider(
-            height: 1.h,
-            color: context.alma.outline,
-          ),
+          separatorBuilder: (_, _) =>
+              Divider(height: 1.h, color: context.alma.outline),
           itemBuilder: (context, index) {
             if (index >= controller.calls.length) {
               return Padding(

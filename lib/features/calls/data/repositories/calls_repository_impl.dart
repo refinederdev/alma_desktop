@@ -28,6 +28,18 @@ class CallsRepositoryImpl implements CallsRepository {
   }
 
   @override
+  Future<Either<Failure, Map<String, dynamic>>> getCallingSettings(
+    int sessionId,
+  ) async {
+    try {
+      final r = await remoteDataSource.getCallingSettings(sessionId);
+      return Right(r);
+    } on CustomException catch (e) {
+      return _wrapError(e);
+    }
+  }
+
+  @override
   Future<Either<Failure, Map<String, dynamic>>> setCallingEnabled(
     int sessionId, {
     required bool enabled,

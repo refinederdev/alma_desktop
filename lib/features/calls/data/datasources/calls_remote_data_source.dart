@@ -7,6 +7,8 @@ import 'package:alma_desktop/features/calls/data/models/whatsapp_call_model.dart
 abstract class CallsRemoteDataSource {
   Future<CallSessionsResponseModel> getSessions();
 
+  Future<Map<String, dynamic>> getCallingSettings(int sessionId);
+
   Future<Map<String, dynamic>> setCallingEnabled(
     int sessionId, {
     required bool enabled,
@@ -14,10 +16,7 @@ abstract class CallsRemoteDataSource {
 
   Future<WhatsAppCallModel?> getActiveCall(int sessionId);
 
-  Future<WhatsAppCallModel> getCallById(
-    int callId, {
-    bool includeSdp = false,
-  });
+  Future<WhatsAppCallModel> getCallById(int callId, {bool includeSdp = false});
 
   Future<WhatsAppCallModel> getCallSdp(int callId);
 
@@ -89,6 +88,14 @@ class CallsRemoteDataSourceImpl implements CallsRemoteDataSource {
   }
 
   @override
+  Future<Map<String, dynamic>> getCallingSettings(int sessionId) async {
+    final response = await apiConsumer.get(
+      'whatsapp-calls/sessions/$sessionId/settings',
+    );
+    return _asMap(response);
+  }
+
+  @override
   Future<Map<String, dynamic>> setCallingEnabled(
     int sessionId, {
     required bool enabled,
@@ -107,10 +114,20 @@ class CallsRemoteDataSourceImpl implements CallsRemoteDataSource {
       queryParameters: {'session_id': sessionId},
     );
     final map = _asMap(response);
-    final inner = map['call'];
-    if (inner == null) return null;
-    if (inner is Map<String, dynamic>) {
-      return WhatsAppCallModel.fromJson(inner);
+    // يحتمل وجود ثلاث صيغ:
+    //   { "call": null }                     ← لا توجد مكالمة نشطة
+    //   { "call": { ...call... } }           ← شكل قديم
+    //   { ...call... } مباشرةً               ← شكل المرجع الحالي
+    if (map.containsKey('call')) {
+      final inner = map['call'];
+      if (inner == null) return null;
+      if (inner is Map<String, dynamic>) {
+        return WhatsAppCallModel.fromJson(inner);
+      }
+      return null;
+    }
+    if (map.containsKey('id') || map.containsKey('call_id')) {
+      return WhatsAppCallModel.fromJson(map);
     }
     return null;
   }
@@ -169,11 +186,7 @@ class CallsRemoteDataSourceImpl implements CallsRemoteDataSource {
   }) async {
     final response = await apiConsumer.post(
       'whatsapp-calls/initiate',
-      body: {
-        'session_id': sessionId,
-        'to': to,
-        'sdp_offer': sdpOffer,
-      },
+      body: {'session_id': sessionId, 'to': to, 'sdp_offer': sdpOffer},
     );
     return _parseCallFrom(response);
   }
@@ -227,10 +240,7 @@ class CallsRemoteDataSourceImpl implements CallsRemoteDataSource {
   }) async {
     final response = await apiConsumer.post(
       'whatsapp-calls/permissions/check',
-      body: {
-        'session_id': sessionId,
-        'user_phone': userPhone,
-      },
+      body: {'session_id': sessionId, 'user_phone': userPhone},
     );
     return CallPermissionModel.fromJson(_asMap(response));
   }
@@ -242,10 +252,7 @@ class CallsRemoteDataSourceImpl implements CallsRemoteDataSource {
     String? templateName,
     String? languageCode,
   }) async {
-    final body = <String, dynamic>{
-      'session_id': sessionId,
-      'to': to,
-    };
+    final body = <String, dynamic>{'session_id': sessionId, 'to': to};
     if (templateName != null) body['template_name'] = templateName;
     if (languageCode != null) body['language_code'] = languageCode;
 

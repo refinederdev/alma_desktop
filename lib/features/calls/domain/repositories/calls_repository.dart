@@ -8,6 +8,10 @@ import 'package:dartz/dartz.dart';
 abstract class CallsRepository {
   Future<Either<Failure, CallSessionsResponse>> getSessions();
 
+  Future<Either<Failure, Map<String, dynamic>>> getCallingSettings(
+    int sessionId,
+  );
+
   Future<Either<Failure, Map<String, dynamic>>> setCallingEnabled(
     int sessionId, {
     required bool enabled,

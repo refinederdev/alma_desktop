@@ -236,19 +236,15 @@ class ArLang {
     'messages_trend': 'اتجاه الرسائل',
     'no_data_available': 'لا توجد بيانات متاحة حالياً.',
     'customer_deal_history': 'سجل صفقات العميل',
-    'contact_phone_required_for_history':
-        'يُطلب رقم الجوال لعرض سجل الصفقات.',
-    'failed_to_load_customer_deal_history':
-        'تعذر تحميل سجل صفقات العميل.',
+    'contact_phone_required_for_history': 'يُطلب رقم الجوال لعرض سجل الصفقات.',
+    'failed_to_load_customer_deal_history': 'تعذر تحميل سجل صفقات العميل.',
     'contact_history_empty': 'لا توجد صفقات لهذا الرقم.',
     'deal_id_label': 'صفقة #@id',
     'current_deal_badge': 'الحالية',
-    'customer_deal_history_hint':
-        'اضغط على صفقة لفتح محادثتها.',
+    'customer_deal_history_hint': 'اضغط على صفقة لفتح محادثتها.',
     'full_history_timeline_hint':
         'تُدمج هنا رسائل كل الصفقات المرتبطة بنفس رقم الجوال.',
-    'full_history_forbidden':
-        'لا تملك صلاحية عرض المحادثة الكاملة لهذا الرقم.',
+    'full_history_forbidden': 'لا تملك صلاحية عرض المحادثة الكاملة لهذا الرقم.',
     'server_config_title': 'إعدادات الخادم',
     'server_config_subtitle':
         'غيّر عنوان واجهة الـ API لربط التطبيق بخادم شركتك. يُطبَّق فور الحفظ على الطلبات الجديدة.',
@@ -286,21 +282,32 @@ class ArLang {
     'failed_to_initiate_call': 'تعذّر إجراء المكالمة.',
     'call_permission_required': 'إذن المكالمة مطلوب',
     'call_permission_required_body':
-        'لم يمنح العميل (@phone) إذن استقبال مكالمات واتساب بعد. هل تريد إرسال رسالة قالب لطلب الإذن؟ ستتمكن من الاتصال خلال 7 أيام بعد قبوله.',
+        'لم يمنح العميل (@phone) إذن استقبال مكالمات واتساب بعد. هل تريد إرسال طلب الإذن التفاعلي الآن؟',
     'send_permission_request': 'إرسال طلب الإذن',
     'permission_request_sent': 'تم إرسال طلب الإذن للعميل.',
     'failed_to_send_permission_request': 'تعذّر إرسال طلب الإذن.',
     'sessions_count': 'الجلسات: @count',
-    'failed_to_accept_call': 'تعذّر قبول المكالمة.',
+    'calling_enabled': 'المكالمات مفعّلة',
+    'enable_calling': 'تفعيل المكالمات',
+    'calling_enabled_successfully': 'تم تفعيل مكالمات واتساب بنجاح.',
+    'failed_to_enable_calling': 'تعذّر تفعيل مكالمات واتساب.',
+    'calling_disabled_hint':
+        'المكالمات معطّلة لهذا الرقم. فعّلها أولاً من شاشة المكالمات.',
+    'failed_to_check_call_permission': 'تعذّر التحقق من إذن المكالمة.',
+    'microphone_permission_denied':
+        '🎤 الميكروفون غير مفعّل. افتح إعدادات النظام > الخصوصية > الميكروفون وفعّل التطبيق.',
+    'invalid_remote_sdp':
+        '📡 بيانات الصوت من واتساب غير صالحة. اطلب من المتصل إعادة المحاولة.',
+    'failed_to_create_answer': '🎙️ تعذّر إنشاء استجابة الصوت.',
+    'failed_to_accept_call': '✋ فشل قبول المكالمة من الخادم.',
     'failed_to_reject_call': 'تعذّر رفض المكالمة.',
-    'failed_to_load_sdp': 'تعذّر تحميل بيانات الصوت.',
-    'failed_to_connect_audio': 'تعذّر فتح القناة الصوتية.',
+    'failed_to_load_sdp': '⬇️ خطأ في جلب بيانات المكالمة.',
+    'failed_to_connect_audio': '🔊 تعذّر فتح القناة الصوتية.',
     'calling_via_whatsapp': 'عبر واتساب كلاود',
     'on_session': 'على الجلسة:',
     'session': 'الجلسة',
     'select_session': 'اختر الجلسة',
-    'phone_e164_hint':
-        'أدخل الرقم بصيغة دولية بدون + (مثال: 971501234567).',
+    'phone_e164_hint': 'أدخل الرقم بصيغة دولية بدون + (مثال: 971501234567).',
     'no_calls_yet': 'لا توجد مكالمات بعد',
     'no_calls_hint': 'ستظهر هنا قائمة بمكالماتك الواردة والصادرة.',
     'no_call_session_available': 'لا توجد جلسة مكالمات متاحة',

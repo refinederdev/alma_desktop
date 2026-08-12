@@ -8,7 +8,8 @@ import 'package:alma_desktop/features/calls/domain/repositories/calls_repository
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 
-class GetCallSessionsUseCase implements UseCase<CallSessionsResponse, NoParams> {
+class GetCallSessionsUseCase
+    implements UseCase<CallSessionsResponse, NoParams> {
   final CallsRepository repository;
 
   GetCallSessionsUseCase({required this.repository});
@@ -17,6 +18,68 @@ class GetCallSessionsUseCase implements UseCase<CallSessionsResponse, NoParams> 
   Future<Either<Failure, CallSessionsResponse>> call(NoParams params) {
     return repository.getSessions();
   }
+}
+
+class GetCallingSettingsUseCase implements UseCase<Map<String, dynamic>, int> {
+  final CallsRepository repository;
+
+  GetCallingSettingsUseCase({required this.repository});
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> call(int sessionId) {
+    return repository.getCallingSettings(sessionId);
+  }
+}
+
+class SetCallingEnabledUseCase
+    implements UseCase<Map<String, dynamic>, SetCallingEnabledParams> {
+  final CallsRepository repository;
+
+  SetCallingEnabledUseCase({required this.repository});
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> call(
+    SetCallingEnabledParams params,
+  ) {
+    return repository.setCallingEnabled(
+      params.sessionId,
+      enabled: params.enabled,
+    );
+  }
+}
+
+class SetCallingEnabledParams extends Equatable {
+  final int sessionId;
+  final bool enabled;
+
+  const SetCallingEnabledParams({
+    required this.sessionId,
+    required this.enabled,
+  });
+
+  @override
+  List<Object?> get props => [sessionId, enabled];
+}
+
+class GetCallByIdUseCase implements UseCase<WhatsAppCall, GetCallByIdParams> {
+  final CallsRepository repository;
+
+  GetCallByIdUseCase({required this.repository});
+
+  @override
+  Future<Either<Failure, WhatsAppCall>> call(GetCallByIdParams params) {
+    return repository.getCallById(params.callId, includeSdp: params.includeSdp);
+  }
+}
+
+class GetCallByIdParams extends Equatable {
+  final int callId;
+  final bool includeSdp;
+
+  const GetCallByIdParams({required this.callId, this.includeSdp = false});
+
+  @override
+  List<Object?> get props => [callId, includeSdp];
 }
 
 class GetActiveCallUseCase implements UseCase<WhatsAppCall?, int> {
@@ -156,7 +219,14 @@ class GetCallHistoryParams extends Equatable {
   });
 
   @override
-  List<Object?> get props => [sessionId, page, perPage, direction, status, dealId];
+  List<Object?> get props => [
+    sessionId,
+    page,
+    perPage,
+    direction,
+    status,
+    dealId,
+  ];
 }
 
 class CheckCallPermissionUseCase

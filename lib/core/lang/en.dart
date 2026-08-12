@@ -213,11 +213,23 @@ class EnLang {
     'failed_to_initiate_call': 'Could not initiate the call.',
     'call_permission_required': 'Call permission required',
     'call_permission_required_body':
-        'The contact (@phone) has not granted WhatsApp call permission yet. Would you like to send a permission request template? You can call within 7 days of acceptance.',
+        'The contact (@phone) has not granted WhatsApp call permission yet. Send an interactive permission request now?',
     'send_permission_request': 'Send permission request',
     'permission_request_sent': 'Permission request sent to the contact.',
     'failed_to_send_permission_request': 'Could not send permission request.',
     'sessions_count': 'Sessions: @count',
+    'calling_enabled': 'Calling enabled',
+    'enable_calling': 'Enable calling',
+    'calling_enabled_successfully': 'WhatsApp calling is now enabled.',
+    'failed_to_enable_calling': 'Could not enable WhatsApp calling.',
+    'calling_disabled_hint':
+        'Calling is disabled for this WhatsApp number. Enable it first.',
+    'failed_to_check_call_permission': 'Could not check call permission.',
+    'microphone_permission_denied':
+        'Microphone permission was not granted. Open System Settings > Privacy & Security > Microphone and enable the app.',
+    'invalid_remote_sdp':
+        'Could not process audio data from WhatsApp. Please try again.',
+    'failed_to_create_answer': 'Could not create the audio answer.',
     'failed_to_accept_call': 'Could not accept the call.',
     'failed_to_reject_call': 'Could not reject the call.',
     'failed_to_load_sdp': 'Could not load call audio data.',
