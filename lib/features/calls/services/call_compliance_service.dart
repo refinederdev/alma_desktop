@@ -157,7 +157,7 @@ class CallComplianceService {
     }
 
     if (!_policy.shouldRecord(direction)) return;
-    if (!Platform.isMacOS) {
+    if (!_nativeAudio.isSupported) {
       if (_policy.recordingRequired) {
         throw const CallComplianceRequiredException(
           'Required call recording is not available on this desktop platform.',
@@ -190,7 +190,7 @@ class CallComplianceService {
   /// Starts the server lifecycle and native capture. The native mic gate stays
   /// closed until the configured announcement has been injected completely.
   Future<void> begin(int callId, String direction) async {
-    if (!_policy.shouldRecord(direction) || !Platform.isMacOS) return;
+    if (!_policy.shouldRecord(direction) || !_nativeAudio.isSupported) return;
     if (_activeCallId == callId && _recordingActive) return;
 
     try {
@@ -296,7 +296,7 @@ class CallComplianceService {
     try {
       await apiConsumer.post(
         'whatsapp-calls/$callId/recording/failed',
-        body: {'reason': error.toString(), 'client': 'alma-desktop-macos'},
+        body: {'reason': error.toString(), 'client': _clientName},
       );
     } catch (_) {}
   }
@@ -316,11 +316,11 @@ class CallComplianceService {
           body: {
             'recording': await MultipartFile.fromFile(
               recording.path,
-              filename: 'whatsapp-call-$callId.m4a',
+              filename: 'whatsapp-call-$callId.${_extension(recording.path)}',
             ),
             'duration_ms': recording.durationMs,
-            'codec': 'audio/mp4;codecs=aac',
-            'client': 'alma-desktop-macos',
+            'codec': recording.mimeType,
+            'client': _clientName,
           },
         );
         return;
@@ -366,5 +366,16 @@ class CallComplianceService {
       final file = File(path);
       if (await file.exists()) await file.delete();
     } catch (_) {}
+  }
+
+  String get _clientName =>
+      Platform.isWindows ? 'alma-desktop-windows' : 'alma-desktop-macos';
+
+  String _extension(String path) {
+    final name = path.replaceAll('\\', '/').split('/').last;
+    final separator = name.lastIndexOf('.');
+    return separator < 0 || separator == name.length - 1
+        ? (Platform.isWindows ? 'wav' : 'm4a')
+        : name.substring(separator + 1).toLowerCase();
   }
 }

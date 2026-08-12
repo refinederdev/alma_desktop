@@ -1,5 +1,5 @@
 name: call_compliance_audio
-description: macOS WebRTC compliance announcement injection and call recording for Alma Desktop.
+description: Desktop WebRTC compliance announcement injection and call recording for Alma Desktop.
 version: 0.1.0
 publish_to: none
 
@@ -15,4 +15,6 @@ flutter:
   plugin:
     platforms:
       macos:
+        pluginClass: CallComplianceAudioPlugin
+      windows:
         pluginClass: CallComplianceAudioPlugin

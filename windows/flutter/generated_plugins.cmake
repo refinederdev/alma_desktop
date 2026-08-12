@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
+  call_compliance_audio
   emoji_picker_flutter
   file_selector_windows
   flutter_webrtc

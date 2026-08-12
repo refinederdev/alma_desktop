@@ -27,11 +27,15 @@ class CallComplianceAudio {
     'com.almacrm.call_compliance_audio',
   );
 
-  bool get isSupported => Platform.isMacOS;
+  bool get isSupported => Platform.isMacOS || Platform.isWindows;
+
+  String get _supportedPlatforms => 'macOS and Windows';
 
   Future<void> armGate() async {
     if (!isSupported) {
-      throw UnsupportedError('Compliance audio is only available on macOS');
+      throw UnsupportedError(
+        'Compliance audio is only available on $_supportedPlatforms',
+      );
     }
     await _channel.invokeMethod<void>('armGate');
   }
@@ -42,7 +46,9 @@ class CallComplianceAudio {
     double announcementVolume = 0.9,
   }) async {
     if (!isSupported) {
-      throw UnsupportedError('Compliance audio is only available on macOS');
+      throw UnsupportedError(
+        'Compliance audio is only available on $_supportedPlatforms',
+      );
     }
     await _channel.invokeMethod<void>('begin', <String, Object?>{
       'record': record,
