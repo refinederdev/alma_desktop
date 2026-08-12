@@ -14,7 +14,9 @@ class AppInterceptos implements Interceptor {
     log('request data: ${options.data}');
 
     if (!options.headers.containsKey('Content-Type')) {
-      options.headers['Content-Type'] = 'application/json';
+      options.headers['Content-Type'] = options.data is FormData
+          ? Headers.multipartFormDataContentType
+          : Headers.jsonContentType;
     }
 
     options.headers.addAll({

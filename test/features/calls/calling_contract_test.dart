@@ -1,4 +1,5 @@
 import 'package:alma_desktop/core/api/api_consumer.dart';
+import 'package:alma_desktop/core/errors/exceptions.dart';
 import 'package:alma_desktop/core/errors/failures.dart';
 import 'package:alma_desktop/features/calls/data/datasources/calls_remote_data_source.dart';
 import 'package:alma_desktop/features/calls/data/models/call_permission_model.dart';
@@ -7,6 +8,7 @@ import 'package:alma_desktop/features/calls/domain/entities/call_event.dart';
 import 'package:alma_desktop/features/calls/presentation/controllers/call_controller.dart';
 import 'package:alma_desktop/features/calls/services/call_compliance_service.dart';
 import 'package:alma_desktop/features/calls/services/whatsapp_webrtc_service.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -119,6 +121,21 @@ void main() {
       expect(policy.shouldRecord('inbound'), isFalse);
       expect(policy.shouldAnnounce('inbound'), isFalse);
     });
+
+    test(
+      'keeps legacy backend calls working when policy route is absent',
+      () async {
+        final service = CallComplianceService(
+          apiConsumer: _MissingComplianceApiConsumer(),
+          dio: Dio(),
+        );
+
+        final policy = await service.refreshPolicy(force: true);
+
+        expect(policy.moduleEnabled, isFalse);
+        expect(policy.shouldRecord('inbound'), isFalse);
+      },
+    );
   });
 }
 
@@ -145,6 +162,48 @@ class _RecordingApiConsumer implements ApiConsumer {
     postPaths.add(path);
     return {'session_id': 7, 'calling_enabled': true};
   }
+
+  @override
+  Future<dynamic> delete(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, dynamic>? queryParameters,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<dynamic> put(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, dynamic>? queryParameters,
+    bool? isFormData,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<dynamic> request(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, dynamic>? queryParameters,
+    bool? isFormData = false,
+    dynamic options,
+  }) => throw UnimplementedError();
+}
+
+class _MissingComplianceApiConsumer implements ApiConsumer {
+  @override
+  Future<dynamic> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    throw NotFoundException('Not found');
+  }
+
+  @override
+  Future<dynamic> post(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, dynamic>? queryParameters,
+    bool? isFormData,
+  }) => throw UnimplementedError();
 
   @override
   Future<dynamic> delete(

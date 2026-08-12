@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:alma_desktop/core/api/api_consumer.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
+import 'package:alma_desktop/core/errors/exceptions.dart';
 import 'package:call_compliance_audio/call_compliance_audio.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -105,7 +106,23 @@ class CallComplianceService {
       return _policy;
     }
 
-    final response = await apiConsumer.get('whatsapp-calls/module-settings');
+    dynamic response;
+    try {
+      response = await apiConsumer.get('whatsapp-calls/module-settings');
+    } on NotFoundException {
+      // Backward compatibility while a desktop release reaches an older CRM
+      // backend. Calls must keep working; compliance automatically activates
+      // as soon as the backend route is deployed and returns its policy.
+      _policy = const CallCompliancePolicy.disabled();
+      _policyFetchedAt = DateTime.now();
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print(
+          '⚠️ Call compliance API is not deployed; using legacy call mode.',
+        );
+      }
+      return _policy;
+    }
     final map = response is Map
         ? Map<String, dynamic>.from(response)
         : const <String, dynamic>{};
