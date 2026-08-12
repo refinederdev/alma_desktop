@@ -2,6 +2,8 @@ import 'package:alma_desktop/core/api/api_consumer.dart';
 import 'package:alma_desktop/core/errors/failures.dart';
 import 'package:alma_desktop/features/calls/data/datasources/calls_remote_data_source.dart';
 import 'package:alma_desktop/features/calls/data/models/call_permission_model.dart';
+import 'package:alma_desktop/features/calls/data/models/whatsapp_call_model.dart';
+import 'package:alma_desktop/features/calls/domain/entities/call_event.dart';
 import 'package:alma_desktop/features/calls/presentation/controllers/call_controller.dart';
 import 'package:alma_desktop/features/calls/services/whatsapp_webrtc_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -50,6 +52,25 @@ void main() {
       expect(permission.metaCode, CallMetaError.permissionRequired);
       expect(disabled.isCallingDisabled, isTrue);
       expect(disabled.metaCode, CallMetaError.callingNotEnabled);
+    });
+
+    test('parses multi-agent ownership and claimed realtime events', () {
+      final call = WhatsAppCallModel.fromJson({
+        'id': 44,
+        'direction': 'inbound',
+        'status': 'connecting',
+        'accepted_by_user_id': 9,
+        'accepted_at': '2026-08-12T20:00:00Z',
+        'is_claimed_by_me': true,
+      });
+
+      expect(
+        CallEventType.fromString('call_claimed'),
+        CallEventType.callClaimed,
+      );
+      expect(call.acceptedByUserId, 9);
+      expect(call.isClaimedByMe, isTrue);
+      expect(call.acceptedAt, isNotNull);
     });
   });
 

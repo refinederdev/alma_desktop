@@ -13,12 +13,15 @@ class WhatsAppCallModel extends WhatsAppCall {
     super.duration,
     super.durationSeconds,
     super.dealId,
+    super.acceptedByUserId,
+    super.isClaimedByMe,
     super.contactName,
     super.sdpOffer,
     super.sdpAnswer,
     super.startedAt,
     super.endedAt,
     super.createdAt,
+    super.acceptedAt,
   });
 
   factory WhatsAppCallModel.fromJson(Map<String, dynamic> json) {
@@ -54,12 +57,15 @@ class WhatsAppCallModel extends WhatsAppCall {
       duration: json['duration'] as String?,
       durationSeconds: toInt(json['duration_seconds']),
       dealId: toInt(json['deal_id']),
+      acceptedByUserId: toInt(json['accepted_by_user_id']),
+      isClaimedByMe: json['is_claimed_by_me'] == true,
       contactName: json['contact_name'] as String?,
       sdpOffer: json['sdp_offer'] as String?,
       sdpAnswer: json['sdp_answer'] as String?,
       startedAt: toDate(json['started_at']),
       endedAt: toDate(json['ended_at']),
       createdAt: toDate(json['created_at']),
+      acceptedAt: toDate(json['accepted_at']),
     );
   }
 }

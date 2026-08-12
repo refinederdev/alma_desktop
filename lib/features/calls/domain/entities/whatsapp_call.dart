@@ -5,7 +5,8 @@ class WhatsAppCall extends Equatable {
   final int id;
   final String? callId;
   final String direction; // inbound | outbound
-  final String status; // ringing, in_progress, completed, rejected, missed, failed
+  final String
+  status; // ringing, in_progress, completed, rejected, missed, failed
   final int? sessionId;
   final String? callerPhone;
   final String? calleePhone;
@@ -13,12 +14,15 @@ class WhatsAppCall extends Equatable {
   final String? duration; // formatted "00:12"
   final int? durationSeconds;
   final int? dealId;
+  final int? acceptedByUserId;
+  final bool isClaimedByMe;
   final String? contactName;
   final String? sdpOffer;
   final String? sdpAnswer;
   final DateTime? startedAt;
   final DateTime? endedAt;
   final DateTime? createdAt;
+  final DateTime? acceptedAt;
 
   const WhatsAppCall({
     required this.id,
@@ -32,12 +36,15 @@ class WhatsAppCall extends Equatable {
     this.duration,
     this.durationSeconds,
     this.dealId,
+    this.acceptedByUserId,
+    this.isClaimedByMe = false,
     this.contactName,
     this.sdpOffer,
     this.sdpAnswer,
     this.startedAt,
     this.endedAt,
     this.createdAt,
+    this.acceptedAt,
   });
 
   bool get isInbound => direction == 'inbound';
@@ -67,12 +74,15 @@ class WhatsAppCall extends Equatable {
     String? duration,
     int? durationSeconds,
     int? dealId,
+    int? acceptedByUserId,
+    bool? isClaimedByMe,
     String? contactName,
     String? sdpOffer,
     String? sdpAnswer,
     DateTime? startedAt,
     DateTime? endedAt,
     DateTime? createdAt,
+    DateTime? acceptedAt,
   }) {
     return WhatsAppCall(
       id: id ?? this.id,
@@ -86,12 +96,15 @@ class WhatsAppCall extends Equatable {
       duration: duration ?? this.duration,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       dealId: dealId ?? this.dealId,
+      acceptedByUserId: acceptedByUserId ?? this.acceptedByUserId,
+      isClaimedByMe: isClaimedByMe ?? this.isClaimedByMe,
       contactName: contactName ?? this.contactName,
       sdpOffer: sdpOffer ?? this.sdpOffer,
       sdpAnswer: sdpAnswer ?? this.sdpAnswer,
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,
       createdAt: createdAt ?? this.createdAt,
+      acceptedAt: acceptedAt ?? this.acceptedAt,
     );
   }
 
@@ -108,11 +121,14 @@ class WhatsAppCall extends Equatable {
     duration,
     durationSeconds,
     dealId,
+    acceptedByUserId,
+    isClaimedByMe,
     contactName,
     sdpOffer,
     sdpAnswer,
     startedAt,
     endedAt,
     createdAt,
+    acceptedAt,
   ];
 }

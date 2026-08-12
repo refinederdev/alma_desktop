@@ -6,6 +6,7 @@ enum CallEventType {
   incomingCall,
   callConnected,
   callRinging,
+  callClaimed,
   callAccepted,
   callRejected,
   callTerminated,
@@ -19,6 +20,8 @@ enum CallEventType {
         return CallEventType.callConnected;
       case 'call_ringing':
         return CallEventType.callRinging;
+      case 'call_claimed':
+        return CallEventType.callClaimed;
       case 'call_accepted':
         return CallEventType.callAccepted;
       case 'call_rejected':

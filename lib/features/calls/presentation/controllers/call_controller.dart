@@ -186,6 +186,8 @@ class CallController extends GetxController {
   Timer? _callTimer;
   DateTime? _callStartedAt;
   Timer? _activeCallPollTimer;
+  Timer? _teardownResetTimer;
+  Timer? _nextCallPollTimer;
   bool _activeCallPollInFlight = false;
   bool _answerApplied = false;
 
@@ -292,6 +294,10 @@ class CallController extends GetxController {
     _callTimer = null;
     _activeCallPollTimer?.cancel();
     _activeCallPollTimer = null;
+    _teardownResetTimer?.cancel();
+    _teardownResetTimer = null;
+    _nextCallPollTimer?.cancel();
+    _nextCallPollTimer = null;
     _callStartedAt = null;
     callDuration = Duration.zero;
     if (_reverb != null) {
@@ -482,6 +488,9 @@ class CallController extends GetxController {
       case CallEventType.callRinging:
         _onCallRinging(event);
         break;
+      case CallEventType.callClaimed:
+        unawaited(_onCallClaimed(event));
+        break;
       case CallEventType.callAccepted:
         unawaited(_onCallAccepted(event));
         break;
@@ -501,10 +510,23 @@ class CallController extends GetxController {
   Future<void> _onIncomingCall(CallEvent event) async {
     final call = event.call;
     if (call == null) return;
-    // إذا كانت لدينا مكالمة نشطة أصلاً، تجاهل (Meta لا ترسل عادةً اثنتين معاً)
-    if (hasActiveCall && currentCall?.id == call.id) {
+    final userId = GlobalController.to.user?.id;
+    if (call.acceptedByUserId != null && call.acceptedByUserId != userId) {
       return;
     }
+    // الموظف المشغول لا تُستبدل مكالمته بمكالمة واردة أخرى. ستظل المكالمة
+    // الجديدة في الطابور المركزي وسيجلبها polling عند فراغ الموظف.
+    if (hasActiveCall) {
+      if (currentCall?.id == call.id) {
+        currentCall = _mergeCall(call);
+        update();
+      }
+      return;
+    }
+    _teardownResetTimer?.cancel();
+    _teardownResetTimer = null;
+    _nextCallPollTimer?.cancel();
+    _nextCallPollTimer = null;
     currentCall = call;
     currentSession = sessionById(call.sessionId);
     phase = CallUiPhase.ringingIncoming;
@@ -516,6 +538,7 @@ class CallController extends GetxController {
 
   void _onCallConnected(CallEvent event) {
     if (event.call == null) return;
+    if (currentCall == null || currentCall!.id != event.call!.id) return;
     currentCall = _mergeCall(event.call!);
     if (phase == CallUiPhase.outgoingDialing) {
       phase = CallUiPhase.outgoingConnecting;
@@ -564,6 +587,7 @@ class CallController extends GetxController {
   }
 
   void _onCallRinging(CallEvent event) {
+    if (event.call != null && currentCall?.id != event.call!.id) return;
     if (phase == CallUiPhase.outgoingDialing ||
         phase == CallUiPhase.outgoingConnecting) {
       phase = CallUiPhase.outgoingRinging;
@@ -573,6 +597,7 @@ class CallController extends GetxController {
   }
 
   Future<void> _onCallAccepted(CallEvent event) async {
+    if (event.call != null && currentCall?.id != event.call!.id) return;
     if (event.call != null) {
       currentCall = _mergeCall(event.call!);
     }
@@ -621,6 +646,7 @@ class CallController extends GetxController {
   }
 
   Future<void> _onCallRejected(CallEvent event) async {
+    if (event.call != null && currentCall?.id != event.call!.id) return;
     if (event.call != null) {
       currentCall = _mergeCall(event.call!);
     }
@@ -636,12 +662,29 @@ class CallController extends GetxController {
   }
 
   Future<void> _onCallTerminated(CallEvent event) async {
+    if (event.call != null && currentCall?.id != event.call!.id) return;
     if (event.call != null) {
       currentCall = _mergeCall(event.call!);
     }
     await _stopRingtones();
     await _stopRingback();
     phase = CallUiPhase.ended;
+    await _finalizeCallTeardown();
+  }
+
+  Future<void> _onCallClaimed(CallEvent event) async {
+    final claimed = event.call;
+    if (claimed == null || currentCall?.id != claimed.id) return;
+
+    final userId = GlobalController.to.user?.id;
+    if (claimed.acceptedByUserId == userId) {
+      currentCall = _mergeCall(claimed);
+      phase = CallUiPhase.outgoingConnecting;
+      update();
+      return;
+    }
+
+    // موظف آخر سبقنا: أغلق الرنين فوراً ثم اجلب أقدم مكالمة متاحة تالية.
     await _finalizeCallTeardown();
   }
 
@@ -660,12 +703,15 @@ class CallController extends GetxController {
       duration: incoming.duration ?? base.duration,
       durationSeconds: incoming.durationSeconds ?? base.durationSeconds,
       dealId: incoming.dealId ?? base.dealId,
+      acceptedByUserId: incoming.acceptedByUserId ?? base.acceptedByUserId,
+      isClaimedByMe: incoming.isClaimedByMe || base.isClaimedByMe,
       contactName: incoming.contactName ?? base.contactName,
       sdpOffer: incoming.sdpOffer ?? base.sdpOffer,
       sdpAnswer: incoming.sdpAnswer ?? base.sdpAnswer,
       startedAt: incoming.startedAt ?? base.startedAt,
       endedAt: incoming.endedAt ?? base.endedAt,
       createdAt: incoming.createdAt ?? base.createdAt,
+      acceptedAt: incoming.acceptedAt ?? base.acceptedAt,
     );
   }
 
@@ -991,6 +1037,10 @@ class CallController extends GetxController {
       return;
     }
     isProcessing = true;
+    _teardownResetTimer?.cancel();
+    _teardownResetTimer = null;
+    _nextCallPollTimer?.cancel();
+    _nextCallPollTimer = null;
     currentSession = session;
     phase = CallUiPhase.outgoingDialing;
     lastError = null;
@@ -1346,6 +1396,12 @@ class CallController extends GetxController {
     // فقط نُهتم بنفس المكالمة
     if (remote.id != local.id) return;
 
+    final userId = GlobalController.to.user?.id;
+    if (remote.acceptedByUserId != null && remote.acceptedByUserId != userId) {
+      await _finalizeCallTeardown();
+      return;
+    }
+
     // 1) إذا كانت **صادرة** وعندنا حالة "تتصل/تتوصل" ولم نطبّق الـ answer
     // بعد، نحاول جلب الـ SDP وتطبيقه. (للمكالمات الواردة نحن من ينشئ الـ
     // answer ويرسله، فلا يجب أبداً تطبيق answer قادم من السيرفر).
@@ -1419,11 +1475,18 @@ class CallController extends GetxController {
     await _disposeWebRtc();
     _closeActiveDialog();
     // نظهر شاشة النهاية لثوانٍ بسيطة في حال أردنا لاحقاً عرض خلاصة
-    Timer(const Duration(seconds: 1), () {
+    _teardownResetTimer?.cancel();
+    _teardownResetTimer = Timer(const Duration(seconds: 1), () {
       currentCall = null;
       currentSession = null;
       phase = CallUiPhase.idle;
+      _teardownResetTimer = null;
       update();
+    });
+    _nextCallPollTimer?.cancel();
+    _nextCallPollTimer = Timer(const Duration(milliseconds: 1250), () {
+      _nextCallPollTimer = null;
+      unawaited(_pollActiveCallsOnce());
     });
     update();
   }
