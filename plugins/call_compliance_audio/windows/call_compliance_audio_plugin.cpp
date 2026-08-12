@@ -126,18 +126,9 @@ bool DecodeAnnouncement(const std::wstring& path,
     return false;
   }
 
-  ComPtr<IMFAttributes> attributes;
-  HRESULT result = MFCreateAttributes(&attributes, 2);
-  if (SUCCEEDED(result)) {
-    result = attributes->SetUINT32(MF_SOURCE_READER_ENABLE_AUDIO_PROCESSING,
-                                   TRUE);
-  }
-
   ComPtr<IMFSourceReader> reader;
-  if (SUCCEEDED(result)) {
-    result = MFCreateSourceReaderFromURL(path.c_str(), attributes.Get(),
-                                         &reader);
-  }
+  HRESULT result =
+      MFCreateSourceReaderFromURL(path.c_str(), nullptr, &reader);
   if (FAILED(result)) {
     *error = "Unable to open the call announcement: " +
              HresultMessage(result);
