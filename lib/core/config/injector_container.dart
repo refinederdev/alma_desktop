@@ -20,6 +20,7 @@ import 'package:alma_desktop/features/calls/data/repositories/calls_repository_i
 import 'package:alma_desktop/features/calls/domain/repositories/calls_repository.dart';
 import 'package:alma_desktop/features/calls/domain/usecases/calls_use_cases.dart';
 import 'package:alma_desktop/features/calls/presentation/controllers/call_controller.dart';
+import 'package:alma_desktop/features/calls/services/call_compliance_service.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:alma_desktop/features/main/data/datasources/main_remote_data_source.dart';
 import 'package:alma_desktop/features/main/data/repositories/main_repository_impl.dart';
@@ -345,6 +346,11 @@ class MainFeatureInjector {
 
 class CallsFeatureInjector {
   static void init() {
+    Get.lazyPut(
+      () => CallComplianceService(apiConsumer: Get.find(), dio: Get.find()),
+      fenix: true,
+    );
+
     // Data Sources
     Get.lazyPut<CallsRemoteDataSource>(
       () => CallsRemoteDataSourceImpl(apiConsumer: Get.find()),
@@ -412,6 +418,7 @@ class CallsFeatureInjector {
         terminateCallUseCase: Get.find(),
         checkCallPermissionUseCase: Get.find(),
         requestCallPermissionUseCase: Get.find(),
+        callComplianceService: Get.find(),
       ),
       permanent: true,
     );

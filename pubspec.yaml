@@ -32,6 +32,8 @@ dependencies:
   path_provider: ^2.1.5
   pasteboard: ^0.3.0
   flutter_webrtc: ^1.4.1
+  call_compliance_audio:
+    path: plugins/call_compliance_audio
 
 dev_dependencies:
   flutter_test:

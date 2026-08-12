@@ -19,6 +19,8 @@ class WhatsAppWebRtcService {
 
   bool _isClosed = false;
   bool _isMuted = false;
+  RTCPeerConnectionState? _connectionState;
+  Completer<void>? _connectedCompleter;
 
   /// callbacks
   void Function(RTCPeerConnectionState state)? onConnectionState;
@@ -33,6 +35,9 @@ class WhatsAppWebRtcService {
   Future<void> start({required List<IceServer> iceServers}) async {
     _isClosed = false;
     _isMuted = false;
+    _connectionState = null;
+    _connectedCompleter = Completer<void>();
+    _connectedCompleter!.future.ignore();
 
     final config = <String, dynamic>{
       'iceServers': iceServers
@@ -52,6 +57,21 @@ class WhatsAppWebRtcService {
     _peer = await createPeerConnection(config);
 
     _peer!.onConnectionState = (state) {
+      _connectionState = state;
+      final connected = _connectedCompleter;
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected &&
+          connected != null &&
+          !connected.isCompleted) {
+        connected.complete();
+      } else if ((state ==
+                  RTCPeerConnectionState.RTCPeerConnectionStateFailed ||
+              state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) &&
+          connected != null &&
+          !connected.isCompleted) {
+        connected.completeError(
+          StateError('WebRTC audio connection failed: $state'),
+        );
+      }
       if (kDebugMode) {
         // ignore: avoid_print
         print('📶 Peer connection state: $state');
@@ -119,6 +139,27 @@ class WhatsAppWebRtcService {
         );
       }
     }
+  }
+
+  /// Waits until the peer has a live audio transport. Compliance audio must
+  /// not start before this point or the customer could miss the announcement.
+  Future<void> waitUntilConnected({
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
+    if (_connectionState ==
+        RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+      return;
+    }
+    final connected = _connectedCompleter;
+    if (connected == null) {
+      throw StateError('WebRTC peer not started');
+    }
+    await connected.future.timeout(
+      timeout,
+      onTimeout: () => throw TimeoutException(
+        'WebRTC audio did not connect within ${timeout.inSeconds} seconds',
+      ),
+    );
   }
 
   /// ينشئ Offer ويعيد SDP بعد اكتمال تجميع ICE.
@@ -205,6 +246,12 @@ class WhatsAppWebRtcService {
   Future<void> dispose() async {
     if (_isClosed) return;
     _isClosed = true;
+    final connected = _connectedCompleter;
+    if (connected != null && !connected.isCompleted) {
+      connected.completeError(StateError('WebRTC peer was disposed'));
+    }
+    _connectedCompleter = null;
+    _connectionState = RTCPeerConnectionState.RTCPeerConnectionStateClosed;
     try {
       final tracks = _localStream?.getTracks() ?? const [];
       for (final t in tracks) {

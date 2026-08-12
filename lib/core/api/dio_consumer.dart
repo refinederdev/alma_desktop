@@ -71,7 +71,7 @@ class DioConsumer implements ApiConsumer {
         queryParameters: queryParameters,
         options: Options(
           headers: {
-            'Content-Type': 'application/json',
+            if (isFormData != true) 'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
         ),
@@ -100,7 +100,7 @@ class DioConsumer implements ApiConsumer {
         queryParameters: queryParameters,
         options: Options(
           headers: {
-            'Content-Type': 'application/json',
+            if (isFormData != true) 'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
         ),

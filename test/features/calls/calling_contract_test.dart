@@ -5,6 +5,7 @@ import 'package:alma_desktop/features/calls/data/models/call_permission_model.da
 import 'package:alma_desktop/features/calls/data/models/whatsapp_call_model.dart';
 import 'package:alma_desktop/features/calls/domain/entities/call_event.dart';
 import 'package:alma_desktop/features/calls/presentation/controllers/call_controller.dart';
+import 'package:alma_desktop/features/calls/services/call_compliance_service.dart';
 import 'package:alma_desktop/features/calls/services/whatsapp_webrtc_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -83,6 +84,40 @@ void main() {
       expect(normalized, 'v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n');
       expect(normalized.endsWith('\r\n'), isTrue);
       expect(RegExp(r'(?<!\r)\n').hasMatch(normalized), isFalse);
+    });
+  });
+
+  group('Call recording policy', () {
+    test('applies direction scope and announcement only to recorded calls', () {
+      final policy = CallCompliancePolicy.fromJson({
+        'module_enabled': true,
+        'recording_enabled': true,
+        'recording_required': true,
+        'recording_scope': 'inbound',
+        'announcement_enabled': true,
+        'announcement_required': true,
+        'announcement_audio_url': '/sounds/call-recording-notice.mp3',
+        'announcement_volume': 90,
+      });
+
+      expect(policy.shouldRecord('inbound'), isTrue);
+      expect(policy.shouldAnnounce('inbound'), isTrue);
+      expect(policy.shouldRecord('outbound'), isFalse);
+      expect(policy.shouldAnnounce('outbound'), isFalse);
+      expect(policy.announcementVolume, 0.9);
+    });
+
+    test('disables recording when the call-center module is disabled', () {
+      final policy = CallCompliancePolicy.fromJson({
+        'module_enabled': false,
+        'recording_enabled': true,
+        'recording_scope': 'all',
+        'announcement_enabled': true,
+        'announcement_audio_url': '/notice.mp3',
+      });
+
+      expect(policy.shouldRecord('inbound'), isFalse);
+      expect(policy.shouldAnnounce('inbound'), isFalse);
     });
   });
 }

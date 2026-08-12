@@ -15,6 +15,7 @@ import 'package:alma_desktop/features/calls/domain/entities/whatsapp_call.dart';
 import 'package:alma_desktop/features/calls/domain/usecases/calls_use_cases.dart';
 import 'package:alma_desktop/features/calls/presentation/widgets/active_call_dialog.dart';
 import 'package:alma_desktop/features/calls/presentation/widgets/incoming_call_dialog.dart';
+import 'package:alma_desktop/features/calls/services/call_compliance_service.dart';
 import 'package:alma_desktop/features/calls/services/whatsapp_webrtc_service.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -146,6 +147,7 @@ class CallController extends GetxController {
     required this.terminateCallUseCase,
     required this.checkCallPermissionUseCase,
     required this.requestCallPermissionUseCase,
+    required this.callComplianceService,
   });
 
   static CallController get to => Get.find();
@@ -162,6 +164,7 @@ class CallController extends GetxController {
   final TerminateCallUseCase terminateCallUseCase;
   final CheckCallPermissionUseCase checkCallPermissionUseCase;
   final RequestCallPermissionUseCase requestCallPermissionUseCase;
+  final CallComplianceService callComplianceService;
 
   // ---------- حالة عامة ----------
   CallUiPhase phase = CallUiPhase.idle;
@@ -190,6 +193,8 @@ class CallController extends GetxController {
   Timer? _nextCallPollTimer;
   bool _activeCallPollInFlight = false;
   bool _answerApplied = false;
+  Future<bool>? _complianceActivation;
+  Future<void>? _teardownInFlight;
 
   AudioPlayer? _ringtonePlayer;
   AudioPlayer? _ringbackPlayer;
@@ -272,6 +277,15 @@ class CallController extends GetxController {
       _startActiveCallPoll();
       update();
       unawaited(refreshCallingSettings());
+      unawaited(
+        callComplianceService.refreshPolicy(force: true).catchError((error) {
+          if (kDebugMode) {
+            // ignore: avoid_print
+            print('⚠️ Initial call compliance policy fetch failed: $error');
+          }
+          return callComplianceService.policy;
+        }),
+      );
       // إعادة الترطيب — هل هناك مكالمة نشطة الآن؟
       for (final session in sessions) {
         unawaited(rehydrateActiveCall(session.id));
@@ -289,7 +303,10 @@ class CallController extends GetxController {
   /// يستدعى عند تسجيل الخروج لتنظيف كل الموارد.
   Future<void> shutdown() async {
     await _stopRingtones();
+    final complianceFinish = callComplianceService.finish(currentCall?.id);
     await _disposeWebRtc();
+    await complianceFinish;
+    await callComplianceService.waitForPendingUploads();
     _callTimer?.cancel();
     _callTimer = null;
     _activeCallPollTimer?.cancel();
@@ -640,6 +657,16 @@ class CallController extends GetxController {
       }
     }
 
+    if (!await _activateComplianceAudio()) {
+      final callId = currentCall?.id;
+      if (callId != null && callId > 0) {
+        await terminateCallUseCase(callId);
+      }
+      phase = CallUiPhase.ended;
+      await _finalizeCallTeardown();
+      return;
+    }
+
     phase = CallUiPhase.inProgress;
     _startCallTimer();
     update();
@@ -737,13 +764,18 @@ class CallController extends GetxController {
           // ignore: avoid_print
           print('🎤 [accept] Requesting microphone & creating peer...');
         }
+        await callComplianceService.prepareAndArm('inbound');
         await _ensureWebRtc();
       } catch (e) {
         if (kDebugMode) {
           // ignore: avoid_print
           print('❌ [accept] Microphone/peer setup failed: $e');
         }
-        _showCallError('microphone_permission_denied'.tr);
+        _showCallError(
+          e is CallComplianceRequiredException
+              ? e.message
+              : 'microphone_permission_denied'.tr,
+        );
         await _finalizeCallTeardown();
         return;
       }
@@ -1103,6 +1135,7 @@ class CallController extends GetxController {
         return;
       }
 
+      await callComplianceService.prepareAndArm('outbound');
       await _ensureWebRtc();
       final sdpOffer = await _webrtc!.createOffer();
 
@@ -1142,10 +1175,10 @@ class CallController extends GetxController {
         // ignore: avoid_print
         print('❌ startOutboundCall error: $e');
       }
-      AppMessages.showSnackBar(
-        type: ErrorType.error,
-        title: 'error'.tr,
-        message: 'failed_to_initiate_call'.tr,
+      _showCallError(
+        e is CallComplianceRequiredException
+            ? e.message
+            : 'failed_to_initiate_call'.tr,
       );
       await _finalizeCallTeardown();
     } finally {
@@ -1305,6 +1338,47 @@ class CallController extends GetxController {
     _webrtc = null;
   }
 
+  Future<bool> _activateComplianceAudio() {
+    final existing = _complianceActivation;
+    if (existing != null) return existing;
+    final activation = _activateComplianceAudioOnce();
+    _complianceActivation = activation;
+    return activation;
+  }
+
+  Future<bool> _activateComplianceAudioOnce() async {
+    final call = currentCall;
+    final webrtc = _webrtc;
+    if (call == null || call.id <= 0) return false;
+    if (!callComplianceService.policy.shouldRecord(call.direction)) {
+      return true;
+    }
+    if (webrtc == null) {
+      _showCallError('failed_to_connect_audio'.tr);
+      return false;
+    }
+
+    try {
+      await webrtc.waitUntilConnected();
+      await callComplianceService.begin(call.id, call.direction);
+      return true;
+    } on CallComplianceRequiredException catch (error) {
+      _showCallError(error.message);
+      return false;
+    } catch (error) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('❌ Call compliance activation failed: $error');
+      }
+      if (callComplianceService.policy.recordingRequired ||
+          callComplianceService.policy.announcementRequired) {
+        _showCallError('Required call recording could not start: $error');
+        return false;
+      }
+      return true;
+    }
+  }
+
   // ====================== Polling احتياطي ======================
   //
   // يُستخدم Reverb كقناة أساسية لاستقبال أحداث المكالمات لحظياً، لكن قد
@@ -1445,6 +1519,12 @@ class CallController extends GetxController {
         print('🔄 Poll: server says in_progress, transitioning UI');
       }
       currentCall = _mergeCall(remote);
+      if (!await _activateComplianceAudio()) {
+        await terminateCallUseCase(remote.id);
+        phase = CallUiPhase.ended;
+        await _finalizeCallTeardown();
+        return;
+      }
       phase = CallUiPhase.inProgress;
       await _stopRingback();
       await _stopRingtones();
@@ -1465,15 +1545,33 @@ class CallController extends GetxController {
   }
 
   Future<void> _finalizeCallTeardown() async {
+    final inFlight = _teardownInFlight;
+    if (inFlight != null) return inFlight;
+    final teardown = _performCallTeardown();
+    _teardownInFlight = teardown;
+    try {
+      await teardown;
+    } finally {
+      if (identical(_teardownInFlight, teardown)) {
+        _teardownInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _performCallTeardown() async {
+    final callId = currentCall?.id;
     _callTimer?.cancel();
     _callTimer = null;
     _callStartedAt = null;
     callDuration = Duration.zero;
     _answerApplied = false;
+    _complianceActivation = null;
     await _stopRingtones();
     await _stopRingback();
+    final complianceFinish = callComplianceService.finish(callId);
     await _disposeWebRtc();
     _closeActiveDialog();
+    await complianceFinish;
     // نظهر شاشة النهاية لثوانٍ بسيطة في حال أردنا لاحقاً عرض خلاصة
     _teardownResetTimer?.cancel();
     _teardownResetTimer = Timer(const Duration(seconds: 1), () {

@@ -1,4 +1,7 @@
 PODS:
+  - call_compliance_audio (0.1.0):
+    - flutter_webrtc
+    - FlutterMacOS
   - flutter_webrtc (1.4.0):
     - FlutterMacOS
     - WebRTC-SDK (= 144.7559.01)
@@ -12,6 +15,7 @@ PODS:
   - WebRTC-SDK (144.7559.01)
 
 DEPENDENCIES:
+  - call_compliance_audio (from `Flutter/ephemeral/.symlinks/plugins/call_compliance_audio/macos`)
   - flutter_webrtc (from `Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - media_kit_libs_macos_audio (from `Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_audio/macos`)
@@ -23,6 +27,8 @@ SPEC REPOS:
     - WebRTC-SDK
 
 EXTERNAL SOURCES:
+  call_compliance_audio:
+    :path: Flutter/ephemeral/.symlinks/plugins/call_compliance_audio/macos
   flutter_webrtc:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_webrtc/macos
   FlutterMacOS:
@@ -35,6 +41,7 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos
 
 SPEC CHECKSUMS:
+  call_compliance_audio: a2572599b61aacb72757bc949578d4ae97c11637
   flutter_webrtc: f1fb1a00c6080461bb2bc6caa5b93d07ddb68466
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   media_kit_libs_macos_audio: 06f3cf88d6d89c7c3c87eae57689d1c6adb335b2
