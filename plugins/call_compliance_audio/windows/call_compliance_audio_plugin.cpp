@@ -39,6 +39,10 @@ using Microsoft::WRL::ComPtr;
 
 constexpr int kRecordingSampleRate = 48000;
 constexpr char kChannelName[] = "com.almacrm.call_compliance_audio";
+constexpr DWORD kAllSourceReaderStreams =
+    static_cast<DWORD>(MF_SOURCE_READER_ALL_STREAMS);
+constexpr DWORD kFirstAudioSourceReaderStream =
+    static_cast<DWORD>(MF_SOURCE_READER_FIRST_AUDIO_STREAM);
 
 std::wstring Utf8ToWide(const std::string& value) {
   if (value.empty()) return std::wstring();
@@ -135,8 +139,8 @@ bool DecodeAnnouncement(const std::wstring& path,
     return false;
   }
 
-  reader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-  result = reader->SetStreamSelection(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+  reader->SetStreamSelection(kAllSourceReaderStreams, FALSE);
+  result = reader->SetStreamSelection(kFirstAudioSourceReaderStream,
                                       TRUE);
 
   ComPtr<IMFMediaType> requested_type;
@@ -151,7 +155,7 @@ bool DecodeAnnouncement(const std::wstring& path,
     result = requested_type->SetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
   }
   if (SUCCEEDED(result)) {
-    result = reader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+    result = reader->SetCurrentMediaType(kFirstAudioSourceReaderStream,
                                          nullptr, requested_type.Get());
   }
   if (FAILED(result)) {
@@ -161,7 +165,7 @@ bool DecodeAnnouncement(const std::wstring& path,
   }
 
   ComPtr<IMFMediaType> actual_type;
-  result = reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+  result = reader->GetCurrentMediaType(kFirstAudioSourceReaderStream,
                                        &actual_type);
   UINT32 sample_rate = 0;
   UINT32 channels = 0;
@@ -185,7 +189,7 @@ bool DecodeAnnouncement(const std::wstring& path,
   while (true) {
     DWORD flags = 0;
     ComPtr<IMFSample> sample;
-    result = reader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0,
+    result = reader->ReadSample(kFirstAudioSourceReaderStream, 0,
                                 nullptr, &flags, nullptr, &sample);
     if (FAILED(result)) {
       *error = "Unable to read the call announcement: " +
@@ -348,13 +352,13 @@ bool EncodeWavToAac(const std::wstring& wav_path,
              HresultMessage(result);
     return false;
   }
-  reader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-  result = reader->SetStreamSelection(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+  reader->SetStreamSelection(kAllSourceReaderStreams, FALSE);
+  result = reader->SetStreamSelection(kFirstAudioSourceReaderStream,
                                       TRUE);
 
   ComPtr<IMFMediaType> input_type;
   if (SUCCEEDED(result)) {
-    result = reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
+    result = reader->GetCurrentMediaType(kFirstAudioSourceReaderStream,
                                          &input_type);
   }
 
@@ -414,7 +418,7 @@ bool EncodeWavToAac(const std::wstring& wav_path,
   while (true) {
     DWORD flags = 0;
     ComPtr<IMFSample> sample;
-    result = reader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0,
+    result = reader->ReadSample(kFirstAudioSourceReaderStream, 0,
                                 nullptr, &flags, nullptr, &sample);
     if (FAILED(result)) break;
     if (sample != nullptr) {
