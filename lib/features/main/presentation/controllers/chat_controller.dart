@@ -316,7 +316,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
-        message: 'لم يتم اختيار ملف.',
+        message: 'no_file_selected'.tr,
       );
       return;
     }
@@ -331,7 +331,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
-        message: 'لم يتم اختيار ملف.',
+        message: 'no_file_selected'.tr,
       );
       return;
     }
@@ -346,7 +346,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
-        message: 'لم يتم اختيار صورة.',
+        message: 'no_image_selected'.tr,
       );
       return;
     }
@@ -363,7 +363,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.warning,
         title: 'error'.tr,
-        message: 'تعذر قراءة الصورة من الحافظة.',
+        message: 'clipboard_image_read_failed'.tr,
       );
       return;
     }
@@ -385,7 +385,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: 'فشل تجهيز الصورة المُلصقة.',
+        message: 'clipboard_image_prepare_failed'.tr,
       );
     }
   }
@@ -396,7 +396,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
-        message: 'لم يتم اختيار فيديو.',
+        message: 'no_video_selected'.tr,
       );
       return;
     }
@@ -411,7 +411,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.info,
         title: 'info'.tr,
-        message: 'لم يتم اختيار ملف صوتي.',
+        message: 'no_audio_selected'.tr,
       );
       return;
     }
@@ -463,7 +463,7 @@ class ChatController extends GetxController {
       AppMessages.showSnackBar(
         type: ErrorType.warning,
         title: 'error'.tr,
-        message: 'حجم الملف أكبر من 10MB.',
+        message: 'attachment_too_large'.tr,
       );
       return false;
     }
@@ -1101,7 +1101,7 @@ class ChatController extends GetxController {
         }
         AppMessages.showSnackBar(
           type: ErrorType.info,
-          title: 'CRM',
+          title: 'crm'.tr,
           message: 'new_deal_received'.tr,
         );
         _playNotificationSound();

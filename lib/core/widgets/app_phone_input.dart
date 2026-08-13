@@ -3,6 +3,7 @@ import 'package:alma_desktop/core/theme/alma_tokens.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 class Country {
   final String name;
@@ -20,7 +21,7 @@ class Country {
   });
 
   static final Country kuwait = Country(
-    name: 'الكويت',
+    name: 'country_kuwait',
     code: 'KW',
     dialCode: '+965',
     flagCode: 'KW',
@@ -98,7 +99,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
               filteredCountries = List<Country>.from(_countries);
             } else {
               filteredCountries = _countries.where((country) {
-                return country.name.toLowerCase().contains(
+                return country.name.tr.toLowerCase().contains(
                       query.toLowerCase(),
                     ) ||
                     country.dialCode.contains(query) ||
@@ -136,7 +137,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                 child: Row(
                   children: [
                     Text(
-                      'اختر الدولة',
+                      'choose_country'.tr,
                       style: AppStyles.titleLarge.copyWith(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
@@ -159,7 +160,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                   controller: _searchController,
                   onChanged: filterCountries,
                   decoration: InputDecoration(
-                    hintText: 'ابحث عن الدولة...',
+                    hintText: 'search_country'.tr,
                     hintStyle: AppStyles.bodyMedium.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
@@ -238,7 +239,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                             // Country name
                             Expanded(
                               child: Text(
-                                country.name,
+                                country.name.tr,
                                 style: AppStyles.bodyMedium.copyWith(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w500,
@@ -373,7 +374,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
 
   String? _validatePhoneNumber(String value) {
     if (value.isEmpty) {
-      return 'الرجاء إدخال رقم الهاتف';
+      return 'phone_required'.tr;
     }
 
     // Remove any spaces, dashes, or other non-digit characters except +
@@ -385,7 +386,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
     final regex = RegExp(regexPattern);
 
     if (!regex.hasMatch(cleanedValue)) {
-      return 'رقم الهاتف غير صحيح';
+      return 'phone_invalid'.tr;
     }
 
     return null;
@@ -396,7 +397,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
     // Saudi Arabia: 9 digits starting with 5 (mobile) or 1 (landline)
     // Format: +966 5XXXXXXXX or +966 1XXXXXXXX
     Country(
-      name: 'السعودية',
+      name: 'country_saudi_arabia',
       code: 'SA',
       dialCode: '+966',
       flagCode: 'SA',
@@ -405,7 +406,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
     // UAE: 9 digits starting with 5
     // Format: +971 5XXXXXXXX
     Country(
-      name: 'الإمارات العربية المتحدة',
+      name: 'country_united_arab_emirates',
       code: 'AE',
       dialCode: '+971',
       flagCode: 'AE',
@@ -415,7 +416,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
     // Qatar: 8 digits starting with 3, 5, 6, or 7
     // Format: +974 [3,5-7]XXXXXXX
     Country(
-      name: 'قطر',
+      name: 'country_qatar',
       code: 'QA',
       dialCode: '+974',
       flagCode: 'QA',
@@ -424,7 +425,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
     // Bahrain: 8 digits starting with 3
     // Format: +973 3XXXXXXX
     Country(
-      name: 'البحرين',
+      name: 'country_bahrain',
       code: 'BH',
       dialCode: '+973',
       flagCode: 'BH',
@@ -433,7 +434,7 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
     // Oman: 8 digits starting with 7 or 9
     // Format: +968 [79]XXXXXXX
     Country(
-      name: 'عُمان',
+      name: 'country_oman',
       code: 'OM',
       dialCode: '+968',
       flagCode: 'OM',

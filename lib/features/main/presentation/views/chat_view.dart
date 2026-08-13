@@ -1327,7 +1327,7 @@ class _MediaPreview extends StatelessWidget {
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: 'Invalid media URL.',
+        message: 'invalid_media_url'.tr,
       );
       return;
     }
@@ -1337,7 +1337,7 @@ class _MediaPreview extends StatelessWidget {
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: 'Could not open this attachment.',
+        message: 'attachment_open_failed'.tr,
       );
     }
   }
@@ -1501,7 +1501,7 @@ class _AudioPreviewState extends State<_AudioPreview> {
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: 'Could not play this audio message.',
+        message: 'audio_playback_failed'.tr,
       );
     } finally {
       if (mounted) {
@@ -1535,7 +1535,7 @@ class _AudioPreviewState extends State<_AudioPreview> {
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: 'Could not play this audio message.',
+        message: 'audio_playback_failed'.tr,
       );
     } finally {
       if (mounted) {
@@ -1644,7 +1644,7 @@ class _MediaDownloadButtonState extends State<_MediaDownloadButton> {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'تحميل',
+      tooltip: 'download'.tr,
       visualDensity: VisualDensity.compact,
       onPressed: _isDownloading ? null : _download,
       icon: _isDownloading
@@ -1678,14 +1678,14 @@ class _MediaDownloadButtonState extends State<_MediaDownloadButton> {
       AppMessages.showSnackBar(
         type: ErrorType.success,
         title: 'done'.tr,
-        message: 'تم تنزيل الملف بنجاح: $savedPath',
+        message: 'download_succeeded'.trParams({'path': savedPath}),
       );
     } catch (e) {
       final message = e.toString().replaceFirst('Exception: ', '');
       AppMessages.showSnackBar(
         type: ErrorType.error,
         title: 'error'.tr,
-        message: 'فشل تنزيل الملف: $message',
+        message: 'download_failed'.trParams({'error': message}),
       );
     } finally {
       if (mounted) {
@@ -1701,7 +1701,7 @@ Future<String> _downloadMediaFile({
 }) async {
   final uri = Uri.tryParse(url);
   if (uri == null) {
-    throw Exception('Invalid URL');
+    throw Exception('invalid_download_url'.tr);
   }
 
   final downloadsDir = await _resolveDownloadsDirectory();
@@ -1733,16 +1733,15 @@ Future<String> _downloadMediaFile({
     );
   } on DioException catch (e) {
     final status = e.response?.statusCode;
-    final body = e.response?.data?.toString();
     if (status == 401 || status == 403) {
-      throw Exception('غير مصرح بتحميل الملف ($status).');
-    }
-    if (status != null) {
       throw Exception(
-        'فشل التحميل برمز HTTP $status${body != null ? ': $body' : ''}',
+        'download_not_authorized'.trParams({'status': '$status'}),
       );
     }
-    throw Exception(e.message ?? 'حدث خطأ غير معروف أثناء التحميل.');
+    if (status != null) {
+      throw Exception('download_http_failed'.trParams({'status': '$status'}));
+    }
+    throw Exception(e.message ?? 'unknown_download_error'.tr);
   }
 
   return savePath;
@@ -1912,7 +1911,9 @@ class _Composer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${controller.selectedAttachments.length} ملف محدد',
+                    'attachments_selected'.trParams({
+                      'count': '${controller.selectedAttachments.length}',
+                    }),
                     style: AppStyles.bodySmall.copyWith(
                       color: context.alma.onSurface,
                       fontWeight: FontWeight.w600,
@@ -1980,7 +1981,7 @@ class _Composer extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: controller.clearAttachment,
-                      child: Text('إزالة الكل'),
+                      child: Text('remove_all'.tr),
                     ),
                   ),
                 ],
@@ -1989,31 +1990,31 @@ class _Composer extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                tooltip: 'Emoji',
+                tooltip: 'emoji'.tr,
                 onPressed: disabled ? null : controller.toggleEmojiPicker,
                 icon: Icon(Icons.emoji_emotions_outlined, size: 20.sp),
               ),
               IconButton(
-                tooltip: 'إرسال موقع فرع',
+                tooltip: 'send_branch_location'.tr,
                 onPressed: disabled
                     ? null
                     : () => _openCompanyLocationsPicker(context, controller),
                 icon: Icon(Icons.location_on_outlined, size: 20.sp),
               ),
               IconButton(
-                tooltip: 'Media',
+                tooltip: 'media'.tr,
                 onPressed: disabled
                     ? null
                     : () => _openAttachmentPicker(context, controller),
                 icon: Icon(Icons.image_outlined, size: 20.sp),
               ),
               IconButton(
-                tooltip: 'Paste image',
+                tooltip: 'paste_image'.tr,
                 onPressed: disabled ? null : controller.pickImageFromClipboard,
                 icon: Icon(Icons.content_paste_rounded, size: 20.sp),
               ),
               IconButton(
-                tooltip: 'File',
+                tooltip: 'file'.tr,
                 onPressed: disabled ? null : controller.pickDocumentAttachment,
                 icon: Icon(Icons.attach_file_rounded, size: 20.sp),
               ),
@@ -2136,7 +2137,7 @@ class _EmojiPickerPanel extends StatelessWidget {
           skinToneConfig: const SkinToneConfig(enabled: true),
           searchViewConfig: SearchViewConfig(
             backgroundColor: context.alma.surfaceVariant,
-            hintText: 'Search emoji',
+            hintText: 'search_emoji'.tr,
           ),
         ),
       ),
@@ -2163,7 +2164,7 @@ Future<void> _openAttachmentPicker(
             children: [
               _AttachmentTile(
                 icon: Icons.image_rounded,
-                label: 'Image',
+                label: 'image'.tr,
                 onTap: () {
                   Get.back();
                   controller.pickImageAttachment();
@@ -2171,7 +2172,7 @@ Future<void> _openAttachmentPicker(
               ),
               _AttachmentTile(
                 icon: Icons.videocam_rounded,
-                label: 'Video',
+                label: 'video'.tr,
                 onTap: () {
                   Get.back();
                   controller.pickVideoAttachment();
@@ -2179,7 +2180,7 @@ Future<void> _openAttachmentPicker(
               ),
               _AttachmentTile(
                 icon: Icons.music_note_rounded,
-                label: 'Audio',
+                label: 'audio'.tr,
                 onTap: () {
                   Get.back();
                   controller.pickAudioAttachment();
@@ -2187,7 +2188,7 @@ Future<void> _openAttachmentPicker(
               ),
               _AttachmentTile(
                 icon: Icons.attach_file_rounded,
-                label: 'Document',
+                label: 'document'.tr,
                 onTap: () {
                   Get.back();
                   controller.pickDocumentAttachment();
@@ -2255,7 +2256,7 @@ Future<void> _openCompanyLocationsPicker(
                   children: [
                     Expanded(
                       child: Text(
-                        'اختر فرعاً لإرسال موقعه',
+                        'select_branch_location'.tr,
                         style: AppStyles.titleSmall.copyWith(
                           color: context.alma.onSurface,
                           fontWeight: FontWeight.w700,
@@ -2263,7 +2264,7 @@ Future<void> _openCompanyLocationsPicker(
                       ),
                     ),
                     IconButton(
-                      tooltip: 'تحديث',
+                      tooltip: 'refresh'.tr,
                       onPressed: controller.isLoadingCompanyLocations
                           ? null
                           : () => controller.loadCompanyLocations(force: true),
@@ -2287,7 +2288,7 @@ Future<void> _openCompanyLocationsPicker(
                       ? Center(
                           child: Text(
                             controller.companyLocationsErrorMessage ??
-                                'لا توجد فروع.',
+                                'no_company_locations'.tr,
                             style: AppStyles.bodyMedium.copyWith(
                               color: context.alma.onSurfaceHint,
                             ),

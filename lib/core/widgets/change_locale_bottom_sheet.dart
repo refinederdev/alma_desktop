@@ -143,7 +143,7 @@ class _LocalePickerBody extends StatelessWidget {
                     Expanded(
                       child: LanguageOptionWidget(
                         flagUrl: 'https://flagsapi.com/SA/flat/64.png',
-                        languageName: 'العربية',
+                        languageName: 'language_arabic'.tr,
                         isSelected:
                             controller.currentLocale.languageCode == 'ar',
                         desktopStyle: true,
@@ -156,7 +156,7 @@ class _LocalePickerBody extends StatelessWidget {
                     Expanded(
                       child: LanguageOptionWidget(
                         flagUrl: 'https://flagsapi.com/US/flat/64.png',
-                        languageName: 'English',
+                        languageName: 'language_english'.tr,
                         isSelected:
                             controller.currentLocale.languageCode == 'en',
                         desktopStyle: true,
@@ -170,7 +170,7 @@ class _LocalePickerBody extends StatelessWidget {
               else ...[
                 LanguageOptionWidget(
                   flagUrl: 'https://flagsapi.com/SA/flat/32.png',
-                  languageName: 'العربية',
+                  languageName: 'language_arabic'.tr,
                   isSelected: controller.currentLocale.languageCode == 'ar',
                   onPressed: () {
                     controller.changeLocale(const Locale('ar', 'SA'));
@@ -179,7 +179,7 @@ class _LocalePickerBody extends StatelessWidget {
                 SizedBox(height: 12.h),
                 LanguageOptionWidget(
                   flagUrl: 'https://flagsapi.com/US/flat/32.png',
-                  languageName: 'English',
+                  languageName: 'language_english'.tr,
                   isSelected: controller.currentLocale.languageCode == 'en',
                   onPressed: () {
                     controller.changeLocale(const Locale('en', 'US'));

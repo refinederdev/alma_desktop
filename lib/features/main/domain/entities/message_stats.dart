@@ -4,7 +4,7 @@ class MessageStats extends Equatable {
   final int totalMessages;
   final int sent;
   final int received;
-  final int replyRate;
+  final double replyRate;
 
   const MessageStats({
     required this.totalMessages,

@@ -4,6 +4,7 @@ import 'package:alma_desktop/features/global/data/datasources/global_local_data_
 import 'package:alma_desktop/features/global/domain/entities/check_auth.dart';
 import 'package:alma_desktop/features/global/domain/repositories/global_repository.dart';
 import 'package:dartz/dartz.dart';
+import 'package:get/get.dart';
 
 class GlobalRepositoryImpl extends GlobalRepository {
   final GlobalLocalDataSource globalLocalDataSource;
@@ -15,7 +16,7 @@ class GlobalRepositoryImpl extends GlobalRepository {
     try {
       final result = await globalLocalDataSource.getCheckAuth();
       if (result == null) {
-        return Left(ServerFailure(message: 'No token found'));
+        return Left(ServerFailure(message: 'no_token_found'.tr));
       }
       return Right(result);
     } on CustomException catch (e) {

@@ -5,6 +5,7 @@ import 'package:alma_desktop/features/auth/data/models/login_response_model.dart
 import 'package:alma_desktop/features/auth/data/models/user_model.dart';
 import 'package:alma_desktop/features/auth/data/models/validate_otp_response_model.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:get/get.dart';
 
 abstract class AuthRemoteDataSource {
   Future<LoginResponseModel> login({
@@ -92,7 +93,7 @@ class AuthRemoteDataSourceImpl extends AuthRemoteDataSource {
       }
     }
     // إذا كانت الاستجابة null أو لا تحتوي على message، نرجع الرسالة الافتراضية
-    return 'تم إرسال رمز التحقق عبر WhatsApp';
+    return 'verification_code_sent_whatsapp'.tr;
   }
 
   @override
@@ -141,7 +142,7 @@ class AuthRemoteDataSourceImpl extends AuthRemoteDataSource {
       }
     }
     // إذا كانت الاستجابة null أو لا تحتوي على message، نرجع الرسالة الافتراضية
-    return 'تم تغيير كلمة المرور بنجاح';
+    return 'password_changed_successfully'.tr;
   }
 
   @override
@@ -231,6 +232,6 @@ class AuthRemoteDataSourceImpl extends AuthRemoteDataSource {
         }
       }
     }
-    return 'تم تحديث كلمة المرور بنجاح';
+    return 'password_updated_successfully'.tr;
   }
 }

@@ -40,14 +40,14 @@ class ServerConfigController extends GetxController {
       urlController.text = AppConfig.baseURL;
       AppMessages.showSnackBar(
         type: ErrorType.success,
-        title: 'server_config_saved_title',
+        title: 'server_config_saved_title'.tr,
         message: 'server_config_saved_message'.tr,
         duration: 4,
       );
     } on FormatException catch (e) {
       AppMessages.showSnackBar(
         type: ErrorType.error,
-        title: 'error',
+        title: 'error'.tr,
         message: _formatErrorMessage(e.message),
       );
     } finally {
@@ -62,7 +62,7 @@ class ServerConfigController extends GetxController {
       urlController.text = AppConfig.baseURL;
       AppMessages.showSnackBar(
         type: ErrorType.info,
-        title: 'server_config_reset_title',
+        title: 'server_config_reset_title'.tr,
         message: 'server_config_reset_message'.tr,
         duration: 3,
       );

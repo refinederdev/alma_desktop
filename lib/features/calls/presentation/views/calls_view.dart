@@ -399,7 +399,9 @@ class _SessionsDropdown extends StatelessWidget {
                 (s) => DropdownMenuItem<int>(
                   value: s.id,
                   child: Text(
-                    s.sessionName ?? (s.phoneNumber ?? 'session ${s.id}'),
+                    s.sessionName ??
+                        (s.phoneNumber ??
+                            'session_number'.trParams({'id': '${s.id}'})),
                     style: AppStyles.bodySmall.copyWith(
                       color: context.alma.onSurface,
                     ),

@@ -87,7 +87,7 @@ class _DashboardHeader extends StatelessWidget {
               children: [
                 Text(
                   'dashboard_welcome'.trParams({
-                    'name': user?.firstName ?? 'Alma',
+                    'name': user?.firstName ?? 'alma_brand_name'.tr,
                   }),
                   style: AppStyles.titleLarge.copyWith(
                     color: context.alma.onSurfaceTitle,
@@ -448,7 +448,9 @@ class _MessagesStatsCard extends StatelessWidget {
               _MiniStat(title: 'received_messages'.tr, value: stats?.received),
               _MiniStat(
                 title: 'reply_rate'.tr,
-                valueText: stats == null ? '--' : '${stats.replyRate}%',
+                valueText: stats == null
+                    ? '--'
+                    : '${stats.replyRate.toStringAsFixed(stats.replyRate % 1 == 0 ? 0 : 1)}%',
               ),
             ],
           ),
@@ -562,7 +564,7 @@ class _WeeklyAttendanceCard extends StatelessWidget {
                           ),
                           SizedBox(height: 6.h),
                           Text(
-                            item.day,
+                            _localizedWeekday(item.day),
                             style: AppStyles.labelSmall.copyWith(
                               color: context.alma.onSurfaceTertiary,
                             ),
@@ -577,6 +579,21 @@ class _WeeklyAttendanceCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _localizedWeekday(String value) {
+    final normalized = value.trim().toLowerCase();
+    final key = switch (normalized) {
+      'saturday' || 'السبت' => 'weekday_saturday',
+      'sunday' || 'الأحد' => 'weekday_sunday',
+      'monday' || 'الإثنين' || 'الاثنين' => 'weekday_monday',
+      'tuesday' || 'الثلاثاء' => 'weekday_tuesday',
+      'wednesday' || 'الأربعاء' || 'الاربعاء' => 'weekday_wednesday',
+      'thursday' || 'الخميس' => 'weekday_thursday',
+      'friday' || 'الجمعة' => 'weekday_friday',
+      _ => null,
+    };
+    return key?.tr ?? value;
   }
 }
 

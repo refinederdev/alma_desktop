@@ -22,7 +22,7 @@ class GlobalController extends GetxController {
 
   Future<void> checkIfUserIsLoggedIn() async {
     final result = await checkIfUserIsLoggedInUseCase(NoParams());
-    result.fold((failure) => Get.snackbar('Error', failure.message ?? ''), (
+    result.fold((failure) => Get.snackbar('error'.tr, failure.message ?? ''), (
       checkAuth,
     ) async {
       token = checkAuth.accessToken;

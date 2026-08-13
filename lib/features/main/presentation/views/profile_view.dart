@@ -281,12 +281,12 @@ class _LanguageCard extends StatelessWidget {
                 runSpacing: 10.h,
                 children: [
                   _LanguageChoice(
-                    label: 'العربية',
+                    label: 'language_arabic'.tr,
                     selected: isArabic,
                     onTap: () => global.changeLocale(const Locale('ar', 'SA')),
                   ),
                   _LanguageChoice(
-                    label: 'English',
+                    label: 'language_english'.tr,
                     selected: !isArabic,
                     onTap: () => global.changeLocale(const Locale('en', 'US')),
                   ),

@@ -211,7 +211,7 @@ class _FormPanel extends GetView<LoginController> {
                           ] else ...[
                             AppPhoneInput(
                               label: 'phone'.tr,
-                              hint: '5XXXXXXX',
+                              hint: 'phone_example_hint'.tr,
                               controller: c.phoneController,
                               initialCountry: Country.kuwait,
                               onCountryChanged: c.setCountryCode,

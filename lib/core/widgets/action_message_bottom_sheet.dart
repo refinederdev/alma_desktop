@@ -5,6 +5,7 @@ import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/core/widgets/app_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 enum MessageType { success, error, warning, info }
 
@@ -220,7 +221,7 @@ class _ActionMessageBottomSheetState extends State<ActionMessageBottomSheet> {
                     ),
                     textColor: AppTheme.brandMain2,
                     borderColor: AppTheme.brandMain2.withValues(alpha: 0.08),
-                    text: 'إلغاء',
+                    text: 'cancel'.tr,
                     onPressed: () {
                       _autoCloseTimer?.cancel();
                       Navigator.of(context).pop();

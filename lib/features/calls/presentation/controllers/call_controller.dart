@@ -1372,7 +1372,9 @@ class CallController extends GetxController {
       }
       if (callComplianceService.policy.recordingRequired ||
           callComplianceService.policy.announcementRequired) {
-        _showCallError('Required call recording could not start: $error');
+        _showCallError(
+          'required_recording_failed'.trParams({'error': error.toString()}),
+        );
         return false;
       }
       return true;

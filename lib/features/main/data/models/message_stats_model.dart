@@ -13,7 +13,7 @@ class MessageStatsModel extends MessageStats {
         totalMessages: (json['total_messages'] as num?)?.toInt() ?? 0,
         sent: (json['sent'] as num?)?.toInt() ?? 0,
         received: (json['received'] as num?)?.toInt() ?? 0,
-        replyRate: (json['reply_rate'] as num?)?.toInt() ?? 0,
+        replyRate: (json['reply_rate'] as num?)?.toDouble() ?? 0,
       );
 
   Map<String, dynamic> toJson() => {

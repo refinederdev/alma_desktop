@@ -146,7 +146,7 @@ class _MainSidebar extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'ALMA',
+                        'alma_brand_name'.tr.toUpperCase(),
                         style: AppStyles.titleMedium.copyWith(
                           color: s.sidebarForeground,
                           fontWeight: FontWeight.w800,
@@ -154,7 +154,7 @@ class _MainSidebar extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'CRM workspace',
+                        'workspace_product_name'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppStyles.labelSmall.copyWith(
@@ -507,7 +507,7 @@ class _UserMenu extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user?.fullName ?? 'Alma',
+                        user?.fullName ?? 'alma_brand_name'.tr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppStyles.labelLarge.copyWith(
@@ -516,7 +516,7 @@ class _UserMenu extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        user?.roles.firstOrNull ?? 'user'.tr,
+                        _localizedRole(user?.roles.firstOrNull),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppStyles.labelSmall.copyWith(
@@ -548,6 +548,16 @@ class _UserMenu extends StatelessWidget {
         .toList();
     if (parts.isEmpty) return 'A';
     return parts.take(2).map((e) => e.characters.first).join().toUpperCase();
+  }
+
+  String _localizedRole(String? role) {
+    return switch (role?.trim().toLowerCase()) {
+      'super_admin' => 'super_admin'.tr,
+      'admin' => 'admin'.tr,
+      'agent' => 'agent'.tr,
+      'user' || null || '' => 'user'.tr,
+      final value => value.tr,
+    };
   }
 }
 

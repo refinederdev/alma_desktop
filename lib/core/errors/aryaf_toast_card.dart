@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AryafToastCard extends StatelessWidget {
   final Widget title;
@@ -36,7 +37,7 @@ class AryafToastCard extends StatelessWidget {
                 splashRadius: 18,
                 icon: const Icon(Icons.close_rounded, color: Colors.white70),
                 onPressed: onClose,
-                tooltip: 'Close',
+                tooltip: 'close'.tr,
               )
             : null);
 

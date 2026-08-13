@@ -2,6 +2,7 @@ import 'package:alma_desktop/core/theme/app_styles.dart';
 import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 /// شعار Alma من PNG (الشعار الكامل). يمكن إضافة كلمة «Alma» تحته عند [showWordmark].
 class AlmaBrandLogo extends StatelessWidget {
@@ -56,7 +57,7 @@ class AlmaBrandLogo extends StatelessWidget {
         if (showWordmark) ...[
           SizedBox(height: spacing.h),
           Text(
-            'Alma',
+            'alma_brand_name'.tr,
             style: AppStyles.headlineMedium.copyWith(
               color: wordmarkColor,
               fontWeight: FontWeight.w700,
