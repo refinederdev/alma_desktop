@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import '../config/app_config.dart';
 
-class AppInterceptos implements Interceptor {
+class AppInterceptos extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     // if (getx.Get.isSnackbarOpen) {

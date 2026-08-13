@@ -57,6 +57,7 @@ class CrmKanbanController extends GetxController {
 
   bool isLoading = true;
   bool isRefreshing = false;
+  final ScrollController boardScrollController = ScrollController();
   static const int _dealsPerPage = 30;
 
   List<Deal> openDeals = const [];
@@ -960,6 +961,7 @@ class CrmKanbanController extends GetxController {
       _reverbService!.disconnect();
       _reverbService = null;
     }
+    boardScrollController.dispose();
     _notificationPlayer?.dispose();
     super.onClose();
   }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:alma_desktop/core/lang/ar.dart';
 import 'package:alma_desktop/core/lang/en.dart';
 import 'package:alma_desktop/features/calls/data/models/whatsapp_call_model.dart';
+import 'package:alma_desktop/features/main/data/models/crm_session_model.dart';
 import 'package:alma_desktop/features/main/data/models/notification_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -76,6 +77,25 @@ void main() {
       expect(notification.icon, 'notifications');
       expect(notification.actionUrl, isEmpty);
       expect(notification.actionText, isEmpty);
+    });
+
+    test('deal summaries accept compact CRM session payloads', () {
+      final session = CrmSessionModel.fromJson({
+        'id': 7,
+        'session_id': 'session-7',
+        'session_name': null,
+        'phone_number': null,
+        'provider': 'whatsapp',
+        'status': 'active',
+      });
+
+      expect(session.id, 7);
+      expect(session.sessionId, 'session-7');
+      expect(session.userId, 0);
+      expect(session.contactGroupId, 0);
+      expect(session.apiKey, isEmpty);
+      expect(session.createdAt.millisecondsSinceEpoch, 0);
+      expect(session.updatedAt.millisecondsSinceEpoch, 0);
     });
 
     test(

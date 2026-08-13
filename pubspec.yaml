@@ -1,7 +1,7 @@
 name: alma_desktop
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.12
+version: 0.1.13
 
 environment:
   sdk: ^3.11.4
@@ -56,6 +56,12 @@ flutter_launcher_icons:
     image_path: assets/icon/icon.png
 
 flutter:
+  # call_compliance_audio imports flutter_webrtc's native macOS APIs and still
+  # uses CocoaPods. Keep both plugins on the same package manager until the
+  # local compliance plugin is migrated to Swift Package Manager.
+  config:
+    enable-swift-package-manager: false
+
   uses-material-design: true
 
   assets:

@@ -67,8 +67,10 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                           border: Border.all(color: alma.outline),
                         ),
                         child: Scrollbar(
+                          controller: c.boardScrollController,
                           thumbVisibility: true,
                           child: SingleChildScrollView(
+                            controller: c.boardScrollController,
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,

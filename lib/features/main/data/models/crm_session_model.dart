@@ -1,6 +1,11 @@
 import 'package:alma_desktop/features/main/domain/entities/crm_session.dart';
 
 class CrmSessionModel extends CrmSession {
+  static final DateTime _unknownTimestamp = DateTime.fromMillisecondsSinceEpoch(
+    0,
+    isUtc: true,
+  );
+
   const CrmSessionModel({
     required super.id,
     required super.sessionId,
@@ -16,16 +21,22 @@ class CrmSessionModel extends CrmSession {
 
   factory CrmSessionModel.fromJson(Map<String, dynamic> json) =>
       CrmSessionModel(
-        id: json['id'] as int,
+        id: (json['id'] as num?)?.toInt() ?? 0,
         sessionId: json['session_id'] as String? ?? '',
-        userId: json['user_id'] as int,
-        contactGroupId: json['contact_group_id'] as int? ?? 0,
+        // Deals endpoints embed a compact session that intentionally omits
+        // ownership, API credentials, and audit timestamps.
+        userId: (json['user_id'] as num?)?.toInt() ?? 0,
+        contactGroupId: (json['contact_group_id'] as num?)?.toInt() ?? 0,
         sessionName: json['session_name'] as String?,
         phoneNumber: json['phone_number'] as String?,
         apiKey: json['api_key'] as String? ?? '',
         status: json['status'] as String? ?? 'active',
-        createdAt: DateTime.parse(json['created_at'] as String),
-        updatedAt: DateTime.parse(json['updated_at'] as String),
+        createdAt:
+            DateTime.tryParse(json['created_at'] as String? ?? '') ??
+            _unknownTimestamp,
+        updatedAt:
+            DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+            _unknownTimestamp,
       );
 
   Map<String, dynamic> toJson() => {
