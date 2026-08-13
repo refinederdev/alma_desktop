@@ -31,6 +31,33 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
               Expanded(
                 child: c.isLoading
                     ? const Center(child: CircularProgressIndicator())
+                    : c.errorMessage != null && c.totalDeals == 0
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.cloud_off_rounded,
+                              size: 36.sp,
+                              color: AppTheme.error600,
+                            ),
+                            SizedBox(height: 10.h),
+                            Text(
+                              c.errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: AppStyles.bodyMedium.copyWith(
+                                color: alma.onSurfaceSecondary,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            OutlinedButton.icon(
+                              onPressed: c.loadBoard,
+                              icon: Icon(Icons.refresh_rounded, size: 18.sp),
+                              label: Text('retry'.tr),
+                            ),
+                          ],
+                        ),
+                      )
                     : Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(12.w),
@@ -59,10 +86,13 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                                   onOpenChat: c.openChatForDeal,
                                   onEditDeal: c.showEditDealDialog,
                                   onTransferDeal: c.showTransferDealDialog,
-                                  onLoadMore: () =>
-                                      c.loadMoreDealsByStatus(CrmDealStatus.open),
+                                  onLoadMore: () => c.loadMoreDealsByStatus(
+                                    CrmDealStatus.open,
+                                  ),
                                   hasMore: c.hasMoreDeals(CrmDealStatus.open),
-                                  isLoadingMore: c.isLoadingMoreDeals(CrmDealStatus.open),
+                                  isLoadingMore: c.isLoadingMoreDeals(
+                                    CrmDealStatus.open,
+                                  ),
                                 ),
                                 SizedBox(width: 14.w),
                                 KanbanColumnWidget(
@@ -78,10 +108,13 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                                   onOpenChat: c.openChatForDeal,
                                   onEditDeal: c.showEditDealDialog,
                                   onTransferDeal: c.showTransferDealDialog,
-                                  onLoadMore: () =>
-                                      c.loadMoreDealsByStatus(CrmDealStatus.won),
+                                  onLoadMore: () => c.loadMoreDealsByStatus(
+                                    CrmDealStatus.won,
+                                  ),
                                   hasMore: c.hasMoreDeals(CrmDealStatus.won),
-                                  isLoadingMore: c.isLoadingMoreDeals(CrmDealStatus.won),
+                                  isLoadingMore: c.isLoadingMoreDeals(
+                                    CrmDealStatus.won,
+                                  ),
                                 ),
                                 SizedBox(width: 14.w),
                                 KanbanColumnWidget(
@@ -97,10 +130,13 @@ class CrmKanbanView extends GetView<CrmKanbanController> {
                                   onOpenChat: c.openChatForDeal,
                                   onEditDeal: c.showEditDealDialog,
                                   onTransferDeal: c.showTransferDealDialog,
-                                  onLoadMore: () =>
-                                      c.loadMoreDealsByStatus(CrmDealStatus.lost),
+                                  onLoadMore: () => c.loadMoreDealsByStatus(
+                                    CrmDealStatus.lost,
+                                  ),
                                   hasMore: c.hasMoreDeals(CrmDealStatus.lost),
-                                  isLoadingMore: c.isLoadingMoreDeals(CrmDealStatus.lost),
+                                  isLoadingMore: c.isLoadingMoreDeals(
+                                    CrmDealStatus.lost,
+                                  ),
                                 ),
                               ],
                             ),
@@ -153,15 +189,19 @@ class _CrmKanbanHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'total_deals_count'.trParams({'count': totalDeals.toString()}),
-                  style: AppStyles.bodySmall
-                      .copyWith(color: alma.onSurfaceTertiary),
+                  'total_deals_count'.trParams({
+                    'count': totalDeals.toString(),
+                  }),
+                  style: AppStyles.bodySmall.copyWith(
+                    color: alma.onSurfaceTertiary,
+                  ),
                 ),
                 SizedBox(height: 2.h),
                 Text(
                   'drag_drop_hint'.tr,
-                  style: AppStyles.labelSmall
-                      .copyWith(color: alma.onSurfaceHint),
+                  style: AppStyles.labelSmall.copyWith(
+                    color: alma.onSurfaceHint,
+                  ),
                 ),
               ],
             ),

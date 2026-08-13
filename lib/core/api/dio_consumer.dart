@@ -26,17 +26,9 @@ class DioConsumer implements ApiConsumer {
         return status != null &&
             ((status >= 200 && status < 300) || status == 204);
       };
-    // Add Interceptors
-    // client.interceptors.add(LogInterceptor());
-    // if (kDebugMode) {
-    client.interceptors.add(
-      LogInterceptor(requestBody: true, responseBody: true),
-    );
-
-    client.interceptors.add(
-      LogInterceptor(requestBody: true, responseBody: true),
-    );
-    // }
+    // Never log payloads or headers: they contain credentials, customer
+    // messages, media metadata, and WebRTC session descriptions. In debug we
+    // keep only method/status diagnostics via AppInterceptos.
     client.interceptors.add(AppInterceptos());
   }
 
@@ -132,7 +124,7 @@ class DioConsumer implements ApiConsumer {
     }
   }
 
-  _handleDioExceptions(DioException err) {
+  Never _handleDioExceptions(DioException err) {
     switch (err.type) {
       case DioExceptionType.badResponse:
         // محاولة تحليل الاستجابة
@@ -254,7 +246,7 @@ class DioConsumer implements ApiConsumer {
     }
   }
 
-  String? _getMessageFromError(response) {
+  String? _getMessageFromError(Map<String, dynamic> response) {
     if (response.containsKey("message")) {
       if (response["message"] is List) {
         return response["message"][0];
@@ -266,7 +258,7 @@ class DioConsumer implements ApiConsumer {
     }
   }
 
-  String? _getMessageFromValidationError(response) {
+  String? _getMessageFromValidationError(Map<String, dynamic> response) {
     if (response.containsKey("errors")) {
       String? message;
       var errors = response["errors"];
@@ -284,10 +276,10 @@ class DioConsumer implements ApiConsumer {
     }
   }
 
-  _getValidationErrors(response) {
+  Map<String, dynamic> _getValidationErrors(Map<String, dynamic> response) {
     if (response.containsKey("errors")) {
-      var errors = response["errors"];
-      return errors;
+      final errors = response["errors"];
+      return errors is Map<String, dynamic> ? errors : <String, dynamic>{};
     } else {
       return {};
     }

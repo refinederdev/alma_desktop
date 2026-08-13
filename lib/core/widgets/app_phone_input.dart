@@ -87,15 +87,15 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
   }
 
   Widget _buildCountryPickerSheet() {
+    var filteredCountries = List<Country>.from(_countries);
     return StatefulBuilder(
       builder: (context, setSheetState) {
         final alma = context.alma;
-        List<Country> filteredCountries = _countries;
 
         void filterCountries(String query) {
           setSheetState(() {
             if (query.isEmpty) {
-              filteredCountries = _countries;
+              filteredCountries = List<Country>.from(_countries);
             } else {
               filteredCountries = _countries.where((country) {
                 return country.name.toLowerCase().contains(
@@ -165,7 +165,10 @@ class _AppPhoneInputState extends State<AppPhoneInput> {
                       fontWeight: FontWeight.w500,
                       color: alma.onSurfaceSecondary,
                     ),
-                    prefixIcon: Icon(Icons.search, color: alma.onSurfaceSecondary),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: alma.onSurfaceSecondary,
+                    ),
                     filled: true,
                     fillColor: alma.inputFill,
                     border: OutlineInputBorder(

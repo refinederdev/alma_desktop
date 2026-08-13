@@ -24,7 +24,10 @@ abstract final class ChangeLocaleBottomSheet {
           return Dialog(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            insetPadding: EdgeInsets.symmetric(horizontal: 48.w, vertical: 40.h),
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: 48.w,
+              vertical: 40.h,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: 520.w),
               child: Material(
@@ -141,7 +144,8 @@ class _LocalePickerBody extends StatelessWidget {
                       child: LanguageOptionWidget(
                         flagUrl: 'https://flagsapi.com/SA/flat/64.png',
                         languageName: 'العربية',
-                        isSelected: controller.currentLocale.languageCode == 'ar',
+                        isSelected:
+                            controller.currentLocale.languageCode == 'ar',
                         desktopStyle: true,
                         onPressed: () {
                           controller.changeLocale(const Locale('ar', 'SA'));
@@ -153,7 +157,8 @@ class _LocalePickerBody extends StatelessWidget {
                       child: LanguageOptionWidget(
                         flagUrl: 'https://flagsapi.com/US/flat/64.png',
                         languageName: 'English',
-                        isSelected: controller.currentLocale.languageCode == 'en',
+                        isSelected:
+                            controller.currentLocale.languageCode == 'en',
                         desktopStyle: true,
                         onPressed: () {
                           controller.changeLocale(const Locale('en', 'US'));

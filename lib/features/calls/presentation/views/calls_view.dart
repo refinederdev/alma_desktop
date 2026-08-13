@@ -24,6 +24,8 @@ class CallsView extends GetView<CallsHistoryController> {
               child: Column(
                 children: [
                   _Header(historyController: c, callController: cc),
+                  SizedBox(height: 10.h),
+                  _CallFilters(controller: c),
                   SizedBox(height: 14.h),
                   Expanded(
                     child: _Body(controller: c, callController: cc),
@@ -34,6 +36,108 @@ class CallsView extends GetView<CallsHistoryController> {
           },
         );
       },
+    );
+  }
+}
+
+class _CallFilters extends StatelessWidget {
+  const _CallFilters({required this.controller});
+
+  final CallsHistoryController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
+      decoration: BoxDecoration(
+        color: context.alma.surfaceVariant,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: context.alma.outline),
+      ),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8.w,
+        runSpacing: 8.h,
+        children: [
+          Icon(
+            Icons.filter_list_rounded,
+            size: 18.sp,
+            color: context.alma.onSurfaceTertiary,
+          ),
+          _FilterChip(
+            label: 'all_calls'.tr,
+            selected: controller.filterDirection == null,
+            onSelected: () => controller.changeDirection(null),
+          ),
+          _FilterChip(
+            label: 'incoming_calls'.tr,
+            selected: controller.filterDirection == 'inbound',
+            onSelected: () => controller.changeDirection('inbound'),
+          ),
+          _FilterChip(
+            label: 'outgoing_calls'.tr,
+            selected: controller.filterDirection == 'outbound',
+            onSelected: () => controller.changeDirection('outbound'),
+          ),
+          SizedBox(width: 4.w),
+          Container(width: 1, height: 24.h, color: context.alma.divider),
+          SizedBox(width: 4.w),
+          _FilterChip(
+            label: 'all_statuses'.tr,
+            selected: controller.filterStatus == null,
+            onSelected: () => controller.changeStatus(null),
+          ),
+          _FilterChip(
+            label: 'call_status_completed'.tr,
+            selected: controller.filterStatus == 'completed',
+            onSelected: () => controller.changeStatus('completed'),
+          ),
+          _FilterChip(
+            label: 'call_status_missed'.tr,
+            selected: controller.filterStatus == 'missed',
+            onSelected: () => controller.changeStatus('missed'),
+          ),
+          _FilterChip(
+            label: 'call_status_failed'.tr,
+            selected: controller.filterStatus == 'failed',
+            onSelected: () => controller.changeStatus('failed'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      selectedColor: AppTheme.brandMain2_600.withValues(alpha: 0.13),
+      side: BorderSide(
+        color: selected ? AppTheme.brandMain2_500 : context.alma.outline,
+      ),
+      labelStyle: AppStyles.labelMedium.copyWith(
+        color: selected
+            ? AppTheme.brandMain2_600
+            : context.alma.onSurfaceSecondary,
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+      ),
     );
   }
 }
@@ -332,6 +436,15 @@ class _Body extends StatelessWidget {
     if (controller.isLoading && controller.calls.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (controller.errorMessage != null && controller.calls.isEmpty) {
+      return _EmptyState(
+        icon: Icons.cloud_off_rounded,
+        title: 'error'.tr,
+        message: controller.errorMessage!,
+        actionLabel: 'retry'.tr,
+        onAction: controller.load,
+      );
+    }
     if (controller.calls.isEmpty) {
       return _EmptyState(
         icon: Icons.call_end_outlined,
@@ -380,11 +493,15 @@ class _EmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
+    this.actionLabel,
+    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final String? actionLabel;
+  final Future<void> Function()? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -412,6 +529,14 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
+          if (actionLabel != null && onAction != null) ...[
+            SizedBox(height: 14.h),
+            OutlinedButton.icon(
+              onPressed: onAction,
+              icon: Icon(Icons.refresh_rounded, size: 17.sp),
+              label: Text(actionLabel!),
+            ),
+          ],
         ],
       ),
     );

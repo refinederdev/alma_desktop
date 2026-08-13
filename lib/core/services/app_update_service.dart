@@ -22,10 +22,10 @@ class UpdateInfo {
 
   bool get hasUpdate =>
       checkError == null &&
-      AppUpdateService
-          ._normalizeVersion(latestVersion)
-          .compareTo(AppUpdateService._normalizeVersion(currentVersion)) >
-      0;
+      AppUpdateService._normalizeVersion(
+            latestVersion,
+          ).compareTo(AppUpdateService._normalizeVersion(currentVersion)) >
+          0;
 }
 
 class AppUpdateService {
@@ -76,34 +76,35 @@ class AppUpdateService {
     required String url,
     required void Function(int received, int total) onProgress,
   }) async {
-    final fileName = _extractFileNameFromUrl(url);
+    final validatedUrl = _validateUpdateUrl(url);
+    final fileName = _extractFileNameFromUrl(validatedUrl);
     final dir = await Directory.systemTemp.createTemp('alma_update_');
-    final ext = fileName.contains('.') ? fileName.substring(fileName.lastIndexOf('.')) : '';
-    final safeFileName =
-        fileName.isNotEmpty ? fileName : 'alma_update_setup$ext';
+    final ext = fileName.contains('.')
+        ? fileName.substring(fileName.lastIndexOf('.'))
+        : '';
+    final safeFileName = fileName.isNotEmpty
+        ? fileName
+        : 'alma_update_setup$ext';
     final savePath = '${dir.path}${Platform.pathSeparator}$safeFileName';
-    await _dio.download(url, savePath, onReceiveProgress: onProgress);
+    await _dio.download(validatedUrl, savePath, onReceiveProgress: onProgress);
     return savePath;
   }
 
   Future<void> installAndExit(String installerPath) async {
     if (Platform.isWindows) {
-      await Process.start(
-        installerPath,
-        <String>['/VERYSILENT', '/NORESTART'],
-        mode: ProcessStartMode.detached,
-      );
+      await Process.start(installerPath, <String>[
+        '/VERYSILENT',
+        '/NORESTART',
+      ], mode: ProcessStartMode.detached);
       exit(0);
     }
 
     if (Platform.isMacOS) {
       // We can't safely replace a running .app automatically; for now we open
       // the downloaded file so user can install manually.
-      await Process.start(
-        'open',
-        <String>[installerPath],
-        mode: ProcessStartMode.detached,
-      );
+      await Process.start('open', <String>[
+        installerPath,
+      ], mode: ProcessStartMode.detached);
       return;
     }
 
@@ -121,8 +122,12 @@ class AppUpdateService {
     final cleanedInput = input.trim();
     // Ignore SemVer build metadata/prerelease (e.g. 0.1.2+1, 1.0.0-beta.1)
     // so numeric comparison is consistent across installed/app store formats.
-    final comparablePart =
-        cleanedInput.split('+').first.split('-').first.trim();
+    final comparablePart = cleanedInput
+        .split('+')
+        .first
+        .split('-')
+        .first
+        .trim();
     final parts = comparablePart.split('.');
     final normalized = List<int>.generate(3, (index) {
       if (index >= parts.length) return 0;
@@ -160,25 +165,34 @@ class AppUpdateService {
     final manifestVersion = _stripVersionTag(
       (manifest['version'] ?? '').toString().trim(),
     );
-    final latestVersion = manifestVersion.isEmpty ? currentVersion : manifestVersion;
+    final latestVersion = manifestVersion.isEmpty
+        ? currentVersion
+        : manifestVersion;
 
     String? downloadUrl;
     if (Platform.isWindows) {
       downloadUrl = (manifest['windows_url'] ?? '').toString().trim();
     } else if (Platform.isMacOS) {
-      downloadUrl =
-          ((manifest['macos_url'] ?? manifest['mac_url']) ?? '').toString().trim();
+      downloadUrl = ((manifest['macos_url'] ?? manifest['mac_url']) ?? '')
+          .toString()
+          .trim();
     }
 
-    if (downloadUrl != null && downloadUrl.isNotEmpty && !downloadUrl.startsWith('http')) {
-      final normalized = downloadUrl.startsWith('/') ? downloadUrl.substring(1) : downloadUrl;
+    if (downloadUrl != null &&
+        downloadUrl.isNotEmpty &&
+        !downloadUrl.startsWith('http')) {
+      final normalized = downloadUrl.startsWith('/')
+          ? downloadUrl.substring(1)
+          : downloadUrl;
       downloadUrl = '${AppConfig.appUpdatesBaseUrl}/$normalized';
     }
 
     return UpdateInfo(
       currentVersion: currentVersion,
       latestVersion: latestVersion,
-      downloadUrl: downloadUrl == null || downloadUrl.isEmpty ? null : downloadUrl,
+      downloadUrl: downloadUrl == null || downloadUrl.isEmpty
+          ? null
+          : _validateUpdateUrl(downloadUrl),
       releaseNotes: (manifest['notes'] ?? '').toString(),
       checkError: null,
     );
@@ -194,11 +208,16 @@ class AppUpdateService {
     );
 
     final html = response.data ?? '';
-    final matches = RegExp(r'href="([^"]+)"', caseSensitive: false).allMatches(html);
+    final matches = RegExp(
+      r'href="([^"]+)"',
+      caseSensitive: false,
+    ).allMatches(html);
     final files = <String>[];
     for (final match in matches) {
       final href = (match.group(1) ?? '').trim();
-      if (href.isEmpty || href.startsWith('?') || href.startsWith('#')) continue;
+      if (href.isEmpty || href.startsWith('?') || href.startsWith('#')) {
+        continue;
+      }
       files.add(href);
     }
     return files;
@@ -216,7 +235,10 @@ class AppUpdateService {
     for (final file in platformFiles) {
       final version = _extractVersionFromText(file);
       if (version == null) continue;
-      if (_normalizeVersion(version).compareTo(_normalizeVersion(bestVersion)) <= 0) {
+      if (_normalizeVersion(
+            version,
+          ).compareTo(_normalizeVersion(bestVersion)) <=
+          0) {
         continue;
       }
       bestVersion = version;
@@ -239,7 +261,9 @@ class AppUpdateService {
       return value.endsWith('.exe');
     }
     if (Platform.isMacOS) {
-      if (!(value.endsWith('.zip') || value.endsWith('.dmg') || value.endsWith('.pkg'))) {
+      if (!(value.endsWith('.zip') ||
+          value.endsWith('.dmg') ||
+          value.endsWith('.pkg'))) {
         return false;
       }
       return value.contains('mac');
@@ -256,9 +280,29 @@ class AppUpdateService {
   }
 
   String _toAbsoluteServerUrl(String href) {
-    if (href.startsWith('http')) return href;
+    if (href.startsWith('http')) return _validateUpdateUrl(href);
     final cleanHref = href.startsWith('/') ? href.substring(1) : href;
-    return '${AppConfig.appUpdatesBaseUrl}/$cleanHref';
+    return _validateUpdateUrl('${AppConfig.appUpdatesBaseUrl}/$cleanHref');
+  }
+
+  String _validateUpdateUrl(String value) {
+    final uri = Uri.tryParse(value);
+    final trustedBase = Uri.parse(AppConfig.appUpdatesBaseUrl);
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        uri.host.toLowerCase() != trustedBase.host.toLowerCase()) {
+      throw const FormatException('Untrusted desktop update URL.');
+    }
+    final path = uri.path.toLowerCase();
+    final validExtension = Platform.isWindows
+        ? path.endsWith('.exe')
+        : path.endsWith('.zip') ||
+              path.endsWith('.dmg') ||
+              path.endsWith('.pkg');
+    if (!validExtension) {
+      throw const FormatException('Unsupported desktop update file type.');
+    }
+    return uri.toString();
   }
 
   UpdateInfo _safeNoUpdate(String currentVersion, {String? checkError}) {

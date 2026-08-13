@@ -27,15 +27,15 @@ class Notification extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        body,
-        icon,
-        color,
-        actionUrl,
-        actionText,
-        isRead,
-        timeAgo,
-        createdAt,
-      ];
+    id,
+    title,
+    body,
+    icon,
+    color,
+    actionUrl,
+    actionText,
+    isRead,
+    timeAgo,
+    createdAt,
+  ];
 }

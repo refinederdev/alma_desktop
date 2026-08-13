@@ -34,8 +34,9 @@ class ProfileView extends GetView<ProfileController> {
                 SizedBox(height: 6.h),
                 Text(
                   user?.fullName ?? '',
-                  style: AppStyles.bodyMedium
-                      .copyWith(color: context.alma.onSurfaceTertiary),
+                  style: AppStyles.bodyMedium.copyWith(
+                    color: context.alma.onSurfaceTertiary,
+                  ),
                 ),
                 SizedBox(height: 16.h),
                 _ProfileCard(controller: c),
@@ -170,8 +171,9 @@ class _AppearanceCard extends StatelessWidget {
               SizedBox(height: 6.h),
               Text(
                 'choose_theme_description'.tr,
-                style: AppStyles.bodySmall
-                    .copyWith(color: alma.onSurfaceTertiary),
+                style: AppStyles.bodySmall.copyWith(
+                  color: alma.onSurfaceTertiary,
+                ),
               ),
               SizedBox(height: 12.h),
               Wrap(
@@ -269,8 +271,9 @@ class _LanguageCard extends StatelessWidget {
               SizedBox(height: 6.h),
               Text(
                 'choose_interface_language'.tr,
-                style: AppStyles.bodySmall
-                    .copyWith(color: alma.onSurfaceTertiary),
+                style: AppStyles.bodySmall.copyWith(
+                  color: alma.onSurfaceTertiary,
+                ),
               ),
               SizedBox(height: 12.h),
               Wrap(
@@ -327,8 +330,7 @@ class _LanguageChoice extends StatelessWidget {
         child: Text(
           label,
           style: AppStyles.labelLarge.copyWith(
-            color:
-                selected ? AppTheme.brandMain2_600 : alma.onSurfaceSecondary,
+            color: selected ? AppTheme.brandMain2_600 : alma.onSurfaceSecondary,
             fontWeight: FontWeight.w600,
           ),
         ),

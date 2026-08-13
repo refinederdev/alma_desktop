@@ -9,6 +9,7 @@ class LanguageOptionWidget extends StatelessWidget {
   final String languageName;
   final bool isSelected;
   final VoidCallback onPressed;
+
   /// بطاقات أوضح لسطح المكتب (أيقونة أكبر وهوامش أرحب).
   final bool desktopStyle;
 
@@ -42,8 +43,8 @@ class LanguageOptionWidget extends StatelessWidget {
             border: isSelected
                 ? Border.all(color: AppTheme.brandMain2, width: 2)
                 : desktopStyle
-                    ? Border.all(color: alma.outlineVariant, width: 1)
-                    : null,
+                ? Border.all(color: alma.outlineVariant, width: 1)
+                : null,
             borderRadius: BorderRadius.circular(desktopStyle ? 14.r : 16.r),
           ),
           child: Row(
@@ -66,11 +67,16 @@ class LanguageOptionWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   languageName,
-                  style: (desktopStyle ? AppStyles.titleLarge : AppStyles.titleMedium)
-                      .copyWith(
-                    color: alma.onSurface,
-                    fontWeight: desktopStyle ? FontWeight.w600 : FontWeight.w500,
-                  ),
+                  style:
+                      (desktopStyle
+                              ? AppStyles.titleLarge
+                              : AppStyles.titleMedium)
+                          .copyWith(
+                            color: alma.onSurface,
+                            fontWeight: desktopStyle
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
                 ),
               ),
               _CustomRadio(isSelected: isSelected, desktopStyle: desktopStyle),

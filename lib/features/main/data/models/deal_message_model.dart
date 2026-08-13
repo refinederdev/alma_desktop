@@ -91,9 +91,7 @@ class DealMessageModel extends DealMessage {
       crmSession: crmSessionJson != null
           ? CrmSessionModel.fromJson(crmSessionJson)
           : throw ArgumentError('crm_session is required'),
-      sourceDeal: _messageDealFromJson(
-        json['deal'] as Map<String, dynamic>?,
-      ),
+      sourceDeal: _messageDealFromJson(json['deal'] as Map<String, dynamic>?),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );

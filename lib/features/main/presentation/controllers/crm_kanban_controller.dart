@@ -89,7 +89,8 @@ class CrmKanbanController extends GetxController {
 
   int get totalDeals => openDeals.length + wonDeals.length + lostDeals.length;
   bool isDealUpdating(int dealId) =>
-      _updatingDealIds.contains(dealId) || _actionRunningDealIds.contains(dealId);
+      _updatingDealIds.contains(dealId) ||
+      _actionRunningDealIds.contains(dealId);
   bool hasMoreDeals(CrmDealStatus status) => _hasMoreByStatus[status] ?? false;
   bool isLoadingMoreDeals(CrmDealStatus status) =>
       _isLoadingMoreByStatus[status] ?? false;
@@ -123,7 +124,8 @@ class CrmKanbanController extends GetxController {
     String? firstFailure;
 
     results[0].fold(
-      (failure) => firstFailure ??= failure.message ?? 'failed_to_load_open_deals'.tr,
+      (failure) =>
+          firstFailure ??= failure.message ?? 'failed_to_load_open_deals'.tr,
       (paginator) {
         openDeals = paginator.data;
         _currentPageByStatus[CrmDealStatus.open] = paginator.currentPage;
@@ -131,7 +133,8 @@ class CrmKanbanController extends GetxController {
       },
     );
     results[1].fold(
-      (failure) => firstFailure ??= failure.message ?? 'failed_to_load_won_deals'.tr,
+      (failure) =>
+          firstFailure ??= failure.message ?? 'failed_to_load_won_deals'.tr,
       (paginator) {
         wonDeals = paginator.data;
         _currentPageByStatus[CrmDealStatus.won] = paginator.currentPage;
@@ -139,7 +142,8 @@ class CrmKanbanController extends GetxController {
       },
     );
     results[2].fold(
-      (failure) => firstFailure ??= failure.message ?? 'failed_to_load_lost_deals'.tr,
+      (failure) =>
+          firstFailure ??= failure.message ?? 'failed_to_load_lost_deals'.tr,
       (paginator) {
         lostDeals = paginator.data;
         _currentPageByStatus[CrmDealStatus.lost] = paginator.currentPage;
@@ -228,7 +232,9 @@ class CrmKanbanController extends GetxController {
   Future<void> showEditDealDialog(Deal deal) async {
     if (_actionRunningDealIds.contains(deal.id)) return;
     final titleController = TextEditingController(text: deal.title ?? '');
-    final contactNameController = TextEditingController(text: deal.contactName ?? '');
+    final contactNameController = TextEditingController(
+      text: deal.contactName ?? '',
+    );
     final notesController = TextEditingController(text: deal.notes ?? '');
     var selectedStatus = deal.status;
     var isSubmitting = false;
@@ -303,7 +309,7 @@ class CrmKanbanController extends GetxController {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: selectedStatus,
+                      initialValue: selectedStatus,
                       decoration: InputDecoration(labelText: 'deal_status'.tr),
                       items: [
                         DropdownMenuItem(value: 'open', child: Text('open'.tr)),
@@ -406,14 +412,16 @@ class CrmKanbanController extends GetxController {
           final normalizedQuery = searchQuery.trim().toLowerCase();
           final filteredCandidates = normalizedQuery.isEmpty
               ? candidates
-              : candidates.where((agent) {
-                  final fullName = agent.fullName.toLowerCase();
-                  final email = agent.email.toLowerCase();
-                  final phone = agent.phone.toLowerCase();
-                  return fullName.contains(normalizedQuery) ||
-                      email.contains(normalizedQuery) ||
-                      phone.contains(normalizedQuery);
-                }).toList(growable: false);
+              : candidates
+                    .where((agent) {
+                      final fullName = agent.fullName.toLowerCase();
+                      final email = agent.email.toLowerCase();
+                      final phone = agent.phone.toLowerCase();
+                      return fullName.contains(normalizedQuery) ||
+                          email.contains(normalizedQuery) ||
+                          phone.contains(normalizedQuery);
+                    })
+                    .toList(growable: false);
 
           Future<void> transfer() async {
             final agentId = selectedAgentId;
@@ -480,64 +488,77 @@ class CrmKanbanController extends GetxController {
                               padding: const EdgeInsets.symmetric(vertical: 22),
                               child: Text(
                                 'no_agents_found'.tr,
-                                style: const TextStyle(color: Color(0xFF777F8C)),
+                                style: const TextStyle(
+                                  color: Color(0xFF777F8C),
+                                ),
                               ),
                             ),
                           )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: filteredCandidates.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final agent = filteredCandidates[index];
-                              final initials =
-                                  '${agent.firstName.isNotEmpty ? agent.firstName[0] : ''}'
-                                      '${agent.lastName.isNotEmpty ? agent.lastName[0] : ''}'
-                                      .toUpperCase();
-                              final isActive = agent.isActive;
-                              return RadioListTile<int>(
-                                value: agent.id,
-                                groupValue: selectedAgentId,
-                                onChanged: isSubmitting || !isActive
-                                    ? null
-                                    : (value) => setState(() => selectedAgentId = value),
-                                title: Row(
-                                  children: [
-                                    Expanded(child: Text(agent.fullName)),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isActive
-                                            ? const Color(0xFFE8F7F1)
-                                            : const Color(0xFFFFEEEE),
-                                        borderRadius: BorderRadius.circular(999),
-                                      ),
-                                      child: Text(
-                                        isActive ? 'active'.tr : 'inactive'.tr,
-                                        style: TextStyle(
+                        : RadioGroup<int>(
+                            groupValue: selectedAgentId,
+                            onChanged: isSubmitting
+                                ? (_) {}
+                                : (value) =>
+                                      setState(() => selectedAgentId = value),
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: filteredCandidates.length,
+                              separatorBuilder: (_, _) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final agent = filteredCandidates[index];
+                                final initials =
+                                    '${agent.firstName.isNotEmpty ? agent.firstName[0] : ''}'
+                                            '${agent.lastName.isNotEmpty ? agent.lastName[0] : ''}'
+                                        .toUpperCase();
+                                final isActive = agent.isActive;
+                                return RadioListTile<int>(
+                                  value: agent.id,
+                                  enabled: !isSubmitting && isActive,
+                                  title: Row(
+                                    children: [
+                                      Expanded(child: Text(agent.fullName)),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
                                           color: isActive
-                                              ? const Color(0xFF17A364)
-                                              : const Color(0xFFE34D4D),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 11,
+                                              ? const Color(0xFFE8F7F1)
+                                              : const Color(0xFFFFEEEE),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          isActive
+                                              ? 'active'.tr
+                                              : 'inactive'.tr,
+                                          style: TextStyle(
+                                            color: isActive
+                                                ? const Color(0xFF17A364)
+                                                : const Color(0xFFE34D4D),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 11,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: Text('${agent.email}\n${agent.phone}'),
-                                isThreeLine: true,
-                                secondary: CircleAvatar(
-                                  backgroundColor: isActive
-                                      ? const Color(0xFFD6F1FF)
-                                      : const Color(0xFFEBECEE),
-                                  child: Text(initials),
-                                ),
-                              );
-                            },
+                                    ],
+                                  ),
+                                  subtitle: Text(
+                                    '${agent.email}\n${agent.phone}',
+                                  ),
+                                  isThreeLine: true,
+                                  secondary: CircleAvatar(
+                                    backgroundColor: isActive
+                                        ? const Color(0xFFD6F1FF)
+                                        : const Color(0xFFEBECEE),
+                                    child: Text(initials),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                   ),
                 ],
@@ -770,7 +791,8 @@ class CrmKanbanController extends GetxController {
           messageData: messageData,
           dealData: dealData,
         );
-      } else if (messageData != null && (messageData['from_me'] as bool? ?? false) == false) {
+      } else if (messageData != null &&
+          (messageData['from_me'] as bool? ?? false) == false) {
         _playNotificationSound(
           kind: 'new_message',
           messageData: messageData,
@@ -832,8 +854,14 @@ class CrmKanbanController extends GetxController {
     return existing == null;
   }
 
-  ({CrmDealStatus status, int index, Deal deal})? _findDealLocation(int dealId) {
-    final statuses = [CrmDealStatus.open, CrmDealStatus.won, CrmDealStatus.lost];
+  ({CrmDealStatus status, int index, Deal deal})? _findDealLocation(
+    int dealId,
+  ) {
+    final statuses = [
+      CrmDealStatus.open,
+      CrmDealStatus.won,
+      CrmDealStatus.lost,
+    ];
     for (final status in statuses) {
       final list = _dealsByStatus(status);
       final idx = list.indexWhere((deal) => deal.id == dealId);
@@ -888,10 +916,12 @@ class CrmKanbanController extends GetxController {
     Map<String, dynamic>? dealData,
   }) async {
     if (Platform.isWindows) return;
-    final messageId = messageData?['id'] as String? ?? messageData?['message_id'] as String?;
+    final messageId =
+        messageData?['id'] as String? ?? messageData?['message_id'] as String?;
     final dealId = (dealData?['id'] as num?)?.toInt();
     final ts = (messageData?['timestamp'] as num?)?.toInt();
-    final key = '${kind}_${dealId ?? 0}_${messageId ?? ts ?? DateTime.now().millisecondsSinceEpoch}';
+    final key =
+        '${kind}_${dealId ?? 0}_${messageId ?? ts ?? DateTime.now().millisecondsSinceEpoch}';
     if (_playedNotificationKeys.contains(key)) return;
     _playedNotificationKeys.add(key);
     if (_playedNotificationKeys.length > 250) {

@@ -62,10 +62,7 @@ class AuthRemoteDataSourceImpl extends AuthRemoteDataSource {
       body['phone'] = phone;
     }
 
-    final response = await apiConsumer.post(
-      'auth/login',
-      body: body,
-    );
+    final response = await apiConsumer.post('auth/login', body: body);
 
     return LoginResponseModel.fromJson(response as Map<String, dynamic>);
   }

@@ -97,7 +97,9 @@ class _ChatDealsPanel extends StatelessWidget {
                   'total_deals_count'.trParams({
                     'count': controller.filteredDeals.length.toString(),
                   }),
-                  style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
+                  style: AppStyles.bodySmall.copyWith(
+                    color: context.alma.onSurfaceTertiary,
+                  ),
                 ),
                 SizedBox(height: 10.h),
                 Row(
@@ -141,6 +143,12 @@ class _ChatDealsPanel extends StatelessWidget {
           Expanded(
             child: controller.isLoadingDeals
                 ? const Center(child: CircularProgressIndicator())
+                : controller.dealsErrorMessage != null &&
+                      controller.filteredDeals.isEmpty
+                ? _InlineErrorState(
+                    message: controller.dealsErrorMessage!,
+                    onRetry: controller.loadDeals,
+                  )
                 : controller.filteredDeals.isEmpty
                 ? Center(
                     child: Text(
@@ -293,7 +301,9 @@ class _DealTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppStyles.bodySmall.copyWith(
-                        color: hasUnread ? context.alma.onSurface : context.alma.onSurfaceHint,
+                        color: hasUnread
+                            ? context.alma.onSurface
+                            : context.alma.onSurfaceHint,
                         fontWeight: hasUnread
                             ? FontWeight.w600
                             : FontWeight.w400,
@@ -493,7 +503,9 @@ class _ChatMessagesPanel extends StatelessWidget {
           ? Center(
               child: Text(
                 'select_chat_to_view_messages'.tr,
-                style: AppStyles.bodyMedium.copyWith(color: context.alma.onSurfaceHint),
+                style: AppStyles.bodyMedium.copyWith(
+                  color: context.alma.onSurfaceHint,
+                ),
               ),
             )
           : Column(
@@ -563,7 +575,9 @@ class _ChatHeader extends StatelessWidget {
                   isSuperAdmin
                       ? '${'agent'.tr}: ${_sanitizeInvalidUtf16(secondaryText)}'
                       : _sanitizeInvalidUtf16(secondaryText),
-                  style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceHint),
+                  style: AppStyles.bodySmall.copyWith(
+                    color: context.alma.onSurfaceHint,
+                  ),
                 ),
               ],
             ),
@@ -754,10 +768,7 @@ class _ChatCallButton extends StatelessWidget {
                       );
                     },
               child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10.w,
-                  vertical: 8.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -843,11 +854,20 @@ class _MessagesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.messagesErrorMessage != null &&
+        controller.messages.isEmpty) {
+      return _InlineErrorState(
+        message: controller.messagesErrorMessage!,
+        onRetry: controller.loadMessagesForSelectedDeal,
+      );
+    }
     if (controller.messages.isEmpty) {
       return Center(
         child: Text(
           'no_messages_yet'.tr,
-          style: AppStyles.bodyMedium.copyWith(color: context.alma.onSurfaceHint),
+          style: AppStyles.bodyMedium.copyWith(
+            color: context.alma.onSurfaceHint,
+          ),
         ),
       );
     }
@@ -888,6 +908,54 @@ class _MessagesList extends StatelessWidget {
   }
 }
 
+class _InlineErrorState extends StatelessWidget {
+  const _InlineErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48.w,
+              height: 48.w,
+              decoration: BoxDecoration(
+                color: AppTheme.error500.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+              child: Icon(
+                Icons.cloud_off_rounded,
+                color: AppTheme.error600,
+                size: 24.sp,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppStyles.bodyMedium.copyWith(
+                color: context.alma.onSurfaceSecondary,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: Icon(Icons.refresh_rounded, size: 17.sp),
+              label: Text('retry'.tr),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   const _MessageBubble({required this.message, required this.controller});
 
@@ -919,10 +987,14 @@ class _MessageBubble extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: isMe ? AppTheme.brandMain2_600 : context.alma.chatBubbleOtherBg,
+                color: isMe
+                    ? AppTheme.brandMain2_600
+                    : context.alma.chatBubbleOtherBg,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
-                  color: isMe ? AppTheme.brandMain2_600 : context.alma.chatBubbleOtherBorder,
+                  color: isMe
+                      ? AppTheme.brandMain2_600
+                      : context.alma.chatBubbleOtherBorder,
                 ),
               ),
               child: Column(
@@ -931,143 +1003,156 @@ class _MessageBubble extends StatelessWidget {
                     ? CrossAxisAlignment.end
                     : CrossAxisAlignment.start,
                 children: [
-            if (controller.showContactDealHistory &&
-                message.sourceDeal != null &&
-                message.sourceDeal!.id != controller.selectedDeal?.id) ...[
-              Align(
-                alignment:
-                    isMe ? Alignment.centerRight : Alignment.centerLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 6.h),
-                  child: Wrap(
-                    spacing: 6.w,
-                    runSpacing: 4.h,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'deal_id_label'
-                            .trParams({'id': '${message.sourceDeal!.id}'}),
-                        style: AppStyles.labelSmall.copyWith(
-                          color: isMe
-                              ? AppTheme.baseWhite.withValues(alpha: 0.9)
-                              : context.alma.onSurfaceSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      _DealStatusBadge(status: message.sourceDeal!.status),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            if (canManageMessage)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  PopupMenuButton<_MessageAction>(
-                    tooltip: 'message_actions'.tr,
-                    icon: Icon(
-                      Icons.more_horiz_rounded,
-                      size: 18.sp,
-                      color: isMe
-                          ? AppTheme.baseWhite.withValues(alpha: 0.85)
-                          : context.alma.onSurfaceTertiary,
-                    ),
-                    color: context.alma.surface,
-                    onSelected: (action) async {
-                      switch (action) {
-                        case _MessageAction.edit:
-                          controller.startEditingMessage(message);
-                          break;
-                        case _MessageAction.delete:
-                          final confirmed = await Get.dialog<bool>(
-                            AlertDialog(
-                              title: Text('delete_message'.tr),
-                              content: Text('confirm_delete_message'.tr),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Get.back(result: false),
-                                  child: Text('cancel'.tr),
-                                ),
-                                TextButton(
-                                  onPressed: () => Get.back(result: true),
-                                  child: Text(
-                                    'delete'.tr,
-                                    style: const TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ],
+                  if (controller.showContactDealHistory &&
+                      message.sourceDeal != null &&
+                      message.sourceDeal!.id !=
+                          controller.selectedDeal?.id) ...[
+                    Align(
+                      alignment: isMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 6.h),
+                        child: Wrap(
+                          spacing: 6.w,
+                          runSpacing: 4.h,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              'deal_id_label'.trParams({
+                                'id': '${message.sourceDeal!.id}',
+                              }),
+                              style: AppStyles.labelSmall.copyWith(
+                                color: isMe
+                                    ? AppTheme.baseWhite.withValues(alpha: 0.9)
+                                    : context.alma.onSurfaceSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          );
-                          if (confirmed == true) {
-                            await controller.deleteMessage(message);
-                          }
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem<_MessageAction>(
-                        value: _MessageAction.edit,
-                        enabled:
-                            (message.messageBody?.trim().isNotEmpty ?? false) &&
-                            controller.deletingMessageId != message.id,
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit_outlined, size: 18.sp),
-                            SizedBox(width: 8.w),
-                            Text('edit'.tr),
+                            _DealStatusBadge(
+                              status: message.sourceDeal!.status,
+                            ),
                           ],
                         ),
                       ),
-                      PopupMenuItem<_MessageAction>(
-                        value: _MessageAction.delete,
-                        enabled: controller.deletingMessageId != message.id,
-                        child: Row(
-                          children: [
-                            if (controller.deletingMessageId == message.id)
-                              SizedBox(
-                                width: 16.w,
-                                height: 16.w,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            else
-                              Icon(Icons.delete_outline, size: 18.sp),
-                            SizedBox(width: 8.w),
-                            Text('delete'.tr),
+                    ),
+                  ],
+                  if (canManageMessage)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PopupMenuButton<_MessageAction>(
+                          tooltip: 'message_actions'.tr,
+                          icon: Icon(
+                            Icons.more_horiz_rounded,
+                            size: 18.sp,
+                            color: isMe
+                                ? AppTheme.baseWhite.withValues(alpha: 0.85)
+                                : context.alma.onSurfaceTertiary,
+                          ),
+                          color: context.alma.surface,
+                          onSelected: (action) async {
+                            switch (action) {
+                              case _MessageAction.edit:
+                                controller.startEditingMessage(message);
+                                break;
+                              case _MessageAction.delete:
+                                final confirmed = await Get.dialog<bool>(
+                                  AlertDialog(
+                                    title: Text('delete_message'.tr),
+                                    content: Text('confirm_delete_message'.tr),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Get.back(result: false),
+                                        child: Text('cancel'.tr),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Get.back(result: true),
+                                        child: Text(
+                                          'delete'.tr,
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  await controller.deleteMessage(message);
+                                }
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem<_MessageAction>(
+                              value: _MessageAction.edit,
+                              enabled:
+                                  (message.messageBody?.trim().isNotEmpty ??
+                                      false) &&
+                                  controller.deletingMessageId != message.id,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 18.sp),
+                                  SizedBox(width: 8.w),
+                                  Text('edit'.tr),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem<_MessageAction>(
+                              value: _MessageAction.delete,
+                              enabled:
+                                  controller.deletingMessageId != message.id,
+                              child: Row(
+                                children: [
+                                  if (controller.deletingMessageId ==
+                                      message.id)
+                                    SizedBox(
+                                      width: 16.w,
+                                      height: 16.w,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  else
+                                    Icon(Icons.delete_outline, size: 18.sp),
+                                  SizedBox(width: 8.w),
+                                  Text('delete'.tr),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
+                      ],
+                    ),
+                  if (hasMedia) ...[
+                    _MediaPreview(
+                      mediaUrl: message.mediaUrl!,
+                      mediaType: message.mediaType,
+                      fromMe: isMe,
+                    ),
+                    if (hasText) SizedBox(height: 8.h),
+                  ],
+                  if (hasText || (!hasText && !hasMedia))
+                    WhatsAppFormattedText(
+                      _sanitizeInvalidUtf16(body),
+                      textAlign: isMe ? TextAlign.end : TextAlign.start,
+                      style: AppStyles.bodyMedium.copyWith(
+                        color: isMe
+                            ? AppTheme.baseWhite
+                            : context.alma.onSurface,
                       ),
-                    ],
+                    ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '$hh:$mm',
+                    style: AppStyles.labelSmall.copyWith(
+                      color: isMe
+                          ? AppTheme.baseWhite.withValues(alpha: 0.75)
+                          : context.alma.onSurfaceHint,
+                    ),
                   ),
-                ],
-              ),
-            if (hasMedia) ...[
-              _MediaPreview(
-                mediaUrl: message.mediaUrl!,
-                mediaType: message.mediaType,
-                fromMe: isMe,
-              ),
-              if (hasText) SizedBox(height: 8.h),
-            ],
-            if (hasText || (!hasText && !hasMedia))
-              WhatsAppFormattedText(
-                _sanitizeInvalidUtf16(body),
-                textAlign: isMe ? TextAlign.end : TextAlign.start,
-                style: AppStyles.bodyMedium.copyWith(
-                  color: isMe ? AppTheme.baseWhite : context.alma.onSurface,
-                ),
-              ),
-            SizedBox(height: 4.h),
-            Text(
-              '$hh:$mm',
-              style: AppStyles.labelSmall.copyWith(
-                color: isMe
-                    ? AppTheme.baseWhite.withValues(alpha: 0.75)
-                    : context.alma.onSurfaceHint,
-              ),
-            ),
                 ],
               ),
             ),
@@ -1202,7 +1287,9 @@ class _MediaPreview extends StatelessWidget {
                   ? Icons.movie_creation_outlined
                   : Icons.description_outlined,
               size: 18.sp,
-              color: fromMe ? AppTheme.baseWhite : context.alma.onSurfaceSecondary,
+              color: fromMe
+                  ? AppTheme.baseWhite
+                  : context.alma.onSurfaceSecondary,
             ),
             SizedBox(width: 6.w),
             Text(
@@ -1294,7 +1381,9 @@ class _AudioPreviewState extends State<_AudioPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = widget.fromMe ? AppTheme.baseWhite : context.alma.onSurface;
+    final foreground = widget.fromMe
+        ? AppTheme.baseWhite
+        : context.alma.onSurface;
     final background = widget.fromMe
         ? AppTheme.baseWhite.withValues(alpha: 0.15)
         : context.alma.outline;
@@ -1564,13 +1653,17 @@ class _MediaDownloadButtonState extends State<_MediaDownloadButton> {
               height: 14.w,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: widget.fromMe ? AppTheme.baseWhite : context.alma.onSurface,
+                color: widget.fromMe
+                    ? AppTheme.baseWhite
+                    : context.alma.onSurface,
               ),
             )
           : Icon(
               Icons.download_rounded,
               size: 18.sp,
-              color: widget.fromMe ? AppTheme.baseWhite : context.alma.onSurface,
+              color: widget.fromMe
+                  ? AppTheme.baseWhite
+                  : context.alma.onSurface,
             ),
     );
   }
@@ -2128,7 +2221,10 @@ class _AttachmentTile extends StatelessWidget {
         label,
         style: AppStyles.titleSmall.copyWith(color: context.alma.onSurface),
       ),
-      trailing: Icon(Icons.chevron_right_rounded, color: context.alma.onSurfaceHint),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: context.alma.onSurfaceHint,
+      ),
     );
   }
 }
@@ -2199,10 +2295,8 @@ Future<void> _openCompanyLocationsPicker(
                         )
                       : ListView.separated(
                           itemCount: controller.companyLocations.length,
-                          separatorBuilder: (_, _) => Divider(
-                            height: 1.h,
-                            color: context.alma.outline,
-                          ),
+                          separatorBuilder: (_, _) =>
+                              Divider(height: 1.h, color: context.alma.outline),
                           itemBuilder: (context, index) {
                             final CompanyLocation loc =
                                 controller.companyLocations[index];
@@ -2218,7 +2312,8 @@ Future<void> _openCompanyLocationsPicker(
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              subtitle: (loc.address != null &&
+                              subtitle:
+                                  (loc.address != null &&
                                       loc.address!.trim().isNotEmpty)
                                   ? Text(
                                       loc.address!,

@@ -57,6 +57,13 @@ class ArLang {
     'chat': 'المحادثة',
     'crm': 'CRM',
     'dashboard': 'لوحة التحكم',
+    'workspace_dashboard_subtitle':
+        'الأداء المباشر والحضور ونشاط العملاء في مكان واحد',
+    'workspace_crm_subtitle': 'حرّك كل فرصة للأمام عبر مسار عمل واضح',
+    'workspace_chat_subtitle': 'محادثات العملاء والسياق والمتابعة في مكان واحد',
+    'workspace_calls_subtitle': 'مكالمات واتساب والسجل وحالة الاتصال المباشر',
+    'workspace_profile_subtitle': 'بياناتك الشخصية واللغة وتفضيلات مساحة العمل',
+    'workspace_updates_subtitle': 'حافظ على أمان Alma واستقراره وتحديثه',
     'welcome_back': 'هلا بالزيــــن',
     'increase_your_work_with_alma_crm': 'كبر شغلك بثقة مع ALMA لإدارة العملاء',
     'help_you_follow_your_customers_organize_tasks_and_see_reports_momemnt_by_momemnt':
@@ -96,6 +103,7 @@ class ArLang {
     'updates': 'التحديثات',
     'updates_subtitle':
         'تحقق من آخر إصدار وثبّت التحديث مباشرة من داخل التطبيق.',
+    'technical_details': 'التفاصيل التقنية',
     'check_for_updates': 'التحقق من التحديثات',
     'update_now': 'تحديث الآن',
     'current_version': 'الإصدار الحالي',
@@ -210,6 +218,7 @@ class ArLang {
     'received_messages': 'الرسائل المستقبلة',
     'reply_rate': 'معدل الرد',
     'general_overview': 'نظرة عامة على الأداء',
+    'dashboard_welcome': 'مرحباً @name، إليك ملخص اليوم',
     'client': 'العميل',
     'status': 'الحالة',
     'checked_in_now': 'مسجل حضور الآن',
@@ -261,6 +270,10 @@ class ArLang {
     'server_config_reset_message': 'عاد عنوان الخادم إلى القيمة الافتراضية.',
     // ====== مكالمات واتساب ======
     'calls': 'المكالمات',
+    'all_calls': 'كل المكالمات',
+    'incoming_calls': 'الواردة',
+    'outgoing_calls': 'الصادرة',
+    'all_statuses': 'كل الحالات',
     'call': 'اتصال',
     'make_call': 'إجراء مكالمة',
     'call_now': 'اتصل الآن',

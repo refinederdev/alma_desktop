@@ -44,8 +44,9 @@ class MainPlaceholderView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppStyles.bodySmall
-                  .copyWith(color: alma.onSurfaceTertiary),
+              style: AppStyles.bodySmall.copyWith(
+                color: alma.onSurfaceTertiary,
+              ),
             ),
           ],
         ),

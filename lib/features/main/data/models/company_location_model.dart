@@ -18,11 +18,11 @@ class CompanyWorkingHourModel extends CompanyWorkingHour {
   }
 
   Map<String, dynamic> toJson() => {
-        'day': day,
-        'from': from,
-        'to': to,
-        'is_closed': isClosed,
-      };
+    'day': day,
+    'from': from,
+    'to': to,
+    'is_closed': isClosed,
+  };
 }
 
 class CompanyLocationModel extends CompanyLocation {
@@ -65,25 +65,23 @@ class CompanyLocationModel extends CompanyLocation {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'address': address,
-        'latitude': latitude,
-        'longitude': longitude,
-        'manager_id': managerId,
-        'manager_name': managerName,
-        'is_active': isActive,
-        'is_open_now': isOpenNow,
-        'working_hours': workingHours
-            .map(
-              (h) => h is CompanyWorkingHourModel ? h.toJson() : null,
-            )
-            .whereType<Map<String, dynamic>>()
-            .toList(),
-        'created_at': createdAt?.toIso8601String(),
-        'updated_at': updatedAt?.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'description': description,
+    'address': address,
+    'latitude': latitude,
+    'longitude': longitude,
+    'manager_id': managerId,
+    'manager_name': managerName,
+    'is_active': isActive,
+    'is_open_now': isOpenNow,
+    'working_hours': workingHours
+        .map((h) => h is CompanyWorkingHourModel ? h.toJson() : null)
+        .whereType<Map<String, dynamic>>()
+        .toList(),
+    'created_at': createdAt?.toIso8601String(),
+    'updated_at': updatedAt?.toIso8601String(),
+  };
 
   static double? _toDouble(dynamic value) {
     if (value == null) return null;
@@ -97,9 +95,8 @@ class CompanyLocationModel extends CompanyLocation {
       return raw
           .whereType<Map>()
           .map(
-            (m) => CompanyWorkingHourModel.fromJson(
-              Map<String, dynamic>.from(m),
-            ),
+            (m) =>
+                CompanyWorkingHourModel.fromJson(Map<String, dynamic>.from(m)),
           )
           .toList();
     }
@@ -156,4 +153,3 @@ class CompanyLocationModel extends CompanyLocation {
     return const <CompanyWorkingHour>[];
   }
 }
-

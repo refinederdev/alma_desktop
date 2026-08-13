@@ -59,8 +59,9 @@ class DashboardController extends GetxController {
   List<MessageLineChartData> messageLineChart = const [];
   int sessionElapsedSeconds = 0;
 
-  bool get isAgent => (GlobalController.to.user?.roles ?? const [])
-      .any((role) => role.toLowerCase() == 'agent');
+  bool get isAgent => (GlobalController.to.user?.roles ?? const []).any(
+    (role) => role.toLowerCase() == 'agent',
+  );
 
   bool get isClockedIn => attendanceStatus?.isClockedIn == true;
 
@@ -84,9 +85,6 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
     loadDashboard();
-    if (isAgent) {
-      loadAttendanceStatus();
-    }
   }
 
   Future<void> loadDashboard({bool refresh = false}) async {
@@ -110,28 +108,35 @@ class DashboardController extends GetxController {
     ]);
 
     results[0].fold(
-      (failure) => firstFailureMessage ??= failure.message ?? 'failed_to_load_dashboard'.tr,
+      (failure) => firstFailureMessage ??=
+          failure.message ?? 'failed_to_load_dashboard'.tr,
       (value) => dealsStats = value as DealStats,
     );
     results[1].fold(
-      (failure) => firstFailureMessage ??= failure.message ?? 'failed_to_load_dashboard'.tr,
+      (failure) => firstFailureMessage ??=
+          failure.message ?? 'failed_to_load_dashboard'.tr,
       (value) => messageStats = value as MessageStats,
     );
     results[2].fold(
-      (failure) => firstFailureMessage ??= failure.message ?? 'failed_to_load_dashboard'.tr,
+      (failure) => firstFailureMessage ??=
+          failure.message ?? 'failed_to_load_dashboard'.tr,
       (value) => todayTotal = value as AttendanceTimeTotal,
     );
     results[3].fold(
-      (failure) => firstFailureMessage ??= failure.message ?? 'failed_to_load_dashboard'.tr,
+      (failure) => firstFailureMessage ??=
+          failure.message ?? 'failed_to_load_dashboard'.tr,
       (value) => weekTotal = value as AttendanceTimeTotal,
     );
     results[4].fold(
-      (failure) => firstFailureMessage ??= failure.message ?? 'failed_to_load_dashboard'.tr,
+      (failure) => firstFailureMessage ??=
+          failure.message ?? 'failed_to_load_dashboard'.tr,
       (value) => weeklyStats = List<AttendanceWeeklyStat>.from(value as List),
     );
     results[5].fold(
-      (failure) => firstFailureMessage ??= failure.message ?? 'failed_to_load_dashboard'.tr,
-      (value) => messageLineChart = List<MessageLineChartData>.from(value as List),
+      (failure) => firstFailureMessage ??=
+          failure.message ?? 'failed_to_load_dashboard'.tr,
+      (value) =>
+          messageLineChart = List<MessageLineChartData>.from(value as List),
     );
 
     if (!hasAnyData) {
@@ -224,8 +229,7 @@ class DashboardController extends GetxController {
     );
     results[2].fold(
       (_) {},
-      (value) =>
-          weeklyStats = List<AttendanceWeeklyStat>.from(value as List),
+      (value) => weeklyStats = List<AttendanceWeeklyStat>.from(value as List),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import '../config/app_config.dart';
@@ -9,10 +10,6 @@ class AppInterceptos implements Interceptor {
     // if (getx.Get.isSnackbarOpen) {
     //   getx.Get.closeAllSnackbars();
     // }
-    // log request data
-    log('request options: ${options.headers}');
-    log('request data: ${options.data}');
-
     if (!options.headers.containsKey('Content-Type')) {
       options.headers['Content-Type'] = options.data is FormData
           ? Headers.multipartFormDataContentType
@@ -28,19 +25,28 @@ class AppInterceptos implements Interceptor {
       'Connection': 'keep-alive',
       'AppVersion': "${AppConfig.appVersion}",
     });
-    log(options.headers.toString());
-    // log((options.data as FormData).fields.toString());
+    if (kDebugMode) {
+      log('API ${options.method} ${options.uri.path}');
+    }
     handler.next(options);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    log(response.data.toString());
+    if (kDebugMode) {
+      log('API ${response.statusCode} ${response.requestOptions.uri.path}');
+    }
     handler.next(response);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (kDebugMode) {
+      log(
+        'API error ${err.response?.statusCode ?? '-'} '
+        '${err.requestOptions.uri.path}: ${err.type.name}',
+      );
+    }
     handler.next(err);
   }
 }

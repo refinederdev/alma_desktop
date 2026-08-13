@@ -9,7 +9,7 @@ import '../errors/exceptions.dart';
 import '../errors/failures.dart';
 
 class NetworkErrorHandler {
-  static CustomException networkHandler(e) {
+  static CustomException networkHandler(Object? e) {
     log("This is socket exception from the network handler $e");
     final exception = "$e";
 
@@ -34,7 +34,9 @@ class NetworkErrorHandler {
           message.contains('failed host lookup') ||
           message.contains('connection refused') ||
           message.contains('network is unreachable')) {
-        throw NoInternetException("${"no_internet_access".tr} ${rawError ?? e.message ?? ''}");
+        throw NoInternetException(
+          "${"no_internet_access".tr} ${rawError ?? e.message ?? ''}",
+        );
       }
     }
 

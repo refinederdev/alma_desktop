@@ -39,8 +39,9 @@ class UpdateView extends GetView<UpdateController> {
                   SizedBox(height: 8.h),
                   Text(
                     'updates_subtitle'.tr,
-                    style: AppStyles.bodyMedium
-                        .copyWith(color: alma.onSurfaceTertiary),
+                    style: AppStyles.bodyMedium.copyWith(
+                      color: alma.onSurfaceTertiary,
+                    ),
                   ),
                   SizedBox(height: 16.h),
                   if (c.isChecking)
@@ -59,21 +60,29 @@ class UpdateView extends GetView<UpdateController> {
                     if (c.errorMessage != null)
                       Text(
                         c.errorMessage!,
-                        style: AppStyles.bodySmall.copyWith(color: AppTheme.error600),
+                        style: AppStyles.bodySmall.copyWith(
+                          color: AppTheme.error600,
+                        ),
                       )
                     else if (info == null)
                       Text(
                         'update_check_failed'.tr,
-                        style: AppStyles.bodySmall.copyWith(color: AppTheme.error600),
+                        style: AppStyles.bodySmall.copyWith(
+                          color: AppTheme.error600,
+                        ),
                       )
                     else if (!info.hasUpdate)
                       Text(
                         'app_is_up_to_date'.tr,
-                        style: AppStyles.bodyMedium.copyWith(color: AppTheme.success700),
+                        style: AppStyles.bodyMedium.copyWith(
+                          color: AppTheme.success700,
+                        ),
                       )
                     else ...[
                       Text(
-                        'new_update_available'.trParams({'version': info.latestVersion}),
+                        'new_update_available'.trParams({
+                          'version': info.latestVersion,
+                        }),
                         style: AppStyles.bodyMedium.copyWith(
                           color: AppTheme.brandMain2_600,
                           fontWeight: FontWeight.w600,
@@ -91,28 +100,46 @@ class UpdateView extends GetView<UpdateController> {
                           ),
                           child: Text(
                             info.releaseNotes.trim(),
-                            style: AppStyles.bodySmall
-                                .copyWith(color: alma.onSurface),
+                            style: AppStyles.bodySmall.copyWith(
+                              color: alma.onSurface,
+                            ),
                           ),
                         ),
                     ],
                     if (c.technicalIssueDetails != null) ...[
                       SizedBox(height: 10.h),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(10.w),
-                        decoration: BoxDecoration(
-                          color: alma.surfaceVariant,
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: alma.outline),
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.symmetric(horizontal: 12.w),
+                        childrenPadding: EdgeInsets.fromLTRB(
+                          12.w,
+                          0,
+                          12.w,
+                          12.h,
                         ),
-                        child: Text(
-                          'Debug: ${c.technicalIssueDetails}',
-                          style: AppStyles.bodySmall.copyWith(
-                            color: alma.onSurface,
-                            fontFamily: 'monospace',
+                        collapsedShape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          side: BorderSide(color: alma.outline),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          side: BorderSide(color: alma.outline),
+                        ),
+                        title: Text(
+                          'technical_details'.tr,
+                          style: AppStyles.labelLarge.copyWith(
+                            color: alma.onSurfaceSecondary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                        children: [
+                          SelectableText(
+                            c.technicalIssueDetails!,
+                            style: AppStyles.bodySmall.copyWith(
+                              color: alma.onSurface,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                     if (c.isDownloading) ...[
@@ -121,18 +148,22 @@ class UpdateView extends GetView<UpdateController> {
                       SizedBox(height: 6.h),
                       Text(
                         'downloading_update'.trParams({
-                          'percent': (c.downloadProgress * 100).toStringAsFixed(0),
+                          'percent': (c.downloadProgress * 100).toStringAsFixed(
+                            0,
+                          ),
                         }),
-                        style: AppStyles.bodySmall
-                            .copyWith(color: alma.onSurfaceSecondary),
+                        style: AppStyles.bodySmall.copyWith(
+                          color: alma.onSurfaceSecondary,
+                        ),
                       ),
                     ],
                     if (c.isInstalling) ...[
                       SizedBox(height: 10.h),
                       Text(
                         'installing_update'.tr,
-                        style: AppStyles.bodySmall
-                            .copyWith(color: alma.onSurfaceSecondary),
+                        style: AppStyles.bodySmall.copyWith(
+                          color: alma.onSurfaceSecondary,
+                        ),
                       ),
                     ],
                     SizedBox(height: 16.h),
@@ -141,21 +172,26 @@ class UpdateView extends GetView<UpdateController> {
                       runSpacing: 10.h,
                       children: [
                         ElevatedButton.icon(
-                          onPressed: c.isChecking || c.isDownloading || c.isInstalling
+                          onPressed:
+                              c.isChecking || c.isDownloading || c.isInstalling
                               ? null
                               : c.checkForUpdates,
                           icon: Icon(Icons.refresh_rounded, size: 18.sp),
                           label: Text('check_for_updates'.tr),
                         ),
                         ElevatedButton.icon(
-                          onPressed: c.isChecking ||
+                          onPressed:
+                              c.isChecking ||
                                   c.isDownloading ||
                                   c.isInstalling ||
                                   info == null ||
                                   !info.hasUpdate
                               ? null
                               : c.updateNow,
-                          icon: Icon(Icons.system_update_alt_rounded, size: 18.sp),
+                          icon: Icon(
+                            Icons.system_update_alt_rounded,
+                            size: 18.sp,
+                          ),
                           label: Text('update_now'.tr),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.brandMain2_600,
@@ -190,8 +226,7 @@ class _InfoRow extends StatelessWidget {
           width: 180.w,
           child: Text(
             label,
-            style: AppStyles.bodySmall
-                .copyWith(color: alma.onSurfaceTertiary),
+            style: AppStyles.bodySmall.copyWith(color: alma.onSurfaceTertiary),
           ),
         ),
         Expanded(

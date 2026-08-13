@@ -48,7 +48,8 @@ class ActiveCallDialog extends StatelessWidget {
                   SizedBox(height: 18.h),
                   CallAvatar(
                     label: name,
-                    pulse: c.phase == CallUiPhase.outgoingDialing ||
+                    pulse:
+                        c.phase == CallUiPhase.outgoingDialing ||
                         c.phase == CallUiPhase.outgoingConnecting ||
                         c.phase == CallUiPhase.outgoingRinging,
                     size: 96,
@@ -125,8 +126,8 @@ class ActiveCallDialog extends StatelessWidget {
                         background: AppTheme.error500,
                         foreground: Colors.white,
                         onTap: c.isProcessing ? null : c.hangUp,
-                        loading: c.isProcessing &&
-                            c.phase != CallUiPhase.inProgress,
+                        loading:
+                            c.isProcessing && c.phase != CallUiPhase.inProgress,
                       ),
                     ],
                   ),

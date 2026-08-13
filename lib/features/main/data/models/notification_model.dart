@@ -17,15 +17,17 @@ class NotificationModel extends Notification {
   factory NotificationModel.fromJson(Map<String, dynamic> json) =>
       NotificationModel(
         id: json['id'] as String,
-        title: json['title'] as String,
-        body: json['body'] as String,
-        icon: json['icon'] as String,
-        color: json['color'] as String,
-        actionUrl: json['action_url'] as String,
-        actionText: json['action_text'] as String,
-        isRead: json['is_read'] as bool,
-        timeAgo: json['time_ago'] as String,
-        createdAt: DateTime.parse(json['created_at'] as String),
+        title: json['title']?.toString() ?? '',
+        body: json['body']?.toString() ?? '',
+        icon: json['icon']?.toString() ?? 'notifications',
+        color: json['color']?.toString() ?? '#006CEA',
+        actionUrl: json['action_url']?.toString() ?? '',
+        actionText: json['action_text']?.toString() ?? '',
+        isRead: json['is_read'] == true,
+        timeAgo: json['time_ago']?.toString() ?? '',
+        createdAt:
+            DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0),
       );
 
   Map<String, dynamic> toJson() => {

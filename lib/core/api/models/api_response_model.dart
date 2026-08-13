@@ -1,5 +1,5 @@
 /// نموذج الاستجابة من API يتوافق مع هيكل Backend
-/// 
+///
 /// هيكل الاستجابة الناجحة:
 /// {
 ///   "success": true,
@@ -8,7 +8,7 @@
 ///   "data": {...},
 ///   "meta": {...} // اختياري
 /// }
-/// 
+///
 /// هيكل الاستجابة مع Pagination:
 /// {
 ///   "success": true,
@@ -25,7 +25,7 @@
 ///     "has_more_pages": true
 ///   }
 /// }
-/// 
+///
 /// هيكل الاستجابة مع خطأ:
 /// {
 ///   "success": false,
@@ -62,14 +62,11 @@ class ApiResponseModel<T> {
       statusCode: json['status_code'] as String? ?? 'ERROR',
       message: json['message'] as String? ?? '',
       data: json['data'] != null
-          ? (fromJsonT != null
-              ? fromJsonT(json['data'])
-              : json['data'] as T?)
+          ? (fromJsonT != null ? fromJsonT(json['data']) : json['data'] as T?)
           : null,
       errors: json['errors'] as Map<String, dynamic>?,
       pagination: json['pagination'] != null
-          ? PaginationModel.fromJson(
-              json['pagination'] as Map<String, dynamic>)
+          ? PaginationModel.fromJson(json['pagination'] as Map<String, dynamic>)
           : null,
       meta: json['meta'] as Map<String, dynamic>?,
     );

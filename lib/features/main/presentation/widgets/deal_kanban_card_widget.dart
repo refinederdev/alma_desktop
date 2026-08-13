@@ -31,174 +31,177 @@ class DealKanbanCardWidget extends StatelessWidget {
     return Opacity(
       opacity: isDragging ? 0.32 : 1,
       child: Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: alma.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: alma.outline),
-        boxShadow: isDragging ? alma.shadowSM : alma.shadowXS,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  deal.title?.trim().isNotEmpty == true ? deal.title! : 'deal'.tr,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppStyles.titleSmall.copyWith(
-                    color: alma.onSurface,
-                    fontWeight: FontWeight.w600,
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: alma.surface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: alma.outline),
+          boxShadow: isDragging ? alma.shadowSM : alma.shadowXS,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    deal.title?.trim().isNotEmpty == true
+                        ? deal.title!
+                        : 'deal'.tr,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppStyles.titleSmall.copyWith(
+                      color: alma.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              if (isBusy) ...[
-                SizedBox(width: 8.w),
-                SizedBox(
-                  width: 14.w,
-                  height: 14.w,
-                  child: const CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ] else ...[
-                SizedBox(width: 6.w),
-                PopupMenuButton<_DealAction>(
-                  icon: Icon(
-                    Icons.more_vert_rounded,
-                    color: alma.onSurfaceTertiary,
-                    size: 18.sp,
+                if (isBusy) ...[
+                  SizedBox(width: 8.w),
+                  SizedBox(
+                    width: 14.w,
+                    height: 14.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  color: alma.surface,
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    side: BorderSide(color: alma.outline),
+                ] else ...[
+                  SizedBox(width: 6.w),
+                  PopupMenuButton<_DealAction>(
+                    icon: Icon(
+                      Icons.more_vert_rounded,
+                      color: alma.onSurfaceTertiary,
+                      size: 18.sp,
+                    ),
+                    color: alma.surface,
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      side: BorderSide(color: alma.outline),
+                    ),
+                    position: PopupMenuPosition.under,
+                    tooltip: 'action'.tr,
+                    itemBuilder: (context) => [
+                      PopupMenuItem<_DealAction>(
+                        value: _DealAction.openChat,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              color: alma.onSurfaceSecondary,
+                              size: 18.sp,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'open_chat'.tr,
+                              style: AppStyles.labelLarge.copyWith(
+                                color: alma.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<_DealAction>(
+                        value: _DealAction.editDeal,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.edit_outlined,
+                              color: alma.onSurfaceSecondary,
+                              size: 18.sp,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'edit_deal'.tr,
+                              style: AppStyles.labelLarge.copyWith(
+                                color: alma.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<_DealAction>(
+                        value: _DealAction.transferDeal,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.swap_horiz_rounded,
+                              color: alma.onSurfaceSecondary,
+                              size: 18.sp,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'transfer_deal'.tr,
+                              style: AppStyles.labelLarge.copyWith(
+                                color: alma.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (action) async {
+                      switch (action) {
+                        case _DealAction.openChat:
+                          await onOpenChat?.call(deal);
+                          break;
+                        case _DealAction.editDeal:
+                          await onEditDeal?.call(deal);
+                          break;
+                        case _DealAction.transferDeal:
+                          await onTransferDeal?.call(deal);
+                          break;
+                      }
+                    },
                   ),
-                  position: PopupMenuPosition.under,
-                  tooltip: 'action'.tr,
-                  itemBuilder: (context) => [
-                    PopupMenuItem<_DealAction>(
-                      value: _DealAction.openChat,
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.chat_bubble_outline_rounded,
-                            color: alma.onSurfaceSecondary,
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'open_chat'.tr,
-                            style: AppStyles.labelLarge.copyWith(
-                              color: alma.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<_DealAction>(
-                      value: _DealAction.editDeal,
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.edit_outlined,
-                            color: alma.onSurfaceSecondary,
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'edit_deal'.tr,
-                            style: AppStyles.labelLarge.copyWith(
-                              color: alma.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<_DealAction>(
-                      value: _DealAction.transferDeal,
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.swap_horiz_rounded,
-                            color: alma.onSurfaceSecondary,
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'transfer_deal'.tr,
-                            style: AppStyles.labelLarge.copyWith(
-                              color: alma.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  onSelected: (action) async {
-                    switch (action) {
-                      case _DealAction.openChat:
-                        await onOpenChat?.call(deal);
-                        break;
-                      case _DealAction.editDeal:
-                        await onEditDeal?.call(deal);
-                        break;
-                      case _DealAction.transferDeal:
-                        await onTransferDeal?.call(deal);
-                        break;
-                    }
-                  },
-                ),
+                ],
               ],
-            ],
-          ),
-          SizedBox(height: 8.h),
-          _InfoRow(
-            icon: Icons.person_outline_rounded,
-            text: deal.contactName?.trim().isNotEmpty == true
-                ? deal.contactName!
-                : '-',
-          ),
-          SizedBox(height: 6.h),
-          _InfoRow(
-            icon: Icons.phone_outlined,
-            text: deal.contactPhone?.trim().isNotEmpty == true
-                ? deal.contactPhone!
-                : '-',
-          ),
-          if (_isSuperAdminUser()) ...[
+            ),
+            SizedBox(height: 8.h),
+            _InfoRow(
+              icon: Icons.person_outline_rounded,
+              text: deal.contactName?.trim().isNotEmpty == true
+                  ? deal.contactName!
+                  : '-',
+            ),
             SizedBox(height: 6.h),
             _InfoRow(
-              icon: Icons.support_agent_rounded,
-              text: _assignedAgentName(deal) ?? '-',
+              icon: Icons.phone_outlined,
+              text: deal.contactPhone?.trim().isNotEmpty == true
+                  ? deal.contactPhone!
+                  : '-',
             ),
-          ],
-          SizedBox(height: 10.h),
-          Row(
-            children: [
-              Expanded(
-                child: _Badge(
-                  color: alma.selectionSoftBg,
-                  textColor: AppTheme.brandMain2_600,
-                  text: deal.status,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                '#${deal.id}',
-                style: AppStyles.labelMedium
-                    .copyWith(color: alma.onSurfaceTertiary),
+            if (_isSuperAdminUser()) ...[
+              SizedBox(height: 6.h),
+              _InfoRow(
+                icon: Icons.support_agent_rounded,
+                text: _assignedAgentName(deal) ?? '-',
               ),
             ],
-          ),
-        ],
+            SizedBox(height: 10.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _Badge(
+                    color: alma.selectionSoftBg,
+                    textColor: AppTheme.brandMain2_600,
+                    text: deal.status,
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  '#${deal.id}',
+                  style: AppStyles.labelMedium.copyWith(
+                    color: alma.onSurfaceTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -291,8 +294,7 @@ class _InfoRow extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppStyles.bodySmall
-                .copyWith(color: alma.onSurfaceSecondary),
+            style: AppStyles.bodySmall.copyWith(color: alma.onSurfaceSecondary),
           ),
         ),
       ],

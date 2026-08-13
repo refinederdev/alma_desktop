@@ -39,7 +39,8 @@ class NotificationPayload extends Equatable {
           : null,
       data: map['data'] as Map<String, dynamic>? ?? map,
       route: map['route'] as String? ?? map['screen'] as String?,
-      routeParams: map['route_params'] as Map<String, dynamic>? ??
+      routeParams:
+          map['route_params'] as Map<String, dynamic>? ??
           map['params'] as Map<String, dynamic>?,
       priority: map['priority'] != null
           ? NotificationPriority.fromString(map['priority'] as String)
@@ -67,18 +68,18 @@ class NotificationPayload extends Equatable {
 
   @override
   List<Object?> get props => [
-        notificationId,
-        title,
-        body,
-        imageUrl,
-        type,
-        data,
-        route,
-        routeParams,
-        priority,
-        sound,
-        badge,
-      ];
+    notificationId,
+    title,
+    body,
+    imageUrl,
+    type,
+    data,
+    route,
+    routeParams,
+    priority,
+    sound,
+    badge,
+  ];
 }
 
 /// أنواع الإشعارات

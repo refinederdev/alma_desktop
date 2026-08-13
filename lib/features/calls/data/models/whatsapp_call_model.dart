@@ -54,12 +54,16 @@ class WhatsAppCallModel extends WhatsAppCall {
       callerPhone: json['caller_phone'] as String?,
       calleePhone: json['callee_phone'] as String?,
       remotePhone: json['remote_phone'] as String?,
-      duration: json['duration'] as String?,
+      duration: (json['formatted_duration'] ?? json['duration'])?.toString(),
       durationSeconds: toInt(json['duration_seconds']),
       dealId: toInt(json['deal_id']),
       acceptedByUserId: toInt(json['accepted_by_user_id']),
       isClaimedByMe: json['is_claimed_by_me'] == true,
-      contactName: json['contact_name'] as String?,
+      contactName:
+          json['contact_name'] as String? ??
+          (json['deal'] is Map
+              ? (json['deal'] as Map)['contact_name'] as String?
+              : null),
       sdpOffer: json['sdp_offer'] as String?,
       sdpAnswer: json['sdp_answer'] as String?,
       startedAt: toDate(json['started_at']),

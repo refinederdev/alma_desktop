@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 class ServerConfigController extends GetxController {
   ServerConfigController({required ServerConfigService serverConfigService})
-      : _serverConfigService = serverConfigService;
+    : _serverConfigService = serverConfigService;
 
   final ServerConfigService _serverConfigService;
 
@@ -33,8 +33,9 @@ class ServerConfigController extends GetxController {
 
     isSaving.value = true;
     try {
-      final normalized =
-          ServerConfigService.normalizeApiBaseUrl(urlController.text);
+      final normalized = ServerConfigService.normalizeApiBaseUrl(
+        urlController.text,
+      );
       await AppConfig.applyBaseUrl(normalized, _serverConfigService);
       urlController.text = AppConfig.baseURL;
       AppMessages.showSnackBar(

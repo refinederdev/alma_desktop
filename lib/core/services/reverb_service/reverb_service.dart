@@ -97,7 +97,12 @@ class ReverbService {
       _startPingTimer();
 
       // نعتبر الاتصال "جاهز" فقط بعد استلام socket_id
-      await _socketIdCompleter!.future;
+      await _socketIdCompleter!.future.timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw TimeoutException(
+          'Realtime server did not complete the connection handshake.',
+        ),
+      );
     } catch (e) {
       if (kDebugMode) print('❌ Error connecting to Reverb: $e');
       _isConnected = false;
@@ -131,7 +136,8 @@ class ReverbService {
         if (kDebugMode) print('✅ Socket ID: $_socketId');
         _isReconnecting = false; // إعادة الاتصال نجحت
         _isConnected = true;
-        _reconnectAttempts = 0; // إعادة تعيين محاولات إعادة الاتصال بعد نجاح فعلي
+        _reconnectAttempts =
+            0; // إعادة تعيين محاولات إعادة الاتصال بعد نجاح فعلي
         _lastPongAt = DateTime.now();
         if (_socketId != null) {
           if (_socketIdCompleter != null && !_socketIdCompleter!.isCompleted) {
@@ -219,9 +225,7 @@ class ReverbService {
           channelName.startsWith('private-calls.')) {
         // أي حدث آخر على قناة مكالمات نمرّره كذلك حتى لا نُسقط شيئاً
         if (kDebugMode) {
-          print(
-            '📞 Forwarding event "$event" on $channelName to call handler',
-          );
+          print('📞 Forwarding event "$event" on $channelName to call handler');
         }
         onCallEvent?.call(eventData, channelName);
       } else {
@@ -390,6 +394,10 @@ class ReverbService {
     _reconnectTimer = Timer(delay, () async {
       if (kDebugMode) print('🔄 Reconnecting... (attempt $_reconnectAttempts)');
       try {
+        // The scheduled attempt owns the reconnect lock. Release it before
+        // entering connect(), otherwise connect() returns immediately and the
+        // realtime connection never recovers.
+        _isReconnecting = false;
         await connect();
       } catch (e) {
         if (kDebugMode) print('❌ Reconnection failed: $e');
@@ -456,8 +464,8 @@ class ReverbService {
 
   Duration _computeReconnectDelay(int attempt) {
     // Backoff أسي مع سقف (تقريباً: 1s, 2s, 4s, 8s... حتى 30s)
-    final ms =
-        (_reconnectBaseDelay.inMilliseconds * (1 << (attempt - 1))).clamp(
+    final ms = (_reconnectBaseDelay.inMilliseconds * (1 << (attempt - 1)))
+        .clamp(
           _reconnectBaseDelay.inMilliseconds,
           _reconnectMaxDelay.inMilliseconds,
         );

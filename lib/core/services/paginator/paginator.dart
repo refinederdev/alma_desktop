@@ -26,16 +26,16 @@ class Paginator<T> extends Equatable {
 
   @override
   List<Object?> get props => [
-        data,
-        currentPage,
-        perPage,
-        total,
-        lastPage,
-        from,
-        to,
-        hasMorePages,
-        meta,
-      ];
+    data,
+    currentPage,
+    perPage,
+    total,
+    lastPage,
+    from,
+    to,
+    hasMorePages,
+    meta,
+  ];
 }
 
 /// Data-layer paginator with JSON parsing. Parses API response that contains
@@ -58,9 +58,7 @@ class PaginatorModel<T> extends Paginator<T> {
     T Function(Map<String, dynamic>) fromJsonT,
   ) {
     final list = json['data'] as List<dynamic>? ?? [];
-    final data = list
-        .map((e) => fromJsonT(e as Map<String, dynamic>))
-        .toList();
+    final data = list.map((e) => fromJsonT(e as Map<String, dynamic>)).toList();
 
     final p = json['pagination'] as Map<String, dynamic>? ?? {};
     return PaginatorModel<T>(

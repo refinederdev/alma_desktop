@@ -33,11 +33,11 @@ class AryafToastCard extends StatelessWidget {
         trailing ??
         (showCloseButton
             ? IconButton(
-              splashRadius: 18,
-              icon: const Icon(Icons.close_rounded, color: Colors.white70),
-              onPressed: onClose,
-              tooltip: 'Close',
-            )
+                splashRadius: 18,
+                icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                onPressed: onClose,
+                tooltip: 'Close',
+              )
             : null);
 
     return Container(

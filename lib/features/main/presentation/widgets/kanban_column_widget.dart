@@ -34,7 +34,8 @@ class KanbanColumnWidget extends StatelessWidget {
   final Color headerTextColor;
   final String emptyMessage;
   final CrmDealStatus status;
-  final Future<void> Function(Deal deal, CrmDealStatus targetStatus) onDealDropped;
+  final Future<void> Function(Deal deal, CrmDealStatus targetStatus)
+  onDealDropped;
   final bool Function(int dealId) isDealUpdating;
   final Future<void> Function(Deal deal) onOpenChat;
   final Future<void> Function(Deal deal) onEditDeal;
@@ -83,7 +84,10 @@ class KanbanColumnWidget extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: headerTextColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(999.r),
@@ -113,7 +117,9 @@ class KanbanColumnWidget extends StatelessWidget {
                           return false;
                         },
                         child: ListView.builder(
-                          itemCount: deals.length + ((hasMore || isLoadingMore) ? 1 : 0),
+                          itemCount:
+                              deals.length +
+                              ((hasMore || isLoadingMore) ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index >= deals.length) {
                               return Padding(
@@ -163,8 +169,9 @@ class _EmptyColumnState extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: AppStyles.bodySmall
-              .copyWith(color: context.alma.onSurfaceHint),
+          style: AppStyles.bodySmall.copyWith(
+            color: context.alma.onSurfaceHint,
+          ),
         ),
       ),
     );

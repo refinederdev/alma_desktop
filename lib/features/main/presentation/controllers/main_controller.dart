@@ -33,7 +33,25 @@ class MainController extends GetxController {
     update();
   }
 
-  void logout() {
+  Future<void> logout() async {
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        icon: const Icon(Icons.logout_rounded),
+        title: Text('logout'.tr),
+        content: Text('are_you_sure_you_want_to_logout'.tr),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text('cancel'.tr),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            child: Text('logout'.tr),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     GlobalController.to.clearLogedIn();
     Get.offAllNamed(AppRoutes.login);
   }

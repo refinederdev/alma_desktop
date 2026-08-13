@@ -36,7 +36,8 @@ class CallPermissionModel extends CallPermission {
     }
 
     // الميتا قد تأتي تحت مفاتيح متعددة بحسب استجابة Meta
-    final state = (json['permission'] as String?) ??
+    final state =
+        (json['permission'] as String?) ??
         (json['state'] as String?) ??
         (json['status'] as String?);
     final granted = json['granted'] is bool

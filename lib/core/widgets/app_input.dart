@@ -11,6 +11,7 @@ class AppInputField extends StatelessWidget {
   final TextEditingController? controller;
   final TextInputType? keyboardType;
   final bool? isPassword;
+
   /// When [isPassword] is true, defaults to obscuring. Override for show/hide toggles.
   final bool? obscureText;
   final bool? isEnabled;

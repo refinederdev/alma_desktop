@@ -50,19 +50,18 @@ class CompanyLocation extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        description,
-        address,
-        latitude,
-        longitude,
-        managerId,
-        managerName,
-        isActive,
-        isOpenNow,
-        workingHours,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    name,
+    description,
+    address,
+    latitude,
+    longitude,
+    managerId,
+    managerName,
+    isActive,
+    isOpenNow,
+    workingHours,
+    createdAt,
+    updatedAt,
+  ];
 }
-

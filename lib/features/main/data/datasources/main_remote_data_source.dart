@@ -135,9 +135,8 @@ class MainRemoteDataSourceImpl implements MainRemoteDataSource {
     return data
         .whereType<Map>()
         .map(
-          (json) => CompanyLocationModel.fromJson(
-            Map<String, dynamic>.from(json),
-          ),
+          (json) =>
+              CompanyLocationModel.fromJson(Map<String, dynamic>.from(json)),
         )
         .toList();
   }
@@ -200,10 +199,7 @@ class MainRemoteDataSourceImpl implements MainRemoteDataSource {
     int perPage = 50,
     bool fullHistory = false,
   }) async {
-    final query = <String, dynamic>{
-      'page': page,
-      'per_page': perPage,
-    };
+    final query = <String, dynamic>{'page': page, 'per_page': perPage};
     if (fullHistory) {
       query['full_history'] = 1;
     }

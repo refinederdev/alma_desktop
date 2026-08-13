@@ -52,9 +52,11 @@ class _WhatsAppFormattedTextState extends State<WhatsAppFormattedText> {
 
     final safeText = _sanitizeInvalidUtf16(widget.text);
     // استخدام الخط من style إذا كان موجوداً، وإلا استخدم الخط الافتراضي
-    final TextStyle baseStyle = widget.style?.copyWith(
+    final TextStyle baseStyle =
+        widget.style?.copyWith(
           fontFamily:
-              widget.style?.fontFamily ?? WhatsAppFormattedText._defaultFontFamily,
+              widget.style?.fontFamily ??
+              WhatsAppFormattedText._defaultFontFamily,
         ) ??
         TextStyle(fontFamily: WhatsAppFormattedText._defaultFontFamily);
 
@@ -66,7 +68,8 @@ class _WhatsAppFormattedTextState extends State<WhatsAppFormattedText> {
           maxLines: widget.maxLines,
           overflow: widget.overflow ?? TextOverflow.clip,
           selectionRegistrar: SelectionContainer.maybeOf(context),
-          selectionColor: Theme.of(context).textSelectionTheme.selectionColor ??
+          selectionColor:
+              Theme.of(context).textSelectionTheme.selectionColor ??
               Colors.blue.withValues(alpha: 0.30),
         ),
       ),
@@ -111,12 +114,15 @@ class _WhatsAppFormattedTextState extends State<WhatsAppFormattedText> {
 
       // استخراج النص المنسق
       final String formattedText = match.group(0)!;
-      final String content = formattedText.substring(1, formattedText.length - 1);
+      final String content = formattedText.substring(
+        1,
+        formattedText.length - 1,
+      );
       final String formatType = formattedText[0];
 
       // إنشاء قائمة جديدة من التنسيقات النشطة
       final List<String> newFormats = List.from(activeFormats);
-      
+
       // إضافة التنسيق الحالي إذا لم يكن موجوداً
       if (!newFormats.contains(formatType)) {
         newFormats.add(formatType);
@@ -197,7 +203,9 @@ class _WhatsAppFormattedTextState extends State<WhatsAppFormattedText> {
     }
 
     if (currentIndex < input.length) {
-      spans.add(TextSpan(text: input.substring(currentIndex), style: baseStyle));
+      spans.add(
+        TextSpan(text: input.substring(currentIndex), style: baseStyle),
+      );
     }
 
     return spans;
@@ -230,7 +238,8 @@ class _WhatsAppFormattedTextState extends State<WhatsAppFormattedText> {
           // استخدام نفس الخط للنص أحادي المسافة بدلاً من monospace
           // للحفاظ على الاتساق مع خط التطبيق
           result = result.copyWith(
-            fontFamily: baseStyle.fontFamily ??
+            fontFamily:
+                baseStyle.fontFamily ??
                 WhatsAppFormattedText._defaultFontFamily,
             letterSpacing: 0.5, // إضافة مسافة بين الأحرف لمظهر أحادي المسافة
           );

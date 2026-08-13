@@ -25,13 +25,10 @@ class LoginParams extends Equatable {
   final String? phone;
   final String? email;
 
-  const LoginParams({
-    required this.password,
-    this.phone,
-    this.email,
-  }) : assert(
-          (phone != null && email == null) || (phone == null && email != null),
-        );
+  const LoginParams({required this.password, this.phone, this.email})
+    : assert(
+        (phone != null && email == null) || (phone == null && email != null),
+      );
 
   @override
   List<Object?> get props => [phone, email, password];

@@ -27,15 +27,15 @@ class CrmSession extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        sessionId,
-        userId,
-        contactGroupId,
-        sessionName,
-        phoneNumber,
-        apiKey,
-        status,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    sessionId,
+    userId,
+    contactGroupId,
+    sessionName,
+    phoneNumber,
+    apiKey,
+    status,
+    createdAt,
+    updatedAt,
+  ];
 }

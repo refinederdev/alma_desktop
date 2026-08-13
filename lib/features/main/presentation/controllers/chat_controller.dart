@@ -533,6 +533,14 @@ class ChatController extends GetxController {
         fullHistory: showContactDealHistory,
       ),
     );
+
+    // The agent may have selected another conversation while this page was
+    // loading. Cache the old result, but never paint it into the new chat.
+    if (selectedDeal?.id != deal.id || cacheKey != _messageCacheKey(deal.id)) {
+      isLoadingOlderMessages = false;
+      update();
+      return;
+    }
     if (requestId != _messagesRequestId || selectedDeal?.id != deal.id) {
       return;
     }
@@ -554,10 +562,7 @@ class ChatController extends GetxController {
             message: 'full_history_forbidden'.tr,
           );
           unawaited(
-            loadMessagesForSelectedDeal(
-              refresh: true,
-              showLoader: showLoader,
-            ),
+            loadMessagesForSelectedDeal(refresh: true, showLoader: showLoader),
           );
           return;
         }
@@ -686,14 +691,21 @@ class ChatController extends GetxController {
         (message) {
           messageController.clear();
           clearAttachment();
-          messages = _sortedUniqueMessages([...messages, message]);
-          _updateSelectedDealLastMessage(message);
-          if (selectedDeal != null) {
-            _messagesCache[_messageCacheKey(selectedDeal!.id)] = messages;
+          if (selectedDeal?.id == deal.id) {
+            messages = _sortedUniqueMessages([...messages, message]);
+            _updateSelectedDealLastMessage(message);
+            _messagesCache[_messageCacheKey(deal.id)] = messages;
+            _scrollToBottom();
+          } else {
+            final cached =
+                _messagesCache[_messageCacheKey(deal.id)] ?? const [];
+            _messagesCache[_messageCacheKey(deal.id)] = _sortedUniqueMessages([
+              ...cached,
+              message,
+            ]);
           }
           isSendingMessage = false;
           update();
-          _scrollToBottom();
         },
       );
       return;
@@ -727,16 +739,20 @@ class ChatController extends GetxController {
 
     messageController.clear();
     clearAttachment();
-    if (sentMessages.isNotEmpty) {
+    if (sentMessages.isNotEmpty && selectedDeal?.id == deal.id) {
       messages = _sortedUniqueMessages([...messages, ...sentMessages]);
       _updateSelectedDealLastMessage(sentMessages.last);
-      if (selectedDeal != null) {
-        _messagesCache[_messageCacheKey(selectedDeal!.id)] = messages;
-      }
+      _messagesCache[_messageCacheKey(deal.id)] = messages;
+    } else if (sentMessages.isNotEmpty) {
+      final cached = _messagesCache[_messageCacheKey(deal.id)] ?? const [];
+      _messagesCache[_messageCacheKey(deal.id)] = _sortedUniqueMessages([
+        ...cached,
+        ...sentMessages,
+      ]);
     }
     isSendingMessage = false;
     update();
-    _scrollToBottom();
+    if (selectedDeal?.id == deal.id) _scrollToBottom();
   }
 
   Future<Either<Failure, DealMessage>> _sendMessageWithOptionalRetry({

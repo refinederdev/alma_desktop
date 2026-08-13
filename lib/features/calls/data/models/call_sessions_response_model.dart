@@ -14,16 +14,12 @@ class CallSessionsResponseModel extends CallSessionsResponse {
 
     final sessions = sessionsRaw
         .whereType<Map>()
-        .map(
-          (e) => CallSessionModel.fromJson(Map<String, dynamic>.from(e)),
-        )
+        .map((e) => CallSessionModel.fromJson(Map<String, dynamic>.from(e)))
         .toList();
 
     final iceServers = iceRaw
         .whereType<Map>()
-        .map(
-          (e) => IceServerModel.fromJson(Map<String, dynamic>.from(e)),
-        )
+        .map((e) => IceServerModel.fromJson(Map<String, dynamic>.from(e)))
         .toList();
 
     return CallSessionsResponseModel(

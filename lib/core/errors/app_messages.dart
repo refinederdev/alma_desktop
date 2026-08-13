@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import '../theme/app_styles.dart';
 
 class AppMessages {
-  static showSnackBar({
+  static void showSnackBar({
     ErrorType type = ErrorType.success,
     String? title = "success",
     String? message = "",
@@ -27,18 +27,17 @@ class AppMessages {
       DelightToastBar.removeAll();
     }
 
-    return DelightToastBar(
+    DelightToastBar(
       position: DelightSnackbarPosition.top,
-      snackbarDuration: Duration(
-        milliseconds: duration.clamp(1, 12) * 1000,
-      ),
+      snackbarDuration: Duration(milliseconds: duration.clamp(1, 12) * 1000),
       animationDuration: const Duration(milliseconds: 360),
       autoDismiss: true,
       builder: (context) {
         return SafeArea(
           child: Align(
-            alignment:
-                isDesktop ? AlignmentDirectional.topEnd : Alignment.topCenter,
+            alignment: isDesktop
+                ? AlignmentDirectional.topEnd
+                : Alignment.topCenter,
             child: AryafToastCard(
               color: palette.background,
               showCloseButton: isDesktop,

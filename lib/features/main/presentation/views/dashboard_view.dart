@@ -6,6 +6,7 @@ import 'package:alma_desktop/core/theme/app_theme.dart';
 import 'package:alma_desktop/features/main/domain/entities/attendance_weekly_stat.dart';
 import 'package:alma_desktop/features/main/domain/entities/message_line_chart_data.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/dashboard_controller.dart';
+import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -27,9 +28,7 @@ class DashboardView extends GetView<DashboardController> {
                 onRefresh: () => c.loadDashboard(refresh: true),
               ),
               SizedBox(height: 16.h),
-              Expanded(
-                child: _DashboardBody(controller: c),
-              ),
+              Expanded(child: _DashboardBody(controller: c)),
             ],
           ),
         );
@@ -39,33 +38,70 @@ class DashboardView extends GetView<DashboardController> {
 }
 
 class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader({
-    required this.isRefreshing,
-    required this.onRefresh,
-  });
+  const _DashboardHeader({required this.isRefreshing, required this.onRefresh});
 
   final bool isRefreshing;
   final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
+    final user = GlobalController.to.user;
+    final now = DateTime.now();
+    final date = '${now.day}/${now.month}/${now.year}';
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
       decoration: BoxDecoration(
-        color: context.alma.surfaceVariant,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: context.alma.outline),
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: [
+            AppTheme.brandMain2_600.withValues(alpha: 0.11),
+            AppTheme.brandMain.withValues(alpha: 0.07),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color: AppTheme.brandMain2_500.withValues(alpha: 0.16),
+        ),
       ),
       child: Row(
         children: [
+          Container(
+            width: 44.w,
+            height: 44.w,
+            decoration: BoxDecoration(
+              color: AppTheme.brandMain2_600,
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Icon(
+              Icons.insights_rounded,
+              color: Colors.white,
+              size: 22.sp,
+            ),
+          ),
+          SizedBox(width: 13.w),
           Expanded(
-            child: Text(
-              'general_overview'.tr,
-              style: AppStyles.titleMedium.copyWith(
-                color: context.alma.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'dashboard_welcome'.trParams({
+                    'name': user?.firstName ?? 'Alma',
+                  }),
+                  style: AppStyles.titleLarge.copyWith(
+                    color: context.alma.onSurfaceTitle,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  '${'general_overview'.tr}  ·  $date',
+                  style: AppStyles.bodySmall.copyWith(
+                    color: context.alma.onSurfaceTertiary,
+                  ),
+                ),
+              ],
             ),
           ),
           ElevatedButton.icon(
@@ -113,7 +149,11 @@ class _DashboardBody extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded, color: AppTheme.error600, size: 30.sp),
+              Icon(
+                Icons.error_outline_rounded,
+                color: AppTheme.error600,
+                size: 30.sp,
+              ),
               SizedBox(height: 8.h),
               Text(
                 controller.errorMessage!,
@@ -139,47 +179,64 @@ class _DashboardBody extends StatelessWidget {
             _AgentAttendanceCard(controller: controller),
             SizedBox(height: 14.h),
           ],
-          Wrap(
-            spacing: 12.w,
-            runSpacing: 12.h,
-            children: [
-              _StatCard(
-                title: 'total_deals'.tr,
-                value: controller.dealsStats?.totalCount.toString() ?? '--',
-                icon: Icons.pie_chart_rounded,
-                color: AppTheme.brandMain2_600,
-              ),
-              _StatCard(
-                title: 'opened_deals'.tr,
-                value: controller.dealsStats?.openCount.toString() ?? '--',
-                icon: Icons.folder_open_rounded,
-                color: AppTheme.warning700,
-              ),
-              _StatCard(
-                title: 'won_deals'.tr,
-                value: controller.dealsStats?.wonCount.toString() ?? '--',
-                icon: Icons.emoji_events_rounded,
-                color: AppTheme.success700,
-              ),
-              _StatCard(
-                title: 'lost_deals'.tr,
-                value: controller.dealsStats?.lostCount.toString() ?? '--',
-                icon: Icons.trending_down_rounded,
-                color: AppTheme.error700,
-              ),
-              _StatCard(
-                title: 'total_day'.tr,
-                value: controller.todayTotal?.formattedTotalTime ?? '--',
-                icon: Icons.today_rounded,
-                color: AppTheme.brandMain700,
-              ),
-              _StatCard(
-                title: 'this_week'.tr,
-                value: controller.weekTotal?.formattedTotalTime ?? '--',
-                icon: Icons.calendar_view_week_rounded,
-                color: context.alma.onSurface,
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 1050
+                  ? 4
+                  : constraints.maxWidth >= 700
+                  ? 3
+                  : 2;
+              final cardWidth =
+                  (constraints.maxWidth - (12.w * (columns - 1))) / columns;
+              return Wrap(
+                spacing: 12.w,
+                runSpacing: 12.h,
+                children: [
+                  _StatCard(
+                    width: cardWidth,
+                    title: 'total_deals'.tr,
+                    value: controller.dealsStats?.totalCount.toString() ?? '--',
+                    icon: Icons.pie_chart_rounded,
+                    color: AppTheme.brandMain2_600,
+                  ),
+                  _StatCard(
+                    width: cardWidth,
+                    title: 'opened_deals'.tr,
+                    value: controller.dealsStats?.openCount.toString() ?? '--',
+                    icon: Icons.folder_open_rounded,
+                    color: AppTheme.warning700,
+                  ),
+                  _StatCard(
+                    width: cardWidth,
+                    title: 'won_deals'.tr,
+                    value: controller.dealsStats?.wonCount.toString() ?? '--',
+                    icon: Icons.emoji_events_rounded,
+                    color: AppTheme.success700,
+                  ),
+                  _StatCard(
+                    width: cardWidth,
+                    title: 'lost_deals'.tr,
+                    value: controller.dealsStats?.lostCount.toString() ?? '--',
+                    icon: Icons.trending_down_rounded,
+                    color: AppTheme.error700,
+                  ),
+                  _StatCard(
+                    width: cardWidth,
+                    title: 'total_day'.tr,
+                    value: controller.todayTotal?.formattedTotalTime ?? '--',
+                    icon: Icons.today_rounded,
+                    color: AppTheme.brandMain700,
+                  ),
+                  _StatCard(
+                    width: cardWidth,
+                    title: 'this_week'.tr,
+                    value: controller.weekTotal?.formattedTotalTime ?? '--',
+                    icon: Icons.calendar_view_week_rounded,
+                    color: context.alma.onSurface,
+                  ),
+                ],
+              );
+            },
           ),
           SizedBox(height: 14.h),
           _MessagesStatsCard(controller: controller),
@@ -242,7 +299,9 @@ class _AgentAttendanceCard extends StatelessWidget {
                             : Icons.login_rounded,
                         size: 18.sp,
                       ),
-                label: Text(controller.isClockedIn ? 'check_out'.tr : 'check_in'.tr),
+                label: Text(
+                  controller.isClockedIn ? 'check_out'.tr : 'check_in'.tr,
+                ),
               ),
             ],
           ),
@@ -267,7 +326,9 @@ class _AgentAttendanceCard extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               'clock_in_to_start_timer'.tr,
-              style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
+              style: AppStyles.bodySmall.copyWith(
+                color: context.alma.onSurfaceTertiary,
+              ),
             ),
           ],
           if (controller.attendanceErrorMessage != null) ...[
@@ -285,6 +346,7 @@ class _AgentAttendanceCard extends StatelessWidget {
 
 class _StatCard extends StatelessWidget {
   const _StatCard({
+    required this.width,
     required this.title,
     required this.value,
     required this.icon,
@@ -292,6 +354,7 @@ class _StatCard extends StatelessWidget {
   });
 
   final String title;
+  final double width;
   final String value;
   final IconData icon;
   final Color color;
@@ -299,12 +362,13 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 250.w,
-      padding: EdgeInsets.all(14.w),
+      width: width,
+      padding: EdgeInsets.all(15.w),
       decoration: BoxDecoration(
         color: context.alma.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: context.alma.outline),
+        boxShadow: context.alma.shadowXS,
       ),
       child: Row(
         children: [
@@ -324,7 +388,9 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
+                  style: AppStyles.bodySmall.copyWith(
+                    color: context.alma.onSurfaceTertiary,
+                  ),
                 ),
                 SizedBox(height: 2.h),
                 Text(
@@ -374,7 +440,10 @@ class _MessagesStatsCard extends StatelessWidget {
             spacing: 10.w,
             runSpacing: 10.h,
             children: [
-              _MiniStat(title: 'total_messages'.tr, value: stats?.totalMessages),
+              _MiniStat(
+                title: 'total_messages'.tr,
+                value: stats?.totalMessages,
+              ),
               _MiniStat(title: 'sent_messages'.tr, value: stats?.sent),
               _MiniStat(title: 'received_messages'.tr, value: stats?.received),
               _MiniStat(
@@ -411,7 +480,9 @@ class _MiniStat extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceTertiary),
+            style: AppStyles.labelSmall.copyWith(
+              color: context.alma.onSurfaceTertiary,
+            ),
           ),
           SizedBox(height: 2.h),
           Text(
@@ -457,7 +528,9 @@ class _WeeklyAttendanceCard extends StatelessWidget {
           if (data.isEmpty)
             Text(
               'no_data_available'.tr,
-              style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
+              style: AppStyles.bodySmall.copyWith(
+                color: context.alma.onSurfaceTertiary,
+              ),
             )
           else
             SizedBox(
@@ -475,7 +548,9 @@ class _WeeklyAttendanceCard extends StatelessWidget {
                         children: [
                           Text(
                             item.hours.toStringAsFixed(1),
-                            style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceSecondary),
+                            style: AppStyles.labelSmall.copyWith(
+                              color: context.alma.onSurfaceSecondary,
+                            ),
                           ),
                           SizedBox(height: 6.h),
                           Container(
@@ -488,7 +563,9 @@ class _WeeklyAttendanceCard extends StatelessWidget {
                           SizedBox(height: 6.h),
                           Text(
                             item.day,
-                            style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceTertiary),
+                            style: AppStyles.labelSmall.copyWith(
+                              color: context.alma.onSurfaceTertiary,
+                            ),
                           ),
                         ],
                       ),
@@ -532,39 +609,47 @@ class _MessagesTrendCard extends StatelessWidget {
           if (data.isEmpty)
             Text(
               'no_data_available'.tr,
-              style: AppStyles.bodySmall.copyWith(color: context.alma.onSurfaceTertiary),
+              style: AppStyles.bodySmall.copyWith(
+                color: context.alma.onSurfaceTertiary,
+              ),
             )
           else
-            ...data.take(7).map(
-              (item) => Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 64.w,
-                      child: Text(
-                        '${item.date.day}/${item.date.month}',
-                        style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceSecondary),
-                      ),
+            ...data
+                .take(7)
+                .map(
+                  (item) => Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 64.w,
+                          child: Text(
+                            '${item.date.day}/${item.date.month}',
+                            style: AppStyles.labelSmall.copyWith(
+                              color: context.alma.onSurfaceSecondary,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: LinearProgressIndicator(
+                            value: _ratio(item.sent, item.received),
+                            minHeight: 8.h,
+                            borderRadius: BorderRadius.circular(12.r),
+                            backgroundColor: context.alma.outline,
+                            color: AppTheme.success500,
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Text(
+                          '${item.sent}/${item.received}',
+                          style: AppStyles.labelSmall.copyWith(
+                            color: context.alma.onSurfaceSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: LinearProgressIndicator(
-                        value: _ratio(item.sent, item.received),
-                        minHeight: 8.h,
-                        borderRadius: BorderRadius.circular(12.r),
-                        backgroundColor: context.alma.outline,
-                        color: AppTheme.success500,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Text(
-                      '${item.sent}/${item.received}',
-                      style: AppStyles.labelSmall.copyWith(color: context.alma.onSurfaceSecondary),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
         ],
       ),
     );

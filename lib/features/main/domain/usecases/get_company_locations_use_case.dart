@@ -31,4 +31,3 @@ class GetCompanyLocationsParams extends Equatable {
   @override
   List<Object?> get props => [activeOnly, isActive];
 }
-

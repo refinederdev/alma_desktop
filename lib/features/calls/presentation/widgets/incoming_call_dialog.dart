@@ -126,7 +126,8 @@ class IncomingCallDialog extends StatelessWidget {
                           icon: Icons.call_end_rounded,
                           label: 'reject'.tr,
                           color: AppTheme.error500,
-                          loading: c.isProcessing &&
+                          loading:
+                              c.isProcessing &&
                               c.phase == CallUiPhase.ringingIncoming,
                           onPressed: c.isProcessing
                               ? null
@@ -139,7 +140,8 @@ class IncomingCallDialog extends StatelessWidget {
                           icon: Icons.call_rounded,
                           label: 'answer'.tr,
                           color: AppTheme.success500,
-                          loading: c.isProcessing &&
+                          loading:
+                              c.isProcessing &&
                               c.phase != CallUiPhase.ringingIncoming,
                           onPressed: c.isProcessing
                               ? null

@@ -30,11 +30,7 @@ class WindowsCrashLogger {
     final previousPlatformOnError = PlatformDispatcher.instance.onError;
     PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
       unawaited(
-        logError(
-          source: 'PlatformDispatcher',
-          error: error,
-          stackTrace: stack,
-        ),
+        logError(source: 'PlatformDispatcher', error: error, stackTrace: stack),
       );
       if (previousPlatformOnError != null) {
         return previousPlatformOnError(error, stack);
@@ -80,9 +76,7 @@ class WindowsCrashLogger {
 
   Future<File> _resolveLogFile() async {
     final baseDir = await _resolveWritableDirectory();
-    final logsDir = Directory(
-      '${baseDir.path}${Platform.pathSeparator}logs',
-    );
+    final logsDir = Directory('${baseDir.path}${Platform.pathSeparator}logs');
     if (!logsDir.existsSync()) {
       logsDir.createSync(recursive: true);
     }

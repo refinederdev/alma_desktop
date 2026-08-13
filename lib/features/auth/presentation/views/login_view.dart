@@ -24,10 +24,7 @@ class LoginView extends GetView<LoginController> {
         textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
         children: [
           Expanded(flex: 11, child: _BrandingPanel()),
-          Expanded(
-            flex: 9,
-            child: _FormPanel(),
-          ),
+          Expanded(flex: 9, child: _FormPanel()),
         ],
       ),
     );
@@ -40,9 +37,7 @@ class _BrandingPanel extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-      ),
+      decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -79,7 +74,8 @@ class _BrandingPanel extends StatelessWidget {
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'organize_your_work_follow_your_customers_and_best_results'.tr,
+                  'organize_your_work_follow_your_customers_and_best_results'
+                      .tr,
                   style: AppStyles.bodyLarge.copyWith(
                     color: AppTheme.baseWhite.withValues(alpha: 0.88),
                     height: 1.5,
@@ -142,7 +138,9 @@ class _FormPanel extends GetView<LoginController> {
         children: [
           Positioned(
             top: 20.h,
-            right: Directionality.of(context) == TextDirection.rtl ? null : 24.w,
+            right: Directionality.of(context) == TextDirection.rtl
+                ? null
+                : 24.w,
             left: Directionality.of(context) == TextDirection.rtl ? 24.w : null,
             child: IconButton(
               tooltip: 'change_language'.tr,
@@ -160,7 +158,10 @@ class _FormPanel extends GetView<LoginController> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 440.w),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 36.w, vertical: 40.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 36.w,
+                    vertical: 40.h,
+                  ),
                   decoration: BoxDecoration(
                     color: alma.surface,
                     borderRadius: BorderRadius.circular(20.r),

@@ -43,7 +43,10 @@ class _SecretKeyboardListenerState extends State<SecretKeyboardListener> {
     if (_isSecretComboActive()) {
       if (_holdTimer == null) {
         _activatedThisHold = false;
-        _holdTimer = Timer(SecretKeyboardListener.holdDuration, _openServerConfig);
+        _holdTimer = Timer(
+          SecretKeyboardListener.holdDuration,
+          _openServerConfig,
+        );
       }
     } else {
       _cancelHoldTimer();

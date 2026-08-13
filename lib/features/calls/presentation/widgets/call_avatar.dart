@@ -77,9 +77,7 @@ class _CallAvatarState extends State<CallAvatar>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        final scale = widget.pulse
-            ? 1 + (_controller.value * 0.18)
-            : 1.0;
+        final scale = widget.pulse ? 1 + (_controller.value * 0.18) : 1.0;
         return SizedBox(
           width: size * 1.35,
           height: size * 1.35,
@@ -94,7 +92,9 @@ class _CallAvatarState extends State<CallAvatar>
                     height: size,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: bg.withValues(alpha: 0.55 - _controller.value * 0.4),
+                      color: bg.withValues(
+                        alpha: 0.55 - _controller.value * 0.4,
+                      ),
                     ),
                   ),
                 ),

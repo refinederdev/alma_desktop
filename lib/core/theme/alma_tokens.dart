@@ -112,19 +112,19 @@ class AlmaTokens extends ThemeExtension<AlmaTokens> {
   static const AlmaTokens fallback = light;
 
   static const AlmaTokens light = AlmaTokens(
-    scaffoldBg: Color(0xFFFCFCFD),
+    scaffoldBg: Color(0xFFF4F7FB),
     surface: Color(0xFFFFFFFF),
-    surfaceVariant: Color(0xFFFCFCFD),
-    outline: Color(0xFFEBECEE),
-    outlineVariant: Color(0xFFF9FAFB),
+    surfaceVariant: Color(0xFFF7F9FC),
+    outline: Color(0xFFE5EAF1),
+    outlineVariant: Color(0xFFEEF2F6),
     outlineStrong: Color(0xFFA2A7B0),
     onSurface: Color(0xFF1D232E),
     onSurfaceTitle: Color(0xFF161B23),
     onSurfaceSecondary: Color(0xFF344054),
     onSurfaceTertiary: Color(0xFF5D6676),
     onSurfaceHint: Color(0xFF777F8C),
-    divider: Color(0xFFEBECEE),
-    inputFill: Color(0xFFFCFCFD),
+    divider: Color(0xFFE8EDF3),
+    inputFill: Color(0xFFF8FAFC),
     modalBarrier: Color(0x73000000),
     shadowBase: Color(0xFF1D232E),
     bottomSheetBg: Color(0xFFFFFFFF),
@@ -154,22 +154,22 @@ class AlmaTokens extends ThemeExtension<AlmaTokens> {
     mediaPlaceholderBg: Color(0xFFEBECEE),
     subtleAccentBg: Color(0x140068EA),
     subtleAccentBorder: Color(0x140068EA),
-    sidebarGradientTop: Color(0xFF068AFF),
-    sidebarGradientBottom: Color(0xFF006CEA),
+    sidebarGradientTop: Color(0xFF123B66),
+    sidebarGradientBottom: Color(0xFF071C38),
     sidebarEdge: Color(0x1FFFFFFF),
     sidebarLogoBackdrop: Color(0x1FFFFFFF),
     sidebarForeground: Color(0xFFFFFFFF),
-    sidebarTileSelected: Color(0x24FFFFFF),
-    sidebarTileBorderActive: Color(0x8019E8C5),
+    sidebarTileSelected: Color(0x1FFFFFFF),
+    sidebarTileBorderActive: Color(0x6619E8C5),
     sidebarTileBorderIdle: Color(0x14FFFFFF),
   );
 
   static const AlmaTokens dark = AlmaTokens(
-    scaffoldBg: Color(0xFF0D1117),
-    surface: Color(0xFF161B22),
-    surfaceVariant: Color(0xFF21262D),
-    outline: Color(0xFF30363D),
-    outlineVariant: Color(0xFF21262D),
+    scaffoldBg: Color(0xFF09111D),
+    surface: Color(0xFF111C2B),
+    surfaceVariant: Color(0xFF172435),
+    outline: Color(0xFF26364A),
+    outlineVariant: Color(0xFF1B2A3C),
     outlineStrong: Color(0xFF484F58),
     onSurface: Color(0xFFE6EDF3),
     onSurfaceTitle: Color(0xFFF0F6FC),
@@ -177,7 +177,7 @@ class AlmaTokens extends ThemeExtension<AlmaTokens> {
     onSurfaceTertiary: Color(0xFF6E7681),
     onSurfaceHint: Color(0xFF484F58),
     divider: Color(0xFF30363D),
-    inputFill: Color(0xFF0D1117),
+    inputFill: Color(0xFF0D1724),
     modalBarrier: Color(0x99000000),
     shadowBase: Color(0xFF000000),
     bottomSheetBg: Color(0xFF161B22),
@@ -207,8 +207,8 @@ class AlmaTokens extends ThemeExtension<AlmaTokens> {
     mediaPlaceholderBg: Color(0xFF30363D),
     subtleAccentBg: Color(0x331EA8FF),
     subtleAccentBorder: Color(0x331EA8FF),
-    sidebarGradientTop: Color(0xFF1A2332),
-    sidebarGradientBottom: Color(0xFF0D1117),
+    sidebarGradientTop: Color(0xFF123454),
+    sidebarGradientBottom: Color(0xFF071321),
     sidebarEdge: Color(0xFF30363D),
     sidebarLogoBackdrop: Color(0x14FFFFFF),
     sidebarForeground: Color(0xFFE6EDF3),
@@ -218,20 +218,20 @@ class AlmaTokens extends ThemeExtension<AlmaTokens> {
   );
 
   List<BoxShadow> get shadowXS => [
-        BoxShadow(
-          color: shadowBase.withValues(alpha: 0.08),
-          blurRadius: 4,
-          offset: const Offset(0, 2),
-        ),
-      ];
+    BoxShadow(
+      color: shadowBase.withValues(alpha: 0.08),
+      blurRadius: 4,
+      offset: const Offset(0, 2),
+    ),
+  ];
 
   List<BoxShadow> get shadowSM => [
-        BoxShadow(
-          color: shadowBase.withValues(alpha: 0.14),
-          blurRadius: 8,
-          offset: const Offset(0, 4),
-        ),
-      ];
+    BoxShadow(
+      color: shadowBase.withValues(alpha: 0.14),
+      blurRadius: 8,
+      offset: const Offset(0, 4),
+    ),
+  ];
 
   @override
   AlmaTokens copyWith({
@@ -380,8 +380,10 @@ class AlmaTokens extends ThemeExtension<AlmaTokens> {
       warningBannerTitle: l(warningBannerTitle, other.warningBannerTitle),
       warningBannerBody: l(warningBannerBody, other.warningBannerBody),
       chatBubbleOtherBg: l(chatBubbleOtherBg, other.chatBubbleOtherBg),
-      chatBubbleOtherBorder:
-          l(chatBubbleOtherBorder, other.chatBubbleOtherBorder),
+      chatBubbleOtherBorder: l(
+        chatBubbleOtherBorder,
+        other.chatBubbleOtherBorder,
+      ),
       statusOpenBg: l(statusOpenBg, other.statusOpenBg),
       statusOpenFg: l(statusOpenFg, other.statusOpenFg),
       statusWonBg: l(statusWonBg, other.statusWonBg),
@@ -393,20 +395,27 @@ class AlmaTokens extends ThemeExtension<AlmaTokens> {
       subtleAccentBg: l(subtleAccentBg, other.subtleAccentBg),
       subtleAccentBorder: l(subtleAccentBorder, other.subtleAccentBorder),
       sidebarGradientTop: l(sidebarGradientTop, other.sidebarGradientTop),
-      sidebarGradientBottom:
-          l(sidebarGradientBottom, other.sidebarGradientBottom),
+      sidebarGradientBottom: l(
+        sidebarGradientBottom,
+        other.sidebarGradientBottom,
+      ),
       sidebarEdge: l(sidebarEdge, other.sidebarEdge),
       sidebarLogoBackdrop: l(sidebarLogoBackdrop, other.sidebarLogoBackdrop),
       sidebarForeground: l(sidebarForeground, other.sidebarForeground),
       sidebarTileSelected: l(sidebarTileSelected, other.sidebarTileSelected),
-      sidebarTileBorderActive:
-          l(sidebarTileBorderActive, other.sidebarTileBorderActive),
-      sidebarTileBorderIdle:
-          l(sidebarTileBorderIdle, other.sidebarTileBorderIdle),
+      sidebarTileBorderActive: l(
+        sidebarTileBorderActive,
+        other.sidebarTileBorderActive,
+      ),
+      sidebarTileBorderIdle: l(
+        sidebarTileBorderIdle,
+        other.sidebarTileBorderIdle,
+      ),
     );
   }
 }
 
 extension AlmaThemeContext on BuildContext {
-  AlmaTokens get alma => Theme.of(this).extension<AlmaTokens>() ?? AlmaTokens.fallback;
+  AlmaTokens get alma =>
+      Theme.of(this).extension<AlmaTokens>() ?? AlmaTokens.fallback;
 }

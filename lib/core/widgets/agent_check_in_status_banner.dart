@@ -85,7 +85,9 @@ class AgentCheckInStatusBanner extends StatelessWidget {
                       ? SizedBox(
                           width: 14.w,
                           height: 14.w,
-                          child: const CircularProgressIndicator(strokeWidth: 2),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
                         )
                       : Icon(Icons.login_rounded, size: 18.sp),
                   label: Text('check_in'.tr),
