@@ -1042,6 +1042,15 @@ class ChatController extends GetxController {
         _incrementUnreadForDeal(dealId);
       }
 
+      // Delivery-status webhooks broadcast the existing outgoing message again.
+      // Replace it in place so pending/sent/delivered ticks update immediately.
+      if (selectedDeal?.id == dealId && fromMe) {
+        final message = _messageFromReverbPayload(messageData, selectedDeal!);
+        if (messages.any((candidate) => candidate.id == message.id)) {
+          _replaceMessageInState(message);
+        }
+      }
+
       // Add incoming websocket message directly for selected chat.
       if (selectedDeal?.id == dealId && !fromMe) {
         final message = _messageFromReverbPayload(messageData, selectedDeal!);

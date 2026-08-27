@@ -1145,13 +1145,22 @@ class _MessageBubble extends StatelessWidget {
                       ),
                     ),
                   SizedBox(height: 4.h),
-                  Text(
-                    '$hh:$mm',
-                    style: AppStyles.labelSmall.copyWith(
-                      color: isMe
-                          ? AppTheme.baseWhite.withValues(alpha: 0.75)
-                          : context.alma.onSurfaceHint,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$hh:$mm',
+                        style: AppStyles.labelSmall.copyWith(
+                          color: isMe
+                              ? AppTheme.baseWhite.withValues(alpha: 0.75)
+                              : context.alma.onSurfaceHint,
+                        ),
+                      ),
+                      if (isMe) ...[
+                        SizedBox(width: 4.w),
+                        _MessageDeliveryIcon(status: message.status),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -1160,6 +1169,32 @@ class _MessageBubble extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _MessageDeliveryIcon extends StatelessWidget {
+  const _MessageDeliveryIcon({required this.status});
+
+  final int? status;
+
+  @override
+  Widget build(BuildContext context) {
+    IconData icon;
+    Color color = AppTheme.baseWhite.withValues(alpha: 0.8);
+
+    if (status == 0) {
+      icon = Icons.error_outline_rounded;
+      color = AppTheme.error500;
+    } else if (status == null || status == 1) {
+      icon = Icons.schedule_rounded;
+    } else if (status == 2) {
+      icon = Icons.done_rounded;
+    } else {
+      icon = Icons.done_all_rounded;
+      if (status! >= 4) color = Colors.lightBlueAccent;
+    }
+
+    return Icon(icon, size: 14.sp, color: color);
   }
 }
 
