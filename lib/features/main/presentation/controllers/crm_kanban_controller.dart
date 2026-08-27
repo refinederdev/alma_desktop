@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:alma_desktop/core/errors/app_messages.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
+import 'package:alma_desktop/core/services/desktop_notification_service.dart';
 import 'package:alma_desktop/core/services/reverb_service/reverb_service.dart';
 import 'package:alma_desktop/features/auth/domain/entities/user.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
@@ -18,7 +17,6 @@ import 'package:alma_desktop/features/main/domain/usecases/update_deal_use_case.
 import 'package:alma_desktop/features/main/domain/usecases/get_won_deals_use_case.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/chat_controller.dart';
 import 'package:alma_desktop/features/main/presentation/controllers/main_controller.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -45,6 +43,7 @@ class CrmKanbanController extends GetxController {
   final UpdateDealUseCase updateDealUseCase;
   final GetAgentsUseCase getAgentsUseCase;
   final AssignDealUseCase assignDealUseCase;
+  final DesktopNotificationService notificationService;
 
   CrmKanbanController({
     required this.getOpenDealsUseCase,
@@ -53,6 +52,7 @@ class CrmKanbanController extends GetxController {
     required this.updateDealUseCase,
     required this.getAgentsUseCase,
     required this.assignDealUseCase,
+    required this.notificationService,
   });
 
   bool isLoading = true;
@@ -83,10 +83,8 @@ class CrmKanbanController extends GetxController {
 
   String? errorMessage;
   ReverbService? _reverbService;
-  AudioPlayer? _notificationPlayer;
   bool _isReverbConnected = false;
   final Set<String> _subscribedChannelNames = <String>{};
-  final Set<String> _playedNotificationKeys = <String>{};
 
   int get totalDeals => openDeals.length + wonDeals.length + lostDeals.length;
   bool isDealUpdating(int dealId) =>
@@ -100,9 +98,6 @@ class CrmKanbanController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (!Platform.isWindows) {
-      _notificationPlayer = AudioPlayer();
-    }
     loadBoard().then((_) => initializeReverb());
   }
 
@@ -916,26 +911,15 @@ class CrmKanbanController extends GetxController {
     Map<String, dynamic>? messageData,
     Map<String, dynamic>? dealData,
   }) async {
-    if (Platform.isWindows) return;
     final messageId =
         messageData?['id'] as String? ?? messageData?['message_id'] as String?;
     final dealId = (dealData?['id'] as num?)?.toInt();
     final ts = (messageData?['timestamp'] as num?)?.toInt();
-    final key =
-        '${kind}_${dealId ?? 0}_${messageId ?? ts ?? DateTime.now().millisecondsSinceEpoch}';
-    if (_playedNotificationKeys.contains(key)) return;
-    _playedNotificationKeys.add(key);
-    if (_playedNotificationKeys.length > 250) {
-      _playedNotificationKeys.remove(_playedNotificationKeys.first);
-    }
-
-    try {
-      await _notificationPlayer?.play(AssetSource('sound/notifi.wav'));
-    } catch (e) {
-      if (kDebugMode) {
-        print('⚠️ CRM notification sound failed: $e');
-      }
-    }
+    final eventIdentity = messageId ?? ts?.toString();
+    final key = eventIdentity == null
+        ? 'deal:${dealId ?? 0}:$kind'
+        : 'message:${dealId ?? 0}:$eventIdentity';
+    await notificationService.notify(eventKey: key);
   }
 
   static bool _isAdmin(User user) {
@@ -962,7 +946,6 @@ class CrmKanbanController extends GetxController {
       _reverbService = null;
     }
     boardScrollController.dispose();
-    _notificationPlayer?.dispose();
     super.onClose();
   }
 }

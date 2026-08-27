@@ -976,7 +976,9 @@ class _MessageBubble extends StatelessWidget {
     final hh = time.hour.toString().padLeft(2, '0');
     final mm = time.minute.toString().padLeft(2, '0');
 
-    final canManageMessage = isMe;
+    final canEditMessage = controller.canEditMessage(message);
+    final canDeleteMessage = controller.canDeleteMessage(message);
+    final canManageMessage = canEditMessage || canDeleteMessage;
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Padding(
@@ -1038,93 +1040,102 @@ class _MessageBubble extends StatelessWidget {
                     ),
                   ],
                   if (canManageMessage)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PopupMenuButton<_MessageAction>(
-                          tooltip: 'message_actions'.tr,
-                          icon: Icon(
-                            Icons.more_horiz_rounded,
-                            size: 18.sp,
-                            color: isMe
-                                ? AppTheme.baseWhite.withValues(alpha: 0.85)
-                                : context.alma.onSurfaceTertiary,
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Container(
+                        margin: EdgeInsets.only(bottom: 6.h),
+                        padding: EdgeInsets.symmetric(horizontal: 3.w),
+                        decoration: BoxDecoration(
+                          color: AppTheme.baseWhite.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(9.r),
+                          border: Border.all(
+                            color: AppTheme.baseWhite.withValues(alpha: 0.18),
                           ),
-                          color: context.alma.surface,
-                          onSelected: (action) async {
-                            switch (action) {
-                              case _MessageAction.edit:
-                                controller.startEditingMessage(message);
-                                break;
-                              case _MessageAction.delete:
-                                final confirmed = await Get.dialog<bool>(
-                                  AlertDialog(
-                                    title: Text('delete_message'.tr),
-                                    content: Text('confirm_delete_message'.tr),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Get.back(result: false),
-                                        child: Text('cancel'.tr),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Get.back(result: true),
-                                        child: Text(
-                                          'delete'.tr,
-                                          style: const TextStyle(
-                                            color: Colors.red,
-                                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (canEditMessage)
+                              IconButton(
+                                tooltip: 'edit'.tr,
+                                visualDensity: VisualDensity.compact,
+                                constraints: BoxConstraints.tightFor(
+                                  width: 30.w,
+                                  height: 28.h,
+                                ),
+                                padding: EdgeInsets.zero,
+                                onPressed: () =>
+                                    controller.startEditingMessage(message),
+                                icon: Icon(
+                                  Icons.edit_outlined,
+                                  size: 16.sp,
+                                  color: AppTheme.baseWhite,
+                                ),
+                              ),
+                            if (canDeleteMessage)
+                              IconButton(
+                                tooltip: 'delete'.tr,
+                                visualDensity: VisualDensity.compact,
+                                constraints: BoxConstraints.tightFor(
+                                  width: 30.w,
+                                  height: 28.h,
+                                ),
+                                padding: EdgeInsets.zero,
+                                onPressed:
+                                    controller.deletingMessageId == message.id
+                                    ? null
+                                    : () async {
+                                        final confirmed =
+                                            await Get.dialog<bool>(
+                                              AlertDialog(
+                                                title: Text(
+                                                  'delete_message'.tr,
+                                                ),
+                                                content: Text(
+                                                  'confirm_delete_message'.tr,
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Get.back(result: false),
+                                                    child: Text('cancel'.tr),
+                                                  ),
+                                                  FilledButton(
+                                                    style:
+                                                        FilledButton.styleFrom(
+                                                          backgroundColor:
+                                                              AppTheme.error600,
+                                                        ),
+                                                    onPressed: () =>
+                                                        Get.back(result: true),
+                                                    child: Text('delete'.tr),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                        if (confirmed == true) {
+                                          await controller.deleteMessage(
+                                            message,
+                                          );
+                                        }
+                                      },
+                                icon: controller.deletingMessageId == message.id
+                                    ? SizedBox.square(
+                                        dimension: 14.w,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppTheme.baseWhite,
                                         ),
+                                      )
+                                    : Icon(
+                                        Icons.delete_outline_rounded,
+                                        size: 16.sp,
+                                        color: AppTheme.baseWhite,
                                       ),
-                                    ],
-                                  ),
-                                );
-                                if (confirmed == true) {
-                                  await controller.deleteMessage(message);
-                                }
-                                break;
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem<_MessageAction>(
-                              value: _MessageAction.edit,
-                              enabled:
-                                  (message.messageBody?.trim().isNotEmpty ??
-                                      false) &&
-                                  controller.deletingMessageId != message.id,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.edit_outlined, size: 18.sp),
-                                  SizedBox(width: 8.w),
-                                  Text('edit'.tr),
-                                ],
                               ),
-                            ),
-                            PopupMenuItem<_MessageAction>(
-                              value: _MessageAction.delete,
-                              enabled:
-                                  controller.deletingMessageId != message.id,
-                              child: Row(
-                                children: [
-                                  if (controller.deletingMessageId ==
-                                      message.id)
-                                    SizedBox(
-                                      width: 16.w,
-                                      height: 16.w,
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  else
-                                    Icon(Icons.delete_outline, size: 18.sp),
-                                  SizedBox(width: 8.w),
-                                  Text('delete'.tr),
-                                ],
-                              ),
-                            ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   if (hasMedia) ...[
                     _MediaPreview(
@@ -1148,6 +1159,18 @@ class _MessageBubble extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (message.editedAt != null) ...[
+                        Text(
+                          'edited'.tr,
+                          style: AppStyles.labelSmall.copyWith(
+                            color: isMe
+                                ? AppTheme.baseWhite.withValues(alpha: 0.75)
+                                : context.alma.onSurfaceHint,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        SizedBox(width: 5.w),
+                      ],
                       Text(
                         '$hh:$mm',
                         style: AppStyles.labelSmall.copyWith(
@@ -2127,8 +2150,6 @@ class _Composer extends StatelessWidget {
     );
   }
 }
-
-enum _MessageAction { edit, delete }
 
 class _EmojiPickerPanel extends StatelessWidget {
   const _EmojiPickerPanel({required this.onEmojiTap});

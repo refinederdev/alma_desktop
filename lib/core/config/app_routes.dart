@@ -107,6 +107,7 @@ class AppRoutes {
             updateDealUseCase: Get.find<UpdateDealUseCase>(),
             getAgentsUseCase: Get.find<GetAgentsUseCase>(),
             assignDealUseCase: Get.find<AssignDealUseCase>(),
+            notificationService: Get.find(),
           ),
           fenix: true,
         );
@@ -120,6 +121,7 @@ class AppRoutes {
             updateMessageUseCase: Get.find<UpdateMessageUseCase>(),
             deleteMessageUseCase: Get.find<DeleteMessageUseCase>(),
             getCompanyLocationsUseCase: Get.find<GetCompanyLocationsUseCase>(),
+            notificationService: Get.find(),
           ),
           fenix: true,
         );

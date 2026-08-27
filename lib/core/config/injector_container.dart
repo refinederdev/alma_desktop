@@ -15,6 +15,7 @@ import 'package:alma_desktop/features/global/domain/repositories/global_reposito
 import 'package:alma_desktop/features/global/domain/usecases/check_if_user_is_logged_in_use_case.dart';
 import 'package:alma_desktop/core/config/app_config.dart';
 import 'package:alma_desktop/core/services/server_config_service/server_config_service.dart';
+import 'package:alma_desktop/core/services/desktop_notification_service.dart';
 import 'package:alma_desktop/features/calls/data/datasources/calls_remote_data_source.dart';
 import 'package:alma_desktop/features/calls/data/repositories/calls_repository_impl.dart';
 import 'package:alma_desktop/features/calls/domain/repositories/calls_repository.dart';
@@ -84,6 +85,9 @@ class InjectorContainer {
       () => ServerConfigService(Get.find()),
       fenix: true,
     );
+    final notificationService = DesktopNotificationService();
+    Get.put<DesktopNotificationService>(notificationService, permanent: true);
+    await notificationService.initialize();
     await AppConfig.init(Get.find<ServerConfigService>());
 
     // Firebase (يعتمد على LocalStorageService)

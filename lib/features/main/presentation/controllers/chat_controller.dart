@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:alma_desktop/core/config/app_config.dart';
 import 'package:alma_desktop/core/services/file_picker_service/file_picker_service.dart';
 import 'package:alma_desktop/core/errors/app_messages.dart';
+import 'package:alma_desktop/core/services/desktop_notification_service.dart';
 import 'package:alma_desktop/core/services/reverb_service/reverb_service.dart';
 import 'package:alma_desktop/features/auth/domain/entities/user.dart';
 import 'package:alma_desktop/features/global/presentation/controllers/global_controller.dart';
@@ -22,7 +23,6 @@ import 'package:alma_desktop/features/main/domain/usecases/get_company_locations
 import 'package:alma_desktop/features/main/domain/usecases/send_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/update_message_use_case.dart';
 import 'package:alma_desktop/features/main/domain/usecases/delete_message_use_case.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +40,7 @@ class ChatController extends GetxController {
     required this.updateMessageUseCase,
     required this.deleteMessageUseCase,
     required this.getCompanyLocationsUseCase,
+    required this.notificationService,
   });
 
   final GetOpenDealsUseCase getOpenDealsUseCase;
@@ -50,6 +51,7 @@ class ChatController extends GetxController {
   final UpdateMessageUseCase updateMessageUseCase;
   final DeleteMessageUseCase deleteMessageUseCase;
   final GetCompanyLocationsUseCase getCompanyLocationsUseCase;
+  final DesktopNotificationService notificationService;
   final FilePickerService _filePickerService = FilePickerService();
 
   final TextEditingController messageController = TextEditingController();
@@ -89,10 +91,8 @@ class ChatController extends GetxController {
   int _messagesRequestId = 0;
   int _currentMessagesPage = 1;
   ReverbService? _reverbService;
-  AudioPlayer? _notificationPlayer;
   bool _isReverbConnected = false;
   final List<String> _subscribedChannelNames = <String>[];
-  final Set<String> _playedNotificationMessageIds = <String>{};
   final Map<int, int> _unreadCountByDealId = <int, int>{};
   final Set<int> _newDealIds = <int>{};
 
@@ -115,9 +115,6 @@ class ChatController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (!Platform.isWindows) {
-      _notificationPlayer = AudioPlayer();
-    }
     messagesScrollController.addListener(_onMessagesScroll);
     loadDeals().then((_) => initializeReverb());
   }
@@ -131,7 +128,6 @@ class ChatController extends GetxController {
       _subscribedChannelNames.clear();
     }
     _reverbService?.dispose();
-    _notificationPlayer?.dispose();
     messagesScrollController.removeListener(_onMessagesScroll);
     messageController.dispose();
     messagesScrollController.dispose();
@@ -877,7 +873,7 @@ class ChatController extends GetxController {
   }
 
   void startEditingMessage(DealMessage message) {
-    if (!message.fromMe) return;
+    if (!canEditMessage(message)) return;
     editingMessage = message;
     messageController.text = message.messageBody ?? '';
     messageController.selection = TextSelection.fromPosition(
@@ -929,12 +925,17 @@ class ChatController extends GetxController {
         messageController.clear();
         isUpdatingMessage = false;
         update();
+        AppMessages.showSnackBar(
+          type: ErrorType.success,
+          title: 'success'.tr,
+          message: 'message_updated_successfully'.tr,
+        );
       },
     );
   }
 
   Future<void> deleteMessage(DealMessage message) async {
-    if (deletingMessageId != null || !message.fromMe) return;
+    if (deletingMessageId != null || !canDeleteMessage(message)) return;
     deletingMessageId = message.id;
     update();
     final result = await deleteMessageUseCase(
@@ -958,8 +959,33 @@ class ChatController extends GetxController {
         _removeMessageFromState(message);
         deletingMessageId = null;
         update();
+        AppMessages.showSnackBar(
+          type: ErrorType.success,
+          title: 'success'.tr,
+          message: 'message_deleted_successfully'.tr,
+        );
       },
     );
+  }
+
+  bool canEditMessage(DealMessage message) {
+    return message.fromMe &&
+        message.id > 0 &&
+        _hasValidProviderMessageId(message) &&
+        message.messageType == 'conversation' &&
+        message.editedAt == null &&
+        (message.messageBody?.trim().isNotEmpty ?? false);
+  }
+
+  bool canDeleteMessage(DealMessage message) {
+    return message.fromMe &&
+        message.id > 0 &&
+        _hasValidProviderMessageId(message);
+  }
+
+  bool _hasValidProviderMessageId(DealMessage message) {
+    final providerId = int.tryParse(message.messageId);
+    return providerId != null && providerId > 0;
   }
 
   Future<void> initializeReverb() async {
@@ -1034,7 +1060,11 @@ class ChatController extends GetxController {
         dealData: dealData,
         messageData: messageData,
       );
-      _playIncomingNotificationIfNeeded(messageData, fromMe: fromMe);
+      _playIncomingNotificationIfNeeded(
+        messageData,
+        fromMe: fromMe,
+        dealId: dealId,
+      );
       if (!upserted) {
         unawaited(loadDeals(refresh: true));
       }
@@ -1092,7 +1122,11 @@ class ChatController extends GetxController {
         dealData: dealData,
         messageData: messageData,
       );
-      _playIncomingNotificationIfNeeded(messageData, fromMe: false);
+      _playIncomingNotificationIfNeeded(
+        messageData,
+        fromMe: messageData?['from_me'] as bool? ?? false,
+        dealId: dealId,
+      );
 
       if (selectedDeal?.id == dealId && messageData != null) {
         final message = _messageFromReverbPayload(messageData, selectedDeal!);
@@ -1113,7 +1147,9 @@ class ChatController extends GetxController {
           title: 'crm'.tr,
           message: 'new_deal_received'.tr,
         );
-        _playNotificationSound();
+        if (messageData == null) {
+          unawaited(notificationService.notify(eventKey: 'deal:$dealId:new'));
+        }
       }
     } catch (e) {
       if (kDebugMode) print('❌ Error handling deal.history.updated: $e');
@@ -1351,6 +1387,7 @@ class ChatController extends GetxController {
   void _playIncomingNotificationIfNeeded(
     Map<String, dynamic>? messageData, {
     required bool fromMe,
+    int? dealId,
   }) {
     if (fromMe || messageData == null) return;
 
@@ -1360,24 +1397,16 @@ class ChatController extends GetxController {
     final uniqueKey =
         rawMessageId ?? (rawTimestamp != null ? 'ts_$rawTimestamp' : null);
     if (uniqueKey == null) return;
-    if (_playedNotificationMessageIds.contains(uniqueKey)) return;
-    _playedNotificationMessageIds.add(uniqueKey);
-    if (_playedNotificationMessageIds.length > 200) {
-      _playedNotificationMessageIds.remove(_playedNotificationMessageIds.first);
-    }
-
-    _playNotificationSound();
-  }
-
-  Future<void> _playNotificationSound() async {
-    if (Platform.isWindows) return;
-    try {
-      await _notificationPlayer?.play(AssetSource('sound/notifi.wav'));
-    } catch (e) {
-      if (kDebugMode) {
-        print('⚠️ Notification sound failed: $e');
-      }
-    }
+    final resolvedDealId =
+        dealId ??
+        (messageData['deal_id'] as num?)?.toInt() ??
+        selectedDeal?.id ??
+        0;
+    unawaited(
+      notificationService.notify(
+        eventKey: 'message:$resolvedDealId:$uniqueKey',
+      ),
+    );
   }
 
   Future<void> hideContactDealHistoryPanel() async {
